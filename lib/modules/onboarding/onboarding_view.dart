@@ -1,34 +1,52 @@
   import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kindered_app/modules/onboarding/widget_button.dart';
-import 'onboarding_controller.dart';
+import '../../config/app_routes.dart';
 
-class OnboardingView extends GetView<OnboardingController> {
-  OnboardingView({super.key}) {
-    Get.put(OnboardingController());
+class OnboardingView extends StatefulWidget {
+  const OnboardingView({super.key});
+
+  @override
+  State<OnboardingView> createState() => _OnboardingViewState();
+}
+
+class _OnboardingViewState extends State<OnboardingView> {
+  late final PageController _pageController;
+  int _currentPage = 0;
+
+  final List<Map<String, String>> onboardingPages = const [
+    {
+      'image': 'assets/images/ob1.jpg',
+      'title': 'More than dating Discover yourself',
+      'description': 'Discover deeper compatibility through values, emotions, and style',
+    },
+    {
+      'image': 'assets/images/ob2.jpg',
+      'title': 'Meet Your Ai Companion on this Journey',
+      'description': 'Powered by deep AI profiling and emotional intelligence',
+    },
+    {
+      'image': 'assets/images/ob3.jpg',
+      'title': 'Where Chemistry Meets Compatibility',
+      'description': 'Find partners who align with your heart, mind, and vibe',
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final controller = Get.find<OnboardingController>();
-    final List<Map<String, String>> onboardingPages = [
-      {
-        'image': 'assets/images/ob1.jpg',
-        'title': 'More than dating Discover yourself',
-        'description': 'Discover deeper compatibility through values, emotions, and style',
-      },
-      {
-        'image': 'assets/images/ob2.jpg',
-        'title': 'Meet Your Ai Companion on this Journey',
-        'description': 'Powered by deep AI profiling and emotional intelligence',
-      },
-      {
-        'image': 'assets/images/ob3.jpg',
-        'title': 'Where Chemistry Meets Compatibility',
-        'description': 'Find partners who align with your heart, mind, and vibe',
-      },
-    ];
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -39,8 +57,8 @@ class OnboardingView extends GetView<OnboardingController> {
           children: [
             // PageView for onboarding slides
             PageView.builder(
-              controller: controller.pageController,
-              onPageChanged: controller.onPageChanged,
+              controller: _pageController,
+              onPageChanged: (index) => setState(() => _currentPage = index),
               itemCount: onboardingPages.length,
               itemBuilder: (context, index) {
                 final page = onboardingPages[index];
@@ -51,7 +69,7 @@ class OnboardingView extends GetView<OnboardingController> {
                 );
               },
             ),
-            
+
             // Bottom controls
             Positioned(
               bottom: 40,
@@ -62,43 +80,43 @@ class OnboardingView extends GetView<OnboardingController> {
                 child: Column(
                   children: [
                     // Three Dotted Indicator
-                    Obx(() => Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(3, (index) {
-                        final isActive = controller.currentPage.value == index;
-                        return GestureDetector(
-                          onTap: () {
-                            controller.pageController.animateToPage(
-                              index,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            width: isActive ? 24 : 10,
-                            height: 10,
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5),
-                              color: isActive 
-                                  ? Theme.of(context).primaryColor 
-                                  : Colors.white.withOpacity(0.4),
-                            ),
+                      children: List.generate(onboardingPages.length, (index) {
+                        final isActive = _currentPage == index;
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          width: isActive ? 24 : 10,
+                          height: 10,
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            color: isActive
+                                ? Theme.of(context).primaryColor
+                                : Colors.white.withOpacity(0.4),
                           ),
                         );
                       }),
-                    )),
-                    
+                    ),
+
                     const SizedBox(height: 30),
-                    
+
                     // Next/Get Started button
-                    Obx(() => OnboardingButton(
-                      text: controller.currentPage.value == onboardingPages.length - 1
+                    OnboardingButton(
+                      text: _currentPage == onboardingPages.length - 1
                           ? 'Begin your Journey'
                           : 'Next',
-                      onPressed: controller.nextPage,
-                    )),
+                      onPressed: () {
+                        if (_currentPage < onboardingPages.length - 1) {
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        } else {
+                          Get.offAllNamed(AppRoutes.login);
+                        }
+                      },
+                    ),
                   ],
                 ),
               ),

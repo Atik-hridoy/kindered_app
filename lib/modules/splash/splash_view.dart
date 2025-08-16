@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../config/app_themes.dart';
 import 'package:get/get.dart';
 import '../../config/app_routes.dart';
-import '../../config/app_themes.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -16,7 +16,7 @@ class _SplashViewState extends State<SplashView> {
   @override
   void initState() {
     super.initState();
-    // Navigate to onboarding after 2 seconds
+    // Simple splash -> onboarding navigation
     Timer(const Duration(seconds: 2), () {
       Get.offAllNamed(AppRoutes.onboarding);
     });

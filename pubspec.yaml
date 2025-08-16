@@ -68,6 +68,7 @@ flutter:
     - assets/images/ob1.jpg
     - assets/images/ob2.jpg
     - assets/images/ob3.jpg
+    - assets/images/au1.jpg
     - assets/svg/
 
   # An image asset can refer to one or more resolution-specific "variants", see

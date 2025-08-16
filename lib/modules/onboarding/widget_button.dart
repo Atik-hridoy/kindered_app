@@ -53,6 +53,7 @@ class OnboardingButton extends StatelessWidget {
             color: Color(0xFF2E3A59), // #2E3A59
             fontSize: 16,
             fontWeight: FontWeight.w600,
+            fontFamily: 'Inter',
             letterSpacing: 0.5,
           ),
         ),
