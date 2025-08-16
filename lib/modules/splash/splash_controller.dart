@@ -33,7 +33,7 @@ class SplashController extends GetxController {
     } catch (e, stackTrace) {
       log('SplashController: Error during navigation', error: e, stackTrace: stackTrace);
       // Fallback to direct navigation if named route fails
-      Get.offAll(() => const OnboardingView());
+      Get.offAll(() => OnboardingView());
     }
   }
 }

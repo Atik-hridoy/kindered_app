@@ -39,6 +39,7 @@ dependencies:
   get: ^4.7.2
   flutter_svg: ^2.0.10+1
   shared_preferences: ^2.5.3
+  smooth_page_indicator: ^1.2.1
 
 dev_dependencies:
   flutter_test:
@@ -84,6 +85,10 @@ flutter:
     - family: PlayfairDisplay
       fonts:
         - asset: assets/font/Playfair_Display/PlayfairDisplay-SemiBold.ttf
+          weight: 600
+    - family: Inter
+      fonts:
+        - asset: assets/font/Inter/Inter_28pt-Regular.ttf
           weight: 600
   #
   # For details regarding fonts from package dependencies,

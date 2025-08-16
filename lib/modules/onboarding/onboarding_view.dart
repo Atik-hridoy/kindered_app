@@ -1,100 +1,115 @@
   import 'package:flutter/material.dart';
-  import 'package:get/get.dart';
-  import 'onboarding_controller.dart';
-  import 'widget_button.dart';
+import 'package:get/get.dart';
+import 'package:kindered_app/modules/onboarding/widget_button.dart';
+import 'onboarding_controller.dart';
 
-  class OnboardingView extends GetView<OnboardingController> {
-    const OnboardingView({super.key});
+class OnboardingView extends GetView<OnboardingController> {
+  OnboardingView({super.key}) {
+    Get.put(OnboardingController());
+  }
 
-    @override
-    Widget build(BuildContext context) {
-      final List<Map<String, String>> onboardingPages = [
-        {
-          'image': 'assets/images/ob1.jpg',
-          'title': 'Welcome to\nKindred',
-          'description': 'Find your perfect match and make meaningful connections with people who share your interests and values.',
-        },
-        {
-          'image': 'assets/images/ob2.jpg',
-          'title': 'Discover\nNew People',
-          'description': 'Swipe and connect with amazing people in your area who share your passions and interests.',
-        },
-        {
-          'image': 'assets/images/ob3.jpg',
-          'title': 'Start\nChatting',
-          'description': 'Build meaningful relationships through real conversations and shared experiences.',
-        },
-      ];
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final controller = Get.find<OnboardingController>();
+    final List<Map<String, String>> onboardingPages = [
+      {
+        'image': 'assets/images/ob1.jpg',
+        'title': 'More than dating Discover yourself',
+        'description': 'Discover deeper compatibility through values, emotions, and style',
+      },
+      {
+        'image': 'assets/images/ob2.jpg',
+        'title': 'Meet Your Ai Companion on this Journey',
+        'description': 'Powered by deep AI profiling and emotional intelligence',
+      },
+      {
+        'image': 'assets/images/ob3.jpg',
+        'title': 'Where Chemistry Meets Compatibility',
+        'description': 'Find partners who align with your heart, mind, and vibe',
+      },
+    ];
 
-      return Scaffold(
-        body: SafeArea(
-          child: Stack(
-            children: [
-              // PageView for onboarding slides
-              PageView.builder(
-                controller: controller.pageController,
-                onPageChanged: controller.onPageChanged,
-                itemCount: onboardingPages.length,
-                itemBuilder: (context, index) {
-                  final page = onboardingPages[index];
-                  return _buildPage(
-                    image: page['image']!,
-                    title: page['title']!,
-                    description: page['description']!,
-                  );
-                },
-              ),
-              
-              // Bottom controls
-              Positioned(
-                bottom: 40,
-                left: 0,
-                right: 0,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    children: [
-                      // Page indicators
-                      Obx(() => Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          onboardingPages.length,
-                          (index) => Container(
-                            width: 10,
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      body: SizedBox(
+        width: size.width,
+        height: size.height,
+        child: Stack(
+          children: [
+            // PageView for onboarding slides
+            PageView.builder(
+              controller: controller.pageController,
+              onPageChanged: controller.onPageChanged,
+              itemCount: onboardingPages.length,
+              itemBuilder: (context, index) {
+                final page = onboardingPages[index];
+                return _buildPage(
+                  image: page['image']!,
+                  title: page['title']!,
+                  description: page['description']!,
+                );
+              },
+            ),
+            
+            // Bottom controls
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  children: [
+                    // Three Dotted Indicator
+                    Obx(() => Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(3, (index) {
+                        final isActive = controller.currentPage.value == index;
+                        return GestureDetector(
+                          onTap: () {
+                            controller.pageController.animateToPage(
+                              index,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: isActive ? 24 : 10,
                             height: 10,
                             margin: const EdgeInsets.symmetric(horizontal: 4),
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: controller.currentPage.value == index
-                                  ? Theme.of(context).primaryColor
+                              borderRadius: BorderRadius.circular(5),
+                              color: isActive 
+                                  ? Theme.of(context).primaryColor 
                                   : Colors.white.withOpacity(0.4),
                             ),
                           ),
-                        ),
-                      )),
-                      
-                      const SizedBox(height: 30),
-                      
-                      // Next/Get Started button
-                      Obx(() => OnboardingButton(
-                        text: controller.currentPage.value == onboardingPages.length - 1
-                            ? 'GET STARTED'
-                            : 'NEXT',
-                        onPressed: controller.nextPage,
-                      )),
-                      
-                      const SizedBox(height: 16),
-                    ],
-                  ),
+                        );
+                      }),
+                    )),
+                    
+                    const SizedBox(height: 30),
+                    
+                    // Next/Get Started button
+                    Obx(() => OnboardingButton(
+                      text: controller.currentPage.value == onboardingPages.length - 1
+                          ? 'Begin your Journey'
+                          : 'Next',
+                      onPressed: controller.nextPage,
+                    )),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
-    }
+      ),
+    );
+  }
 
-    Widget _buildPage({
+  Widget _buildPage({
     required String image,
     required String title,
     required String description,
@@ -133,15 +148,17 @@
         Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Spacer(),
+              const Spacer(flex:4), // Reduced space above title
               // Title
               Text(
                 title,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 36,
-                  fontWeight: FontWeight.bold,
+                  fontFamily: 'PlayfairDisplay',
+                  fontWeight: FontWeight.w600, // SemiBold weight
                   color: Colors.white,
                   height: 1.2,
                 ),
@@ -150,13 +167,19 @@
               // Description
               Text(
                 description,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 16,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w500,
+                  
+
                   color: Colors.white,
                   height: 1.5,
                 ),
               ),
-              const SizedBox(height: 100), // Space for bottom controls
+              const Spacer(flex: 1),
+              
             ],
           ),
         ),

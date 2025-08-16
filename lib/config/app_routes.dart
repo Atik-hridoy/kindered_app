@@ -24,7 +24,7 @@ class AppRoutes {
     ),
     GetPage(
       name: onboarding,
-      page: () => const OnboardingView(),
+      page: () => OnboardingView(),
       binding: OnboardingBinding(),
     ),
   ];
