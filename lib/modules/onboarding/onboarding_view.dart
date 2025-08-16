@@ -72,7 +72,7 @@ class _OnboardingViewState extends State<OnboardingView> {
 
             // Bottom controls
             Positioned(
-              bottom: 40,
+              bottom: 65,  // Reduced from 40 to move button up
               left: 0,
               right: 0,
               child: Padding(

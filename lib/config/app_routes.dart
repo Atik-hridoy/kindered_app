@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:kindered_app/modules/auth/views/create_account_view.dart';
 import '../modules/splash/splash_view.dart';
 import '../modules/splash/splash_binding.dart';
 import '../modules/onboarding/onboarding_view.dart';
@@ -11,13 +12,13 @@ class AppRoutes {
   static const String splash = '/';
   static const String onboarding = '/onboarding';
   static const String login = '/login';
-  static const String home = '/home';
+  static const String createAccount = '/create-account';
   
   // Route getters
   static String getSplashRoute() => splash;
   static String getOnboardingRoute() => onboarding;
   static String getLoginRoute() => login;
-  static String getHomeRoute() => home;
+  static String getCreateAccountRoute() => createAccount;
   
   // Route definitions
   static final List<GetPage> routes = [
@@ -34,6 +35,11 @@ class AppRoutes {
     GetPage(
       name: login,
       page: () => const LoginView(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: createAccount,
+      page: () => const CreateAccountView(),
       binding: AuthBinding(),
     ),
   ];
