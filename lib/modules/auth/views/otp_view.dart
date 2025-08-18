@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/modules/auth/controllers/otp_controller.dart';
 import 'package:kindered_app/modules/auth/widget_button.dart';
 
@@ -8,7 +9,6 @@ class OtpView extends GetView<OtpController> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       appBar: AppBar(
@@ -148,7 +148,9 @@ class OtpView extends GetView<OtpController> {
                     child: AuthCtaButton(
                       text: 'Verify',
                       onPressed: () {
-                        // TODO: Implement OTP verification
+                        // TODO: Implement OTP verification logic
+                        // For now, navigate to account settings after verification
+                        Get.offAllNamed(AppRoutes.intro);
                       },
                       style: AuthButtonStyle.filled,
                     ),

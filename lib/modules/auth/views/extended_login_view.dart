@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kindered_app/config/app_routes.dart';
-import '../controllers/login_controller.dart';
-import '../widget_button.dart';
+import 'package:kindered_app/modules/auth/controllers/extended_login_view_controller.dart';
 
-class LoginView extends GetView<LoginController> {
-  const LoginView({super.key});
+class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
+  const ExtendedLoginView({super.key});
 
   // Responsive padding based on screen size
   EdgeInsetsGeometry _getPadding(BuildContext context) {
@@ -86,12 +85,52 @@ class LoginView extends GetView<LoginController> {
                                   maxWidth: 400,
                                   minWidth: isSmallScreen ? 280 : 335,
                                 ),
-                                child: AuthCtaButton(
-                                  text: 'Create an account',
-                                  onPressed: () {
-                                    Get.toNamed(AppRoutes.getCreateAccountRoute());
-                                  },
-                                  style: AuthButtonStyle.filled,
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFD47A6A), // Google button color
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.15),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      // TODO: Implement Google sign in
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        SvgPicture.asset(
+                                          'assets/svg/google.svg',
+                                          width: 24,
+                                          height: 24,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          'Continue with Google',
+                                          style: TextStyle(
+                                            color: Color(0xFF2E3A59),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -104,12 +143,46 @@ class LoginView extends GetView<LoginController> {
                                   maxWidth: 400,
                                   minWidth: isSmallScreen ? 280 : 335,
                                 ),
-                                child: AuthCtaButton(
-                                  text: 'I have an account',
-                                  onPressed: () {
-                                    Get.toNamed(AppRoutes.getExtendedLoginRoute());
-                                  },
-                                  style: AuthButtonStyle.outline,
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white, // White background for phone button
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFF2E3A59), width: 1.2),
+                                  ),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Get.toNamed(AppRoutes.createAccount);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        SvgPicture.asset(
+                                          'assets/svg/phone.svg',
+                                          width: 24,
+                                          height: 24,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          'Continue with phone',
+                                          style: TextStyle(
+                                            color: Color(0xFF2E3A59),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -126,23 +199,19 @@ class LoginView extends GetView<LoginController> {
                                     height: 1.4,
                                   ),
                                   children: [
-                                    const TextSpan(text: 'By signing up, you agree to our '),
+                                    const TextSpan(text: 'By signing in, you agree to our '),
                                     TextSpan(
-                                      text: 'Terms',
+                                      text: 'Terms.',
                                       style: const TextStyle(
                                         decoration: TextDecoration.underline,
                                       ),
-                                      // TODO: Add onTap handler for Terms
-                                      // onTap: () => _launchTermsUrl(),
                                     ),
-                                    const TextSpan(text: '. See how we use your data in our '),
+                                    const TextSpan(text: ' See how we use your data in our '),
                                     TextSpan(
                                       text: 'Privacy Policy',
                                       style: const TextStyle(
                                         decoration: TextDecoration.underline,
                                       ),
-                                      // TODO: Add onTap handler for Privacy Policy
-                                      // onTap: () => _launchPrivacyPolicyUrl(),
                                     ),
                                     const TextSpan(text: '.'),
                                   ],
@@ -164,4 +233,5 @@ class LoginView extends GetView<LoginController> {
       ),
     );
   }
+
 }
