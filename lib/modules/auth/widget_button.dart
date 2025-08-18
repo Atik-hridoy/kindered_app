@@ -52,8 +52,8 @@ class AuthCtaButton extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFD89A58), // top
-              Color(0xFFB27438), // bottom
+              Color(0xFFD47A6A), // top - #D47A6A
+              Color(0xFFD47A6A), // bottom - same color for solid appearance
             ],
           ),
           boxShadow: [

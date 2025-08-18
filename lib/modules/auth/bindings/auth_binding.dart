@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:kindered_app/modules/auth/controllers/create_account_view_controller.dart';
+import 'package:kindered_app/modules/auth/controllers/extended_login_view_controller.dart';
 import '../controllers/login_controller.dart';
 import '../controllers/otp_controller.dart';
 
@@ -9,5 +10,6 @@ class AuthBinding extends Bindings {
     Get.lazyPut<LoginController>(() => LoginController());
     Get.lazyPut<CreateAccountViewController>(() => CreateAccountViewController());
     Get.lazyPut<OtpController>(() => OtpController());
+    Get.lazyPut<ExtendedLoginViewController>(() => ExtendedLoginViewController());
   }
 }

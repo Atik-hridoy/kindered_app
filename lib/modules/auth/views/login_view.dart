@@ -37,7 +37,7 @@ class LoginView extends GetView<LoginController> {
                 ),
               ),
               child: Container(
-                color: const Color(0xFF2E3A59).withOpacity(0.7), // #2E3A59 with 70% opacity
+                color: const Color(0xFF2E3A59).withValues(alpha: 0.7), // #2E3A59 with 70% opacity
               ),
             ),
 
@@ -107,7 +107,7 @@ class LoginView extends GetView<LoginController> {
                                 child: AuthCtaButton(
                                   text: 'I have an account',
                                   onPressed: () {
-                                    // TODO: navigate to sign in form
+                                    Get.toNamed(AppRoutes.getExtendedLoginRoute());
                                   },
                                   style: AuthButtonStyle.outline,
                                 ),
