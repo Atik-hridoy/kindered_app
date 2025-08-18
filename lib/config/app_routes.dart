@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:kindered_app/modules/acccounts_setting/binding/accounts_binding.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/intro_view.dart';
 import 'package:kindered_app/modules/auth/views/create_account_view.dart';
 import 'package:kindered_app/modules/auth/views/extended_login_view.dart';
 import 'package:kindered_app/modules/auth/views/otp_view.dart';
@@ -17,14 +19,15 @@ class AppRoutes {
   static const String extendedLogin = '/extended-login';
   static const String createAccount = '/create-account';
   static const String otp = '/otp';
-  
+  static const String intro = '/intro';
   // Route getters
   static String getSplashRoute() => splash;
   static String getOnboardingRoute() => onboarding;
   static String getLoginRoute() => login;
   static String getExtendedLoginRoute() => extendedLogin;
   static String getCreateAccountRoute() => createAccount;
-  
+  static String getOtpRoute() => otp;
+  static String getIntroRoute() => intro;
   // Route definitions
   static final List<GetPage> routes = [
     GetPage(
@@ -57,5 +60,11 @@ class AppRoutes {
       page: () => const OtpView(),
       binding: AuthBinding(),
     ),
+    GetPage(
+      name: intro,
+      page: () => IntroView(),
+      binding: AccountsBinding(),
+    ),
     ];
+    
 }

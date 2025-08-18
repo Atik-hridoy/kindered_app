@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kindered_app/modules/acccounts_setting/binding/accounts_binding.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/intro_view.dart';
+import 'package:kindered_app/modules/auth/views/create_account_view.dart';
+import 'package:kindered_app/modules/auth/views/otp_view.dart';
 import 'config/app_routes.dart';
 import 'config/app_themes.dart';
 import 'modules/splash/splash_view.dart';
@@ -38,6 +42,21 @@ class MyApp extends StatelessWidget {
           name: AppRoutes.login,
           page: () => const LoginView(),
           binding: AuthBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.createAccount,
+          page: () => const CreateAccountView(),
+          binding: AuthBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.otp,
+          page: () =>  OtpView(),
+          binding: AuthBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.intro,
+          page: () => IntroView(),
+          binding: AccountsBinding(),
         ),
       ],
       defaultTransition: Transition.fade,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/modules/auth/controllers/extended_login_view_controller.dart';
-import '../widget_button.dart';
 
 class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
   const ExtendedLoginView({super.key});
@@ -36,7 +36,7 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
                 ),
               ),
               child: Container(
-                color: const Color(0xFF2E3A59).withOpacity(0.7), // #2E3A59 with 70% opacity
+                color: const Color(0xFF2E3A59).withValues(alpha: 0.7), // #2E3A59 with 70% opacity
               ),
             ),
 
@@ -93,7 +93,7 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.15),
+                                        color: Colors.black.withValues(alpha: 0.15),
                                         blurRadius: 8,
                                         offset: const Offset(0, 4),
                                       ),
@@ -153,7 +153,7 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
                                   ),
                                   child: ElevatedButton(
                                     onPressed: () {
-                                      // TODO: Implement phone sign in
+                                      Get.toNamed(AppRoutes.createAccount);
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,
