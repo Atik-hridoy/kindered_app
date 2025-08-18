@@ -1,5 +1,42 @@
 import 'package:flutter/material.dart';
 
+class CircularArrowButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final double size;
+  final Color backgroundColor;
+  final Color iconColor;
+  final double iconSize;
+
+  const CircularArrowButton({
+    super.key,
+    required this.onPressed,
+    this.size = 56.0,
+    this.backgroundColor = Colors.blueAccent,
+    this.iconColor = Colors.white,
+    this.iconSize = 30.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.arrow_forward,
+          color: iconColor,
+          size: iconSize,
+        ),
+      ),
+    );
+  }
+}
+
 class OnboardingButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;

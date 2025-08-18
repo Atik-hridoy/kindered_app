@@ -1,4 +1,4 @@
-  import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kindered_app/modules/onboarding/widget_button.dart';
 import '../../config/app_routes.dart';
@@ -70,57 +70,93 @@ class _OnboardingViewState extends State<OnboardingView> {
               },
             ),
 
-            // Bottom controls
+            // Page Indicator
             Positioned(
-              bottom: 65,  // Reduced from 40 to move button up
-              left: 0,
+              bottom: 120,  // Position above the buttons
+              left: 0, 
               right: 0,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  children: [
-                    // Three Dotted Indicator
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(onboardingPages.length, (index) {
-                        final isActive = _currentPage == index;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          width: isActive ? 24 : 10,
-                          height: 10,
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(5),
-                            color: isActive
-                                ? Theme.of(context).primaryColor
-                                : Colors.white.withOpacity(0.4),
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(onboardingPages.length, (index) {
+                    final isActive = _currentPage == index;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: isActive ? 24 : 10,
+                      height: 10,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        color: isActive
+                            ? Theme.of(context).primaryColor
+                            : Colors.white.withOpacity(0.4),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ),
+
+            // Bottom Buttons
+            if (_currentPage < onboardingPages.length - 1)
+              Positioned(
+                bottom: 40,  // Position from bottom of screen
+                left: 0,
+                right: 0,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Skip button
+                      TextButton(
+                        onPressed: () {
+                          Get.offAllNamed(AppRoutes.login);
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFB0AEAC),
+                          textStyle: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
                           ),
-                        );
-                      }),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // Next/Get Started button
-                    OnboardingButton(
-                      text: _currentPage == onboardingPages.length - 1
-                          ? 'Begin your Journey'
-                          : 'Next',
-                      onPressed: () {
-                        if (_currentPage < onboardingPages.length - 1) {
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        ),
+                        child: const Text('Skip'),
+                      ),
+                      
+                      // Next button
+                      CircularArrowButton(
+                        onPressed: () {
                           _pageController.nextPage(
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeInOut,
                           );
-                        } else {
-                          Get.offAllNamed(AppRoutes.login);
-                        }
-                      },
-                    ),
-                  ],
+                        },
+                        backgroundColor: const Color(0xFF21293F),
+                        size: 64,
+                        iconSize: 34,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Positioned(
+                bottom: 40,
+                left: 0,
+                right: 0,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: OnboardingButton(
+                    text: 'Begin your Journey',
+                    onPressed: () {
+                      Get.offAllNamed(AppRoutes.login);
+                    },
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
