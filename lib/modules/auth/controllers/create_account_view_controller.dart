@@ -14,7 +14,6 @@ class CreateAccountViewController extends GetxController {
 
   void onNextPressed() {
     if (phoneController.text.isNotEmpty) {
-      final fullNumber = '$countryCode${phoneController.text}';
       Get.toNamed(AppRoutes.otp);
     } else {
       // Show error if phone number is empty

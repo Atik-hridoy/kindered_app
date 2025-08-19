@@ -19,10 +19,10 @@ class CustomCheckbox extends StatelessWidget {
     required this.onChanged,
     required this.label,
     this.activeColor = const Color(0xFFD4A373),
-    this.checkColor = Colors.white,
+    this.checkColor = const Color(0xFFD4A373),
     this.borderColor = const Color(0xFFD4A373),
     this.size = 24.0,
-    this.borderWidth = 2.0,
+    this.borderWidth = 1.0,
     this.showLabel = true,
     this.padding,
     this.labelStyle,
@@ -33,44 +33,53 @@ class CustomCheckbox extends StatelessWidget {
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: Container(
-        padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A2634),
-          borderRadius: BorderRadius.circular(12),
+          color: value ? const Color(0xFFD4A373) : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: value ? activeColor : const Color(0xFF2D3A4A),
-            width: 1.5,
+            color: value ? const Color(0xFFD4A373) : const Color.fromARGB(255, 212, 154, 115).withValues(alpha: 0.8),
+            width: borderWidth,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            if (showLabel) ...[
-              Text(
-                label,
-                style: labelStyle ?? const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontFamily: 'Playfair Display',
-                ),
+            Text(
+              label,
+              style: labelStyle ?? const TextStyle(
+                color: Color.fromARGB(255, 143, 65, 14),
+                fontSize: 16,
+                fontFamily: 'Playfair Display',
               ),
-            ] else const Spacer(),
+            ),
             Container(
               width: size,
               height: size,
               decoration: BoxDecoration(
-                color: value ? activeColor : Colors.transparent,
+                //color: const Color(0xFFD4A373).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(size / 2),
                 border: Border.all(
-                  color: value ? activeColor : borderColor.withValues(alpha: 0.5),
+                  color: const Color(0xFFD4A373).withValues(alpha: 0.8),
                   width: borderWidth,
                 ),
               ),
               child: value
-                  ? Icon(
-                      Icons.check,
-                      size: size * 0.7,
-                      color: checkColor,
+                  ? Center(
+                      child: Container(
+                        width: size * 1,
+                        height: size * 1,
+                        decoration: const BoxDecoration(
+                          color: Colors.transparent,
+                          shape: BoxShape.circle,
+                          border: Border.fromBorderSide(
+                            BorderSide(
+                              color: Colors.white,
+                              width: 2.0,
+                            ),
+                          ),
+                        ),
+                      ),
                     )
                   : null,
             ),

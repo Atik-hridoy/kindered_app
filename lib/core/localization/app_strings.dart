@@ -83,7 +83,8 @@ class AppStrings extends Translations {
           'showOnProfile': 'প্রোফাইলে দেখান',
           
           // Gender Selection
-          'selectGender': 'আপনার লিঙ্গ নির্বাচন করুন',
+          
+          'whichGenderDescribeYouTheBest': 'Which gender describe you the best?',
           
           // Validation
           'fieldRequired': 'এই ফিল্ডটি প্রয়োজন',
@@ -125,8 +126,8 @@ class AppStrings extends Translations {
   static String get verify => 'verify'.tr;
   
   // Account Settings Getters
-  static String get whatsYourGender => 'whatsYourGender'.tr;
-  static String get selectYourGender => 'selectYourGender'.tr;
+  static String get thatsGreatAlex => "that's Great, Alex".tr;
+  static String get whichGenderDescribeYouTheBest => 'which Gender Describe You The Best?'.tr;
   static String get letsStartWithIntro => 'letsStartWithIntro'.tr;
   static String get yourFirstName => 'yourFirstName'.tr;
   static String get yourAge => 'yourAge'.tr;

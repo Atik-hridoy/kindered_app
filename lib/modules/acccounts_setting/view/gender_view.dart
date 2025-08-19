@@ -34,7 +34,7 @@ class GenderView extends GetView<GenderViewController> {
                 const CustomProgressBar(value: 0.5),
                 const SizedBox(height: 20),
                 Text(
-                  AppStrings.whatsYourGender,
+                  AppStrings.thatsGreatAlex,
                   style: GoogleFonts.playfairDisplay(
                     color: Colors.white,
                     fontSize: 24,
@@ -69,7 +69,7 @@ class GenderView extends GetView<GenderViewController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          AppStrings.selectYourGender,
+          AppStrings.whichGenderDescribeYouTheBest,
           style: GoogleFonts.playfairDisplay(
             color: Colors.white,
             fontSize: 16,
@@ -77,21 +77,24 @@ class GenderView extends GetView<GenderViewController> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildGenderCheckbox(AppStrings.male, 'male'),
+        _buildGenderCheckbox(AppStrings.male),
         const SizedBox(height: 12),
-        _buildGenderCheckbox(AppStrings.female, 'female'),
+        _buildGenderCheckbox(AppStrings.female),
         const SizedBox(height: 12),
-        _buildGenderCheckbox(AppStrings.other, 'other'),
+        _buildGenderCheckbox(AppStrings.other),
       ],
     );
   }
 
-  Widget _buildGenderCheckbox(String label, String value) {
+  Widget _buildGenderCheckbox(String label) {
     return Obx(
       () => CustomCheckbox(
-        value: controller.selectedGender.value == value,
-        onChanged: (_) => controller.selectedGender.value = value,
+        value: controller.selectedGender.value == label,
+        onChanged: (_) => controller.selectedGender.value = label,
         label: label,
+        activeColor: Colors.white.withOpacity(0.3),
+        checkColor: Colors.white,
+        borderColor: Colors.white.withOpacity(0.5),
         labelStyle: GoogleFonts.playfairDisplay(
           color: Colors.white,
           fontSize: 16,
