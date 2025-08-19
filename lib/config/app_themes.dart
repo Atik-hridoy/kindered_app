@@ -1,35 +1,41 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
+  // Color constants
+  static const Color primaryColor = Color(0xFF2E3A59);
+  static const Color backgroundColor = Color(0xFF2E3A59);
+  static const Color accentColor = Color(0xFFD29A67);
+  static const Color textColor = Color(0xFF2E3A59);
+  static const Color appBarTextColor = Colors.white;
   static ThemeData get lightTheme {
     return ThemeData(
-      primaryColor: const Color(0xFF2E3A59), // Updated to #2E3A59
-      scaffoldBackgroundColor: const Color(0xFFF8F4E9), 
+      primaryColor: primaryColor,
+      scaffoldBackgroundColor: backgroundColor,
+
       textTheme: TextTheme(
-        headlineLarge: const TextStyle(
-          color: Color(0xFFD29A67), 
+        headlineLarge: TextStyle(
+          color: accentColor,
           fontSize: 30,
           fontWeight: FontWeight.bold,
         ),
-        // Add more text styles for better consistency
-        bodyLarge: const TextStyle(color: Color(0xFF2E3A59)),
-        bodyMedium: const TextStyle(color: Color(0xFF2E3A59)),
+        bodyLarge: TextStyle(color: textColor),
+        bodyMedium: TextStyle(color: textColor),
       ),
-      buttonTheme: const ButtonThemeData(
-        buttonColor: Color(0xFFD29A67), 
-        textTheme: ButtonTextTheme.primary, 
+      buttonTheme: ButtonThemeData(
+        buttonColor: accentColor,
+        textTheme: ButtonTextTheme.primary,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF2E3A59), // Using the same primary color
-        iconTheme: IconThemeData(color: Color(0xFFF3F1E7)),
-        titleTextStyle: TextStyle(
-          color: Colors.white,
+      appBarTheme: AppBarTheme(
+        backgroundColor: primaryColor,
+        iconTheme: const IconThemeData(color: appBarTextColor),
+        titleTextStyle: const TextStyle(
+          color: appBarTextColor,
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: Color(0xFFD29A67), 
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accentColor,
       ),
     );
   }
