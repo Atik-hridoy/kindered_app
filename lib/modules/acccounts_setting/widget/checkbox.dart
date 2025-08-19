@@ -14,7 +14,7 @@ class CustomCheckbox extends StatelessWidget {
   final TextStyle? labelStyle;
 
   const CustomCheckbox({
-    Key? key,
+    super.key,
     required this.value,
     required this.onChanged,
     required this.label,
@@ -26,7 +26,7 @@ class CustomCheckbox extends StatelessWidget {
     this.showLabel = true,
     this.padding,
     this.labelStyle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

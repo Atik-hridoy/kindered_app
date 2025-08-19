@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kindered_app/config/app_routes.dart';
+import 'package:kindered_app/core/localization/app_strings.dart';
 import 'package:kindered_app/modules/auth/controllers/extended_login_view_controller.dart';
 
 class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
@@ -120,9 +121,9 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
                                           height: 24,
                                         ),
                                         const SizedBox(width: 12),
-                                        const Text(
-                                          'Continue with Google',
-                                          style: TextStyle(
+                                        Text(
+                                          '${AppStrings.continueText} ${AppStrings.orContinueWith} Google',
+                                          style: const TextStyle(
                                             color: Color(0xFF2E3A59),
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,
@@ -172,9 +173,9 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
                                           height: 24,
                                         ),
                                         const SizedBox(width: 12),
-                                        const Text(
-                                          'Continue with phone',
-                                          style: TextStyle(
+                                        Text(
+                                          '${AppStrings.continueText} ${AppStrings.orContinueWith} ${AppStrings.phoneNumber}',
+                                          style: const TextStyle(
                                             color: Color(0xFF2E3A59),
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,
@@ -193,25 +194,29 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
                               child: RichText(
                                 textAlign: TextAlign.center,
                                 text: TextSpan(
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 12,
                                     height: 1.4,
                                   ),
                                   children: [
-                                    const TextSpan(text: 'By signing in, you agree to our '),
+                                    TextSpan(text: '${AppStrings.bySigningUp} '),
                                     TextSpan(
-                                      text: 'Terms.',
+                                      text: AppStrings.terms,
                                       style: const TextStyle(
                                         decoration: TextDecoration.underline,
                                       ),
+                                      // TODO: Add onTap handler for Terms
+                                      // onTap: () => _launchTermsUrl(),
                                     ),
-                                    const TextSpan(text: ' See how we use your data in our '),
+                                    TextSpan(text: ' ${AppStrings.and} '),
                                     TextSpan(
-                                      text: 'Privacy Policy',
+                                      text: AppStrings.privacyPolicy,
                                       style: const TextStyle(
                                         decoration: TextDecoration.underline,
                                       ),
+                                      // TODO: Add onTap handler for Privacy Policy
+                                      // onTap: () => _launchPrivacyPolicyUrl(),
                                     ),
                                     const TextSpan(text: '.'),
                                   ],
