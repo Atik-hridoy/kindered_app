@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kindered_app/modules/acccounts_setting/binding/accounts_binding.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/gender_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/intro_view.dart';
 import 'package:kindered_app/modules/auth/views/create_account_view.dart';
 import 'package:kindered_app/modules/auth/views/otp_view.dart';
@@ -56,6 +57,11 @@ class MyApp extends StatelessWidget {
         GetPage(
           name: AppRoutes.intro,
           page: () => IntroView(),
+          binding: AccountsBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.gender,
+          page: () => GenderView(),
           binding: AccountsBinding(),
         ),
       ],

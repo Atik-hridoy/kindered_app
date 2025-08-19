@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart'; // <-- Add this import
 
 class CustomGradientButton extends StatefulWidget {
   final String text;
@@ -101,9 +102,9 @@ class _CustomGradientButtonState extends State<CustomGradientButton>
           colors: widget.gradientColors,
         );
 
-    final defaultTextStyle = TextStyle(
-      color: widget.textColor ?? Colors.white,
-      fontSize: 16,
+    final defaultTextStyle = GoogleFonts.playfairDisplay( // <-- Use Playfair Display
+      color: widget.textColor ?? Colors.white,            // <-- Use white color
+      fontSize: 18,
       fontWeight: FontWeight.w600,
       letterSpacing: 0.5,
     );
@@ -139,13 +140,13 @@ class _CustomGradientButtonState extends State<CustomGradientButton>
                   boxShadow: widget.boxShadow ??
                       [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
                         if (_isPressed)
                           BoxShadow(
-                            color: widget.gradientColors.last.withOpacity(0.3),
+                            color: widget.gradientColors.last.withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 2),
                           ),

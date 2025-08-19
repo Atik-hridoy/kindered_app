@@ -6,6 +6,7 @@ class IntroViewController extends GetxController {
   final RxString age = ''.obs;
   final RxBool showOnProfile = false.obs;
   final RxBool isLoading = false.obs;
+  final RxBool isProfileVisible = true.obs;
 
   // Update profile
   void updateProfile() async {
@@ -15,11 +16,6 @@ class IntroViewController extends GetxController {
       await Future.delayed(const Duration(seconds: 2));
 
       // Handle profile update logic here, for example, saving to an API or local storage
-      Get.snackbar(
-        'Success',
-        'Profile updated successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -59,5 +55,10 @@ class IntroViewController extends GetxController {
 
     // Call updateProfile function or navigate based on the business logic
     updateProfile();
+  }
+
+  // Toggle profile visibility
+  void toggleProfileVisibility() {
+    isProfileVisible.toggle();
   }
 }

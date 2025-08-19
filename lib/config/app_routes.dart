@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:kindered_app/modules/acccounts_setting/binding/accounts_binding.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/gender_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/intro_view.dart';
 import 'package:kindered_app/modules/auth/views/create_account_view.dart';
 import 'package:kindered_app/modules/auth/views/extended_login_view.dart';
@@ -20,6 +21,7 @@ class AppRoutes {
   static const String createAccount = '/create-account';
   static const String otp = '/otp';
   static const String intro = '/intro';
+  static const String gender = '/gender';
   // Route getters
   static String getSplashRoute() => splash;
   static String getOnboardingRoute() => onboarding;
@@ -63,6 +65,11 @@ class AppRoutes {
     GetPage(
       name: intro,
       page: () => IntroView(),
+      binding: AccountsBinding(),
+    ),
+    GetPage(
+      name: gender,
+      page: () => GenderView(),
       binding: AccountsBinding(),
     ),
     ];
