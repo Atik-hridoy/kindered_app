@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kindered_app/config/app_routes.dart';
+import 'package:kindered_app/core/localization/app_strings.dart';
 import '../controllers/login_controller.dart';
 import '../widget_button.dart';
 
@@ -87,7 +88,7 @@ class LoginView extends GetView<LoginController> {
                                   minWidth: isSmallScreen ? 280 : 335,
                                 ),
                                 child: AuthCtaButton(
-                                  text: 'Create an account',
+                                  text: AppStrings.createAccount,
                                   onPressed: () {
                                     Get.toNamed(AppRoutes.getCreateAccountRoute());
                                   },
@@ -105,7 +106,7 @@ class LoginView extends GetView<LoginController> {
                                   minWidth: isSmallScreen ? 280 : 335,
                                 ),
                                 child: AuthCtaButton(
-                                  text: 'I have an account',
+                                  text: AppStrings.haveAccount,
                                   onPressed: () {
                                     Get.toNamed(AppRoutes.getExtendedLoginRoute());
                                   },
@@ -126,18 +127,18 @@ class LoginView extends GetView<LoginController> {
                                     height: 1.4,
                                   ),
                                   children: [
-                                    const TextSpan(text: 'By signing up, you agree to our '),
+                                    TextSpan(text: '${AppStrings.bySigningUp} '),
                                     TextSpan(
-                                      text: 'Terms',
+                                      text: AppStrings.terms,
                                       style: const TextStyle(
                                         decoration: TextDecoration.underline,
                                       ),
                                       // TODO: Add onTap handler for Terms
                                       // onTap: () => _launchTermsUrl(),
                                     ),
-                                    const TextSpan(text: '. See how we use your data in our '),
+                                    TextSpan(text: ' ${AppStrings.and} '),
                                     TextSpan(
-                                      text: 'Privacy Policy',
+                                      text: AppStrings.privacyPolicy,
                                       style: const TextStyle(
                                         decoration: TextDecoration.underline,
                                       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kindered_app/core/localization/app_strings.dart';
 import 'package:kindered_app/modules/acccounts_setting/controller/gender_view_controller.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/checkbox.dart';
@@ -33,7 +34,7 @@ class GenderView extends GetView<GenderViewController> {
                 const CustomProgressBar(value: 0.5),
                 const SizedBox(height: 20),
                 Text(
-                  "What's your gender?",
+                  AppStrings.whatsYourGender,
                   style: GoogleFonts.playfairDisplay(
                     color: Colors.white,
                     fontSize: 24,
@@ -68,7 +69,7 @@ class GenderView extends GetView<GenderViewController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Select your gender',
+          AppStrings.selectYourGender,
           style: GoogleFonts.playfairDisplay(
             color: Colors.white,
             fontSize: 16,
@@ -76,11 +77,11 @@ class GenderView extends GetView<GenderViewController> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildGenderCheckbox('Male', 'male'),
+        _buildGenderCheckbox(AppStrings.male, 'male'),
         const SizedBox(height: 12),
-        _buildGenderCheckbox('Female', 'female'),
+        _buildGenderCheckbox(AppStrings.female, 'female'),
         const SizedBox(height: 12),
-        _buildGenderCheckbox('Other', 'other'),
+        _buildGenderCheckbox(AppStrings.other, 'other'),
       ],
     );
   }
@@ -106,7 +107,7 @@ class GenderView extends GetView<GenderViewController> {
           controller.updateProfile();
         }
       },
-      text: 'Continue',
+      text: AppStrings.continueText,
       textStyle: GoogleFonts.playfairDisplay(
         color: Colors.white,
         fontSize: 16,

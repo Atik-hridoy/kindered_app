@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kindered_app/core/localization/app_strings.dart';
 import 'package:kindered_app/modules/auth/controllers/create_account_view_controller.dart';
 import 'package:kindered_app/modules/auth/widget_button.dart';
 
@@ -70,14 +71,14 @@ class CreateAccountView extends GetView<CreateAccountViewController> {
 
 
   Widget _buildTitle() {
-    return const Text.rich(
+    return Text.rich(
       TextSpan(
         children: [
-          TextSpan(text: 'Can we get your phone number,\n'),
-          TextSpan(text: 'Please?'),
+          TextSpan(text: '${AppStrings.phoneNumberTitle}\n'),
+          TextSpan(text: AppStrings.please),
         ],
       ),
-      style: TextStyle(
+      style: const TextStyle(
         color: Colors.white,
         fontSize: 20,
         fontWeight: FontWeight.w600, 
@@ -89,10 +90,10 @@ class CreateAccountView extends GetView<CreateAccountViewController> {
   }
 
   Widget _buildPhoneInputLabel() {
-    return const Padding(
-      padding: EdgeInsets.only(left: 8.0, bottom: 4.0),
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
       child: Text(
-        'Phone number',
+        AppStrings.phoneNumber,
         style: TextStyle(
           fontFamily: 'PlayfairDisplay',
           fontSize: 12,
@@ -191,8 +192,8 @@ class CreateAccountView extends GetView<CreateAccountViewController> {
           height: 1.5,
           letterSpacing: 0.5,
         ),
-        decoration: const InputDecoration(
-          hintText: 'Enter phone number',
+        decoration: InputDecoration(
+          hintText: AppStrings.enterPhoneNumber,
           hintStyle: TextStyle(
             color: Color(0xFFB0B5C0),
             fontSize: 18,
@@ -250,8 +251,11 @@ class CreateAccountView extends GetView<CreateAccountViewController> {
           minWidth: isSmallScreen ? 280 : 335,
         ),
         child: AuthCtaButton(
-          text: 'Next',
-          onPressed: controller.onNextPressed,
+          text: AppStrings.continueText,
+          onPressed: () {
+            // TODO: Implement continue action
+            Get.toNamed('/otp-verification');
+          },
           style: AuthButtonStyle.filled,
         ),
       ),
@@ -260,7 +264,7 @@ class CreateAccountView extends GetView<CreateAccountViewController> {
 
   Widget _buildTermsAndPrivacyText() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24.0),
+      padding: const EdgeInsets.only(bottom: 24.0, top: 16.0),
       child: RichText(
         textAlign: TextAlign.center,
         text: TextSpan(

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart';
 import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/modules/acccounts_setting/controller/intro_view_controller.dart';
+import 'package:kindered_app/core/localization/app_strings.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/input_box.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
@@ -79,7 +79,7 @@ class IntroView extends GetView<IntroViewController> {
               CustomProgressBar(value: 0.5),
               const SizedBox(height: 20),
               Text(
-                "Let's start with an Intro",
+                AppStrings.letsStartWithIntro,
                 style: GoogleFonts.playfairDisplay(
                   color: Colors.white,
                   fontSize: 24,
@@ -99,7 +99,7 @@ class IntroView extends GetView<IntroViewController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Your first name',
+          AppStrings.yourFirstName,
           style: GoogleFonts.playfairDisplay(
             color: Colors.white,
             fontSize: 16,
@@ -127,7 +127,7 @@ class IntroView extends GetView<IntroViewController> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Your age',
+          AppStrings.yourAge,
           style: GoogleFonts.playfairDisplay(
             color: Colors.white,
             fontSize: 16,
@@ -156,7 +156,7 @@ class IntroView extends GetView<IntroViewController> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Show on profile',
+              AppStrings.showOnProfile,
               style: GoogleFonts.playfairDisplay(
                 color: Colors.white,
                 fontSize: 16,
@@ -181,7 +181,7 @@ class IntroView extends GetView<IntroViewController> {
 
   Widget _buildSaveButton() {
     return CustomGradientButton(
-      text: 'Next',
+      text: AppStrings.next,
       width: 335,
       height: 48,
       borderRadius: 12,

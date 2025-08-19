@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kindered_app/config/app_routes.dart';
+import 'package:kindered_app/core/localization/app_strings.dart';
 import 'package:kindered_app/modules/auth/controllers/otp_controller.dart';
 import 'package:kindered_app/modules/auth/widget_button.dart';
 
@@ -29,9 +30,9 @@ class OtpView extends GetView<OtpController> {
             SizedBox(height: MediaQuery.of(context).padding.top + kToolbarHeight + 20.0),
             
             // Title
-            const Text(
-              'We need to verify your number',
-              style: TextStyle(
+            Text(
+              AppStrings.verifyYourNumber,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
@@ -50,11 +51,11 @@ class OtpView extends GetView<OtpController> {
                   fontWeight: FontWeight.w400,
                   fontFamily: 'PlayfairDisplay',
                 ),
-                children: const [
-                  TextSpan(text: 'Please enter the verification code sent to\n'),
+                children: [
+                  TextSpan(text: '${AppStrings.enterVerificationCode}\n'),
                   TextSpan(
-                    text: '+61 2345 5656 69',
-                    style: TextStyle(
+                    text: '+61 2345 5656 69', // TODO: Replace with actual phone number from controller
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                     ),
                   ),
@@ -110,8 +111,8 @@ class OtpView extends GetView<OtpController> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Didn't receive the code? ",
+                    Text(
+                      AppStrings.resendCodePrompt,
                       style: TextStyle(
                         color: Color(0xFFB0AEAC),
                         fontSize: 14,
@@ -122,8 +123,8 @@ class OtpView extends GetView<OtpController> {
                       onTap: () {
                         // TODO: Implement resend OTP
                       },
-                      child: const Text(
-                        'Resend',
+                      child: Text(
+                        AppStrings.resend,
                         style: TextStyle(
                           color: Color(0xFFD4A373),
                           fontSize: 14,
@@ -146,7 +147,7 @@ class OtpView extends GetView<OtpController> {
                       maxWidth: double.infinity,
                     ),
                     child: AuthCtaButton(
-                      text: 'Verify',
+                      text: AppStrings.verify,
                       onPressed: () {
                         // TODO: Implement OTP verification logic
                         // For now, navigate to account settings after verification
