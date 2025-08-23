@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/core/localization/app_strings.dart';
 import 'package:kindered_app/modules/auth/controllers/create_account_view_controller.dart';
 import 'package:kindered_app/modules/auth/widget_button.dart';
@@ -254,7 +255,7 @@ class CreateAccountView extends GetView<CreateAccountViewController> {
           text: AppStrings.continueText,
           onPressed: () {
             // TODO: Implement continue action
-            Get.toNamed('/otp-verification');
+            Get.toNamed(AppRoutes.otp);
           },
           style: AuthButtonStyle.filled,
         ),

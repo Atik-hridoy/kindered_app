@@ -139,50 +139,45 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
 
                             // Secondary CTA
                             Center(
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  maxWidth: 400,
-                                  minWidth: isSmallScreen ? 280 : 335,
-                                ),
-                                child: Container(
-                                  width: double.infinity,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white, // White background for phone button
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: const Color(0xFF2E3A59), width: 1.2),
-                                  ),
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      Get.toNamed(AppRoutes.createAccount);
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.transparent,
-                                      shadowColor: Colors.transparent,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: SizedBox(
+                                width: isSmallScreen ? 280 : 335,
+                                height: 48,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Get.toNamed(AppRoutes.createAccount);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: const Color(0xFF2E3A59),
+                                    elevation: 0,
+                                    side: const BorderSide(color: Color(0xFF2E3A59), width: 1.2),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        SvgPicture.asset(
-                                          'assets/svg/phone.svg',
-                                          width: 24,
-                                          height: 24,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SvgPicture.asset(
+                                        'assets/svg/phone.svg',
+                                        width: 20,
+                                        height: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
                                           '${AppStrings.continueText} ${AppStrings.orContinueWith} ${AppStrings.phoneNumber}',
                                           style: const TextStyle(
-                                            color: Color(0xFF2E3A59),
-                                            fontSize: 16,
+                                            fontSize: 14,
                                             fontWeight: FontWeight.w600,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
+                                          maxLines: 1,
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),

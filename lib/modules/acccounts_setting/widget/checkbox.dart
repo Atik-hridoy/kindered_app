@@ -1,80 +1,81 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CustomCheckbox extends StatelessWidget {
-  final bool value;
-  final ValueChanged<bool> onChanged;
-  final String label;
-  final Color activeColor;
-  final Color checkColor;
-  final Color borderColor;
-  final double size;
-  final double borderWidth;
-  final bool showLabel;
-  final EdgeInsetsGeometry? padding;
-  final TextStyle? labelStyle;
+ final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color selectedColor;
+  final Color unselectedColor;
+  final Color textColor;
+  final double borderRadius;
+  final EdgeInsets padding;
+  final double height;
 
   const CustomCheckbox({
     super.key,
-    required this.value,
-    required this.onChanged,
     required this.label,
-    this.activeColor = const Color(0xFFD4A373),
-    this.checkColor = Colors.white,
-    this.borderColor = const Color(0xFFD4A373),
-    this.size = 24.0,
-    this.borderWidth = 2.0,
-    this.showLabel = true,
-    this.padding,
-    this.labelStyle,
+    required this.isSelected,
+    required this.onTap,
+    this.selectedColor = const Color(0xFFD4A574),
+    this.unselectedColor = Colors.transparent,
+    this.textColor = Colors.white,
+    this.borderRadius = 12.0,
+    this.padding = const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    this.height = 60.0,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => onChanged(!value),
+      onTap: onTap,
       child: Container(
-        padding: padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        height: height,
+        margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A2634),
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? selectedColor : unselectedColor,
+          borderRadius: BorderRadius.circular(borderRadius),
           border: Border.all(
-            color: value ? activeColor : const Color(0xFF2D3A4A),
-            width: 1.5,
+            color: isSelected ? selectedColor : const Color(0xFFD29A67).withValues(alpha: 0.6),
+            width: 1,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            if (showLabel) ...[
+        child: Padding(
+          padding: padding,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               Text(
                 label,
-                style: labelStyle ?? const TextStyle(
-                  color: Colors.white,
+                style: GoogleFonts.playfairDisplay(
+                  color: isSelected ? const Color(0xFF2C3E50) : textColor,
                   fontSize: 16,
-                  fontFamily: 'Playfair Display',
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ] else const Spacer(),
-            Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                color: value ? activeColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(size / 2),
-                border: Border.all(
-                  color: value ? activeColor : borderColor.withValues(alpha: 0.5),
-                  width: borderWidth,
+              Container(
+                width: 24,
+                height: 24,
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFF2C3E50) : const Color(0xFFD29A67).withValues(alpha: 0.6),
+                    width: isSelected ? 2 : 1,
+                  ),
                 ),
+                child: isSelected
+                    ? Container(
+                        width: 16,
+                        height: 16,                        decoration:BoxDecoration(
+                          color: Color(0xFF2C3E50),
+                          shape: BoxShape.circle,
+                        ),
+                      )
+                    : null,
               ),
-              child: value
-                  ? Icon(
-                      Icons.check,
-                      size: size * 0.7,
-                      color: checkColor,
-                    )
-                  : null,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

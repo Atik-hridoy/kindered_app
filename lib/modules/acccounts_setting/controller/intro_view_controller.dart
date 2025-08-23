@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 class IntroViewController extends GetxController {
   // State variables
   final RxString firstName = ''.obs;
+  final RxString lastName = ''.obs;
   final RxString age = ''.obs;
   final RxBool showOnProfile = false.obs;
   final RxBool isLoading = false.obs;
@@ -31,6 +32,7 @@ class IntroViewController extends GetxController {
   void loadUserData() {
     // You can replace this with actual data fetching logic from API or storage
     firstName.value = 'Alex'; // Example of pre-filled data
+    lastName.value = 'Smith'; // Example of pre-filled data
     age.value = '23';         // Example of pre-filled data
     showOnProfile.value = true;  // Example of pre-filled toggle state
   }
@@ -44,7 +46,7 @@ class IntroViewController extends GetxController {
 
   // Handle logic when the user presses the "Next" button
   void onNextPressed() {
-    if (firstName.value.isEmpty || age.value.isEmpty) {
+    if (firstName.value.isEmpty || lastName.value.isEmpty || age.value.isEmpty) {
       Get.snackbar(
         'Validation Error',
         'Please complete the form before proceeding.',
