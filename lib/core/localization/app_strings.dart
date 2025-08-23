@@ -24,7 +24,7 @@ class AppStrings extends Translations {
           'resend': 'Resend',
           'verify': 'Verify',
           'verifyYourEmail': 'Verify Your Email',
-          'enterOtp': 'Enter the 6-digit code sent to',
+          'enterOtp': 'Enter the 4-digit code sent to',
           'resendCode': 'Resend Code',
           'didntReceiveCode': "Didn't receive a code?",
           'male': 'Male',
@@ -44,8 +44,8 @@ class AppStrings extends Translations {
           // Validation
           'fieldRequired': 'This field is required',
           'invalidEmail': 'Please enter a valid email',
-          'passwordTooShort': 'passwordTooShort'.tr,
-          'passwordsDontMatch': 'passwordsDontMatch'.tr,
+          'passwordTooShort': 'password Too Short',
+          'passwordsDontMatch': 'passwords Dont Match',
         },
         'bn_BD': {
           // Common
@@ -93,48 +93,48 @@ class AppStrings extends Translations {
       };
 
   // Auth Getters
-  static String get createAccount => 'createAccount'.tr;
-  static String get haveAccount => 'haveAccount'.tr;
-  static String get signIn => 'signIn'.tr;
-  static String get signUp => 'signUp'.tr;
-  static String get forgotPassword => 'forgotPassword'.tr;
-  static String get orContinueWith => 'orContinueWith'.tr;
-  static String get bySigningUp => 'bySigningUp'.tr;
+  static String get createAccount => 'create Account'.tr;
+  static String get haveAccount => 'have Account'.tr;
+  static String get signIn => 'sign In'.tr;
+  static String get signUp => 'sign Up'.tr;
+  static String get forgotPassword => 'forgot Password'.tr;
+  static String get orContinueWith => 'or Continue With'.tr;
+  static String get bySigningUp => 'by Signing Up'.tr;
   static String get terms => 'terms'.tr;
   static String get privacyPolicy => 'privacyPolicy'.tr;
   static String get and => 'and'.tr;
   static String get seeHowWeUse => 'seeHowWeUse'.tr;
   static String get email => 'email'.tr;
   static String get password => 'password'.tr;
-  static String get confirmPassword => 'confirmPassword'.tr;
-  static String get fullName => 'fullName'.tr;
-  static String get phoneNumber => 'phoneNumber'.tr;
-  static String get phoneNumberTitle => 'phoneNumberTitle'.tr;
+  static String get confirmPassword => 'confirm Password'.tr;
+  static String get fullName => 'full Name'.tr;
+  static String get phoneNumber => 'phone Number'.tr;
+  static String get phoneNumberTitle => 'phone Number Title'.tr;
   static String get please => 'please'.tr;
-  static String get enterPhoneNumber => 'enterPhoneNumber'.tr;
+  static String get enterPhoneNumber => 'enter Phone Number'.tr;
   static String get continueText => 'continueText'.tr;
-  static String get verifyYourEmail => 'verifyYourEmail'.tr;
-  static String get enterOtp => 'enterOtp'.tr;
-  static String get resendCode => 'resendCode'.tr;
-  static String get didntReceiveCode => 'didntReceiveCode'.tr;
-  static String get phoneVerificationMessage => 'phoneVerificationMessage'.tr;
-  static String get verifyYourNumber => 'verifyYourNumber'.tr;
-  static String get enterVerificationCode => 'enterVerificationCode'.tr;
-  static String get sentTo => 'sentTo'.tr;
-  static String get resendCodePrompt => 'resendCodePrompt'.tr;
+  static String get verifyYourEmail => 'verify Your Email'.tr;
+  static String get enterOtp => 'enter Otp'.tr;
+  static String get resendCode => 'resend Code'.tr;
+  static String get didntReceiveCode => 'didnt Receive Code'.tr;
+  static String get phoneVerificationMessage => 'phone Verification Message'.tr;
+  static String get verifyYourNumber => 'verify Your Number'.tr;
+  static String get enterVerificationCode => 'enter Verification Code'.tr;
+  static String get sentTo => 'sent To'.tr;
+  static String get resendCodePrompt => 'resend Code Prompt'.tr;
   static String get resend => 'resend'.tr;
   static String get verify => 'verify'.tr;
   
   // Account Settings Getters
-  static String get thatsGreatAlex => "that's Great, Alex".tr;
+  static String get thatsGreatAlex => "That's Great, Alex".tr;
   static String get whichGenderDescribeYouTheBest => 'which Gender Describe You The Best?'.tr;
-  static String get letsStartWithIntro => 'letsStartWithIntro'.tr;
-  static String get yourFirstName => 'yourFirstName'.tr;
-  static String get yourAge => 'yourAge'.tr;
-  static String get showOnProfile => 'showOnProfile'.tr;
+  static String get letsStartWithIntro => 'let\'s Start With Intro'.tr;
+  static String get yourFirstName => 'Your First Name'.tr;
+  static String get yourAge => 'Your Age'.tr;
+  static String get showOnProfile => 'show On Profile'.tr;
   
   // Common Getters
-  static String get appName => 'appName'.tr;
+  static String get appName => 'app Name'.tr;
   static String get next => 'next'.tr;
   static String get back => 'back'.tr;
   static String get save => 'save'.tr;
@@ -143,15 +143,15 @@ class AppStrings extends Translations {
   static String get success => 'success'.tr;
   
   // Gender Selection
-  static String get selectGender => 'selectGender'.tr;
+  static String get selectGender => 'select Gender'.tr;
   static String get male => 'male'.tr;
   static String get female => 'female'.tr;
   static String get other => 'other'.tr;
-  static String get preferNotToSay => 'preferNotToSay'.tr;
+  static String get preferNotToSay => 'prefer Not ToSay'.tr;
   
   // Validation
-  static String get fieldRequired => 'fieldRequired'.tr;
-  static String get invalidEmail => 'invalidEmail'.tr;
-  static String get passwordTooShort => 'passwordTooShort'.tr;
-  static String get passwordsDontMatch => 'passwordsDontMatch'.tr;
+  static String get fieldRequired => 'field Required'.tr;
+  static String get invalidEmail => 'invalid Email'.tr;
+  static String get passwordTooShort => 'password TooShort'.tr;
+  static String get passwordsDontMatch => 'passwords Dont Match'.tr;
 }

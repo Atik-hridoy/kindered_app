@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:kindered_app/modules/acccounts_setting/binding/accounts_binding.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/gender_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/intro_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/choice_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/interest_view.dart';
 import 'package:kindered_app/modules/auth/views/create_account_view.dart';
 import 'package:kindered_app/modules/auth/views/extended_login_view.dart';
 import 'package:kindered_app/modules/auth/views/otp_view.dart';
@@ -22,6 +24,8 @@ class AppRoutes {
   static const String otp = '/otp';
   static const String intro = '/intro';
   static const String gender = '/gender';
+  static const String choice = '/choice';
+  static const String interest = '/interest';
   // Route getters
   static String getSplashRoute() => splash;
   static String getOnboardingRoute() => onboarding;
@@ -30,6 +34,10 @@ class AppRoutes {
   static String getCreateAccountRoute() => createAccount;
   static String getOtpRoute() => otp;
   static String getIntroRoute() => intro;
+  static String getGenderRoute() => gender;
+  static String getChoiceRoute() => choice;
+  static String getInterestRoute() => interest;
+
   // Route definitions
   static final List<GetPage> routes = [
     GetPage(
@@ -58,9 +66,9 @@ class AppRoutes {
       binding: AuthBinding(),
     ),
     GetPage(
-      name: otp,
+      name:AppRoutes.otp,
       page: () => const OtpView(),
-      binding: AuthBinding(),
+      // binding: AuthBinding(),
     ),
     GetPage(
       name: intro,
@@ -72,6 +80,15 @@ class AppRoutes {
       page: () => GenderView(),
       binding: AccountsBinding(),
     ),
-    ];
-    
+    GetPage(
+      name: choice,
+      page: () => ChoiceView(),
+      binding: AccountsBinding(),
+    ),
+    GetPage(
+      name: interest,
+      page: () => InterestView(),
+      binding: AccountsBinding(),
+    ),
+  ];
 }

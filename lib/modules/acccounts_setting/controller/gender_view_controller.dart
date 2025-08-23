@@ -22,43 +22,8 @@ class GenderViewController extends GetxController {
   }
 
   // Update profile with selected gender
-  Future<void> updateProfile() async {
-    try {
-      final validationError = validateGender();
-      if (validationError != null) {
-        Get.snackbar(
-          'Validation Error',
-          validationError,
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return;
-      }
+  
 
-      isLoading.value = true;
-      
-      // Here you would typically call your API to update the user's gender
-      await Future.delayed(const Duration(seconds: 1));
-      
-      // For demonstration, show success message
-      Get.snackbar(
-        'Success',
-        'Gender updated successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      
-      // Navigate to next screen after successful update
-      // Get.to(() => NextScreen());
-      
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to update gender: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } finally {
-      isLoading.value = false;
-    }
-  }
 
   // Load user's current gender (if any)
   void loadUserGender() {

@@ -7,7 +7,6 @@ import 'package:kindered_app/core/localization/app_strings.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/input_box.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
-import 'package:kindered_app/modules/acccounts_setting/widget/toggle_button.dart';
 
 class IntroView extends GetView<IntroViewController> {
   final _formKey = GlobalKey<FormState>();
@@ -39,9 +38,11 @@ class IntroView extends GetView<IntroViewController> {
                         children: [
                           _buildNameField(),
                           const SizedBox(height: 16),
+                          _buildLastNameField(),
+                          const SizedBox(height: 16),
                           _buildAgeField(),
                           const SizedBox(height: 24),
-                          _buildToggleButton(),
+                          
                         ],
                       ),
                     ),
@@ -64,19 +65,19 @@ class IntroView extends GetView<IntroViewController> {
       elevation: 0,
       backgroundColor: Colors.transparent,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Color(0xFFD4A373), size: 24),
-        padding: const EdgeInsets.only(top: 35.0, left: 10.0),
-        constraints: const BoxConstraints(),
-        onPressed: () => Get.back(),
-      ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(100),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 24.0, left: 20.0, right: 20.0),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFFD4A373)),
+          onPressed: () => Get.back(),
+        ),
+        toolbarHeight: 80,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(80),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 10.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CustomProgressBar(value: 0.5),
+              CustomProgressBar(value: 0.2),
+              
               const SizedBox(height: 20),
               Text(
                 AppStrings.letsStartWithIntro,
@@ -122,6 +123,34 @@ class IntroView extends GetView<IntroViewController> {
     );
   }
 
+  Widget _buildLastNameField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Last Name',
+          style: GoogleFonts.playfairDisplay(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 8),
+        CustomInputField(
+          controller: TextEditingController(text: controller.lastName.value),
+          hintText: '',
+          borderColor: const Color(0xFFD4A373),
+          borderRadius: 12,
+          onChanged: (value) => controller.lastName.value = value,
+          textStyle: GoogleFonts.playfairDisplay(
+            color: Colors.white,
+            fontSize: 16,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildAgeField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,33 +180,7 @@ class IntroView extends GetView<IntroViewController> {
     );
   }
 
-  Widget _buildToggleButton() {
-    return Obx(() => Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              AppStrings.showOnProfile,
-              style: GoogleFonts.playfairDisplay(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            CustomToggleButton(
-              isActive: controller.showOnProfile.value,
-              onChanged: (value) {
-                controller.showOnProfile.value = value;
-              },
-              width: 32,
-              height: 16,
-              toggleSize: 12,
-              animationDuration: const Duration(milliseconds: 200),
-              activeColor: const Color(0xFFD89A58),
-              inactiveColor: const Color(0xFFB0AEAC),
-            ),
-          ],
-        ));
-  }
+
 
   Widget _buildSaveButton() {
     return CustomGradientButton(
@@ -187,15 +190,16 @@ class IntroView extends GetView<IntroViewController> {
       borderRadius: 12,
       gradientColors: const [Color(0xFFD4A373), Color(0xFFB56E29)],
       textStyle: GoogleFonts.inter(
-        color:const Color(  0xFF1A1A1A  )
-,
+        color: const Color(0xFF1A1A1A),
         fontSize: 18,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
       ),
       onPressed: () {
-        Get.toNamed(AppRoutes.gender);
-        },
+        if (_formKey.currentState?.validate() ?? false) {
+          Get.offAllNamed(AppRoutes.gender);
+        }
+      },
     );
   }
 }

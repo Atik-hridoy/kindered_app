@@ -6,12 +6,14 @@ import 'package:kindered_app/modules/acccounts_setting/controller/gender_view_co
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/checkbox.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
+import 'package:kindered_app/config/app_routes.dart';
 
 class GenderView extends GetView<GenderViewController> {
   final _formKey = GlobalKey<FormState>();
+  @override
   final GenderViewController controller = Get.put(GenderViewController());
 
-  GenderView({Key? key}) : super(key: key);
+  GenderView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,19 +22,27 @@ class GenderView extends GetView<GenderViewController> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
+        leading: Padding(
+          padding: const EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0, bottom: 1.0), // Add top padding to move the arrow down
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFFD4A373)),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () {
+              Get.offAllNamed(AppRoutes.intro);
+            },
+          ),
         ),
+        toolbarHeight: 80,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(100),
+          preferredSize: const Size.fromHeight(140), // Increased height
           child: Padding(
-            padding: const EdgeInsets.only(top: 24.0, left: 20.0, right: 20.0),
+            padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 10.0, top: 40.0), // Added top padding
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const CustomProgressBar(value: 0.5),
-                const SizedBox(height: 20),
+                const CustomProgressBar(value: 0.4),
+                const SizedBox(height: 16),
                 Text(
                   AppStrings.thatsGreatAlex,
                   style: GoogleFonts.playfairDisplay(
@@ -41,25 +51,39 @@ class GenderView extends GetView<GenderViewController> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 20), // Increased from 1 to 20
+                Text(
+                  "We are glad that you're here, please pick the gender which describe you the best",
+                  style: GoogleFonts.playfairDisplay(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.normal,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 12),
               ],
             ),
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildGenderSelection(),
-              const SizedBox(height: 40),
-              _buildContinueButton(),
-            ],
+      body: Column(
+        children: [
+          const SizedBox(height: 20), // Add space at the top of the body
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              child: Form(
+                key: _formKey,
+                child: _buildGenderSelection(),
+              ),
+            ),
           ),
-        ),
+          Container(
+            padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 50.0, top: 20.0),
+            child: _buildContinueButton(),
+          ),
+        ],
       ),
     );
   }
@@ -77,11 +101,13 @@ class GenderView extends GetView<GenderViewController> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildGenderCheckbox(AppStrings.male),
+        _buildGenderCheckbox('Woman'),
         const SizedBox(height: 12),
-        _buildGenderCheckbox(AppStrings.female),
+        _buildGenderCheckbox('Man'),
         const SizedBox(height: 12),
-        _buildGenderCheckbox(AppStrings.other),
+        _buildGenderCheckbox('Nonbinary'),
+        const SizedBox(height: 12),
+        _buildGenderCheckbox('I\'m Trans'),
       ],
     );
   }
@@ -89,16 +115,9 @@ class GenderView extends GetView<GenderViewController> {
   Widget _buildGenderCheckbox(String label) {
     return Obx(
       () => CustomCheckbox(
-        value: controller.selectedGender.value == label,
-        onChanged: (_) => controller.selectedGender.value = label,
         label: label,
-        activeColor: Colors.white.withOpacity(0.3),
-        checkColor: Colors.white,
-        borderColor: Colors.white.withOpacity(0.5),
-        labelStyle: GoogleFonts.playfairDisplay(
-          color: Colors.white,
-          fontSize: 16,
-        ),
+        isSelected: controller.selectedGender.value == label,
+        onTap: () => controller.selectedGender.value = label,
       ),
     );
   }
@@ -106,18 +125,17 @@ class GenderView extends GetView<GenderViewController> {
   Widget _buildContinueButton() {
     return CustomGradientButton(
       onPressed: () {
-        if (_formKey.currentState?.validate() ?? false) {
-          controller.updateProfile();
-        }
+        Get.offAllNamed(AppRoutes.choice);
       },
-      text: AppStrings.continueText,
-      textStyle: GoogleFonts.playfairDisplay(
-        color: Colors.white,
+      text: 'Next',
+      textStyle: GoogleFonts.inter(
+        color: const Color(0xFF2C3E50),
         fontSize: 16,
         fontWeight: FontWeight.w500,
       ),
       height: 56,
       borderRadius: 12,
+      gradientColors: const [Color(0xFFD4A373), Color(0xFFB56E29)],
     );
   }
 }
