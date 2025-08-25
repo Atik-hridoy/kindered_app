@@ -117,11 +117,11 @@ class LoginView extends GetView<LoginController> {
 
                             // Terms and Privacy Text
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                              padding: const EdgeInsets.only(top: 16.0),
                               child: RichText(
                                 textAlign: TextAlign.center,
                                 text: TextSpan(
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 12,
                                     height: 1.4,
@@ -132,17 +132,17 @@ class LoginView extends GetView<LoginController> {
                                       text: AppStrings.terms,
                                       style: const TextStyle(
                                         decoration: TextDecoration.underline,
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                      // TODO: Add onTap handler for Terms
                                       // onTap: () => _launchTermsUrl(),
                                     ),
-                                    TextSpan(text: ' ${AppStrings.and} '),
+                                    TextSpan(text: ' ${AppStrings.seeHowWeUse} '),
                                     TextSpan(
                                       text: AppStrings.privacyPolicy,
                                       style: const TextStyle(
                                         decoration: TextDecoration.underline,
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                      // TODO: Add onTap handler for Privacy Policy
                                       // onTap: () => _launchPrivacyPolicyUrl(),
                                     ),
                                     const TextSpan(text: '.'),

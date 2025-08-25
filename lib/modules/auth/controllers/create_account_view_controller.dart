@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kindered_app/config/app_routes.dart';
 
 class CreateAccountViewController extends GetxController {
   final phoneController = TextEditingController();

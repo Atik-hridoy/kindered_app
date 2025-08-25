@@ -12,7 +12,6 @@ class AppStrings extends Translations {
           'cancel': 'Cancel',
           'error': 'Error',
           'success': 'Success',
-          'continueText': 'Continue',
           'phoneNumberTitle': 'Can we get your phone number',
           'please': 'Please?',
           'enterPhoneNumber': 'Enter phone number',
@@ -37,6 +36,13 @@ class AppStrings extends Translations {
           'yourFirstName': 'Your first name',
           'yourAge': 'Your age',
           'showOnProfile': 'Show on profile',
+          
+          // Terms and Privacy
+          'By signing up, you agree to our': 'By signing up, you agree to our',
+          'Terms': 'Terms',
+          'and': 'and',
+          'See how we use your data in our': 'See how we use your data in our',
+          'Privacy Policy': 'Privacy Policy',
           
           // Gender Selection
           'selectGender': 'Select Your Gender',
@@ -93,26 +99,27 @@ class AppStrings extends Translations {
       };
 
   // Auth Getters
-  static String get createAccount => 'create Account'.tr;
-  static String get haveAccount => 'have Account'.tr;
+  static String get createAccount => 'Create an account'.tr;
+  static String get haveAccount => 'I have an account'.tr;
   static String get signIn => 'sign In'.tr;
   static String get signUp => 'sign Up'.tr;
   static String get forgotPassword => 'forgot Password'.tr;
-  static String get orContinueWith => 'or Continue With'.tr;
-  static String get bySigningUp => 'by Signing Up'.tr;
-  static String get terms => 'terms'.tr;
-  static String get privacyPolicy => 'privacyPolicy'.tr;
+  static String get orContinueWith => 'With'.tr;
+  static String get bySigningUp => 'By signing up, you agree to our'.tr;
+  static String get terms => 'Terms.'.tr;
+  static String get privacyPolicy => 'Privacy Policy'.tr;
   static String get and => 'and'.tr;
-  static String get seeHowWeUse => 'seeHowWeUse'.tr;
+  static String get seeHowWeUse => 'See how we use your data in our'.tr;
+  static String get termsAndPrivacyEnding => '.'.tr;
   static String get email => 'email'.tr;
   static String get password => 'password'.tr;
   static String get confirmPassword => 'confirm Password'.tr;
   static String get fullName => 'full Name'.tr;
-  static String get phoneNumber => 'phone Number'.tr;
+  static String get phoneNumber => 'phone'.tr;
   static String get phoneNumberTitle => 'phone Number Title'.tr;
   static String get please => 'please'.tr;
   static String get enterPhoneNumber => 'enter Phone Number'.tr;
-  static String get continueText => 'continueText'.tr;
+  static String get continueText => 'Continue'.tr;
   static String get verifyYourEmail => 'verify Your Email'.tr;
   static String get enterOtp => 'enter Otp'.tr;
   static String get resendCode => 'resend Code'.tr;

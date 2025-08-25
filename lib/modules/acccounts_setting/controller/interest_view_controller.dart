@@ -4,9 +4,4 @@ class InterestViewController extends GetxController {
   // You can add any controller logic here if needed
   // For example: form validation, API calls, etc.
   
-  @override
-  void onInit() {
-    super.onInit();
-    // Initialize any required data
-  }
 }

@@ -29,7 +29,6 @@ class AuthCtaButton extends StatelessWidget {
             side: const BorderSide(color: Colors.white, width: 1.2),
             shape: RoundedRectangleBorder(borderRadius: borderRadius),
             backgroundColor: Colors.white,
-            // surfaceTintColor: Colors.transparent,
             foregroundColor: const Color(0xFF2E3A59), // Dark blue text
             textStyle: const TextStyle(
               fontSize: 16,
@@ -52,8 +51,8 @@ class AuthCtaButton extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFD47A6A), // top - #D47A6A
-              Color(0xFFD47A6A), // bottom - same color for solid appearance
+              Color(0xFFD4A373), // top - #D4A373
+              Color(0xFFB56E29), // bottom - #B56E29
             ],
           ),
           boxShadow: [

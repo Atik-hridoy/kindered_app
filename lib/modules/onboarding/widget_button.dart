@@ -11,9 +11,9 @@ class CircularArrowButton extends StatelessWidget {
     super.key,
     required this.onPressed,
     this.size = 56.0,
-    this.backgroundColor = Colors.blueAccent,
+    this.backgroundColor = const Color(0xFF2E3A59),
     this.iconColor = Colors.white,
-    this.iconSize = 30.0,
+    this.iconSize = 24.0,
   });
 
   @override
@@ -25,7 +25,14 @@ class CircularArrowButton extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           color: backgroundColor,
-          shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(size / 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Icon(
           Icons.arrow_forward,

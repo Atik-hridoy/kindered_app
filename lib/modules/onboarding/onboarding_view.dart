@@ -50,9 +50,11 @@ class _OnboardingViewState extends State<OnboardingView> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      body: SizedBox(
+      backgroundColor: const Color(0xFF21293F),
+      body: Container(
         width: size.width,
         height: size.height,
+        color: const Color(0xFF21293F),
         child: Stack(
           children: [
             // PageView for onboarding slides
@@ -82,18 +84,18 @@ class _OnboardingViewState extends State<OnboardingView> {
                     final isActive = _currentPage == index;
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      width: isActive ? 24 : 10,
-                      height: 10,
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: isActive ? 32 : 16,  // Increased width for both active and inactive dots
+                      height: 8,  // Slightly reduced height for a more modern look
+                      margin: const EdgeInsets.symmetric(horizontal: 6),  // Increased horizontal margin
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(5),
+                        borderRadius: BorderRadius.circular(4),  // Slightly more rounded
                         color: isActive
-                            ? Theme.of(context).primaryColor
-                            : Colors.white.withOpacity(0.4),
+                            ? Colors.white  // Solid white for active dot
+                            : Colors.white.withOpacity(0.4),  // 40% opacity for inactive dots
                       ),
                     );
                   }),
-                ),
+                ),  
               ),
             ),
 
@@ -115,11 +117,11 @@ class _OnboardingViewState extends State<OnboardingView> {
                           Get.offAllNamed(AppRoutes.login);
                         },
                         style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFFB0AEAC),
+                          foregroundColor: const Color(0xFFE2DFDC),
                           textStyle: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            decoration: TextDecoration.underline,
+                            decoration: TextDecoration.none,
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         ),
@@ -171,15 +173,17 @@ class _OnboardingViewState extends State<OnboardingView> {
     return Stack(
       children: [
         // Background Image with ColorFilter to make it brighter
-        Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage(image),
+        Positioned.fill(
+          child: Transform.translate(
+            offset: Offset(0, -60), // Increased shift up to 60 pixels
+            child: Image.asset(
+              image,
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height * 1.2, // Increased height to ensure coverage
               fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                Colors.white.withValues(alpha: 0.2), // Increased opacity for better visibility
-                BlendMode.overlay, // Changed to overlay for better contrast
-              ),
+              alignment: Alignment.topCenter,
+              color: Colors.white.withOpacity(0.2),
+              colorBlendMode: BlendMode.overlay,
             ),
           ),
         ),
@@ -210,11 +214,12 @@ class _OnboardingViewState extends State<OnboardingView> {
                 title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 36,
+                  fontSize: 24,
                   fontFamily: 'PlayfairDisplay',
                   fontWeight: FontWeight.w600, // SemiBold weight
                   color: Colors.white,
-                  height: 1.2,
+                  height: 1.33, // 32px line height / 24px font size
+                  letterSpacing: 0,
                 ),
               ),
               const SizedBox(height: 16),

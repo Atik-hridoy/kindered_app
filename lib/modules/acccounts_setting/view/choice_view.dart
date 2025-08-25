@@ -99,7 +99,7 @@ class ChoiceView extends GetView<ChoiceViewController> {
                     }
                   },
                 )),
-              )).toList(),
+              )),
               const SizedBox(height: 70.0), // Increased space above button
               // Add the Custom Gradient Button
               Padding(
