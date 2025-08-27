@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:kindered_app/modules/acccounts_setting/binding/accounts_binding.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/choice_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/gender_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/height_weight_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/interest_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/intro_view.dart';
 import 'package:kindered_app/modules/auth/views/create_account_view.dart';
 import 'package:kindered_app/modules/auth/views/otp_view.dart';
@@ -68,6 +70,16 @@ class MyApp extends StatelessWidget {
         GetPage(
           name: AppRoutes.choice,
           page: () => ChoiceView(),
+          binding: AccountsBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.interest,
+          page: () => InterestView(),
+          binding: AccountsBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.heightWeight,
+          page: () => HeightWeightView(),
           binding: AccountsBinding(),
         ),
       ],

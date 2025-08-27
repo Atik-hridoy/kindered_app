@@ -97,7 +97,7 @@ class ChoiceView extends GetView<ChoiceViewController> {
                     } else {
                       selectedGenders.add(gender);
                     }
-                  },
+                  }, titleFontSize: 12.0, descriptionFontSize: 10.0,
                 )),
               )),
               const SizedBox(height: 70.0), // Increased space above button

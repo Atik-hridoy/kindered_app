@@ -22,7 +22,7 @@ class CustomCheckbox extends StatelessWidget {
     this.textColor = Colors.white,
     this.borderRadius = 12.0,
     this.padding = const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-    this.height = 60.0,
+    this.height = 60.0, required double titleFontSize, required double descriptionFontSize,
   });
 
   @override

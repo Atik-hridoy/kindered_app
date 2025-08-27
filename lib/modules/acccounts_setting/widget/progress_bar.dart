@@ -5,8 +5,9 @@ class CustomProgressBar extends StatelessWidget implements PreferredSizeWidget {
   final Color color;
   final Color backgroundColor;
   final double height;
+  
   @override
-  final Size preferredSize = const Size.fromHeight(6.0);
+  final Size preferredSize = const Size.fromHeight(6.0); // The height of the progress bar
 
   const CustomProgressBar({
     super.key,

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:kindered_app/modules/acccounts_setting/binding/accounts_binding.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/gender_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/height_weight_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/intro_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/choice_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/interest_view.dart';
@@ -26,6 +27,7 @@ class AppRoutes {
   static const String gender = '/gender';
   static const String choice = '/choice';
   static const String interest = '/interest';
+  static const String heightWeight = '/height_weight';
   // Route getters
   static String getSplashRoute() => splash;
   static String getOnboardingRoute() => onboarding;
@@ -37,6 +39,8 @@ class AppRoutes {
   static String getGenderRoute() => gender;
   static String getChoiceRoute() => choice;
   static String getInterestRoute() => interest;
+  static String getHeightWeightRoute() => heightWeight;
+
 
   // Route definitions
   static final List<GetPage> routes = [
@@ -88,6 +92,11 @@ class AppRoutes {
     GetPage(
       name: interest,
       page: () => InterestView(),
+      binding: AccountsBinding(),
+    ),
+    GetPage(
+      name: heightWeight,
+      page: () => HeightWeightView(),
       binding: AccountsBinding(),
     ),
   ];

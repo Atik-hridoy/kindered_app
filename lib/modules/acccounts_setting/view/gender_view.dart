@@ -117,7 +117,8 @@ class GenderView extends GetView<GenderViewController> {
       () => CustomCheckbox(
         label: label,
         isSelected: controller.selectedGender.value == label,
-        onTap: () => controller.selectedGender.value = label,
+        onTap: () => controller.selectedGender.value = label, titleFontSize: 12.0,
+        descriptionFontSize: 12.0,
       ),
     );
   }
