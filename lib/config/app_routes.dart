@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:kindered_app/modules/acccounts_setting/binding/accounts_binding.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/education_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/faith_belief_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/gender_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/inspire_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/height_weight_view.dart';
@@ -19,6 +20,7 @@ import '../modules/auth/bindings/auth_binding.dart';
 
 class AppRoutes {
   // Route names
+  static const String dev = '/dev';
   static const String splash = '/';
   static const String onboarding = '/onboarding';
   static const String login = '/login';
@@ -32,6 +34,7 @@ class AppRoutes {
   static const String heightWeight = '/height_weight';
   static const String educationView = '/education_view';
   static const String inspireView = '/inspire_view';
+  static const String faithBeliefView = '/faith_belief_view';
 
   // Route getters
   static String getSplashRoute() => splash;
@@ -47,6 +50,7 @@ class AppRoutes {
   static String getHeightWeightRoute() => heightWeight;
   static String getEducationViewRoute() => educationView;
   static String getInspireViewRoute() => inspireView;
+  static String getFaithBeliefViewRoute() => faithBeliefView;
 
   // Route definitions
   static final List<GetPage> routes = [
@@ -113,6 +117,11 @@ class AppRoutes {
     GetPage(
       name: inspireView,
       page: () => InspireView(),
+      binding: AccountsBinding(),
+    ),
+    GetPage(
+      name: faithBeliefView,
+      page: () => FaithBeliefView(),
       binding: AccountsBinding(),
     ),
   ];

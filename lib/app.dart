@@ -3,8 +3,10 @@ import 'package:get/get.dart';
 import 'package:kindered_app/modules/acccounts_setting/binding/accounts_binding.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/choice_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/education_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/faith_belief_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/gender_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/height_weight_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/inspire_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/interest_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/intro_view.dart';
 import 'package:kindered_app/modules/auth/views/create_account_view.dart';
@@ -86,6 +88,16 @@ class MyApp extends StatelessWidget {
         GetPage(
           name: AppRoutes.educationView,
           page: () => EducationView(),
+          binding: AccountsBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.inspireView,
+          page: () => InspireView(),
+          binding: AccountsBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.faithBeliefView,
+          page: () => FaithBeliefView(),
           binding: AccountsBinding(),
         ),
       ],

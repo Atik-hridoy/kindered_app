@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/checkbox.dart';
@@ -122,7 +123,7 @@ class _InspireViewState extends State<InspireView> {
           text: 'Next',
           onPressed: isButtonEnabled ? () {
             // Navigate to Faith/Belief view
-            Get.to(() => const FaithBeliefView());
+            Get.toNamed(AppRoutes.faithBeliefView);
           } : null,
           enabled: isButtonEnabled,
         ),

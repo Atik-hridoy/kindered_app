@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: AppRoutes.splash,
+      initialRoute: AppRoutes.inspireView,
       getPages: AppRoutes.routes,
       translations: AppStrings(),
       locale: AppLocalization.getDeviceLocale(),
