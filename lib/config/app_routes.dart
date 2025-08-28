@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:kindered_app/modules/acccounts_setting/binding/accounts_binding.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/education_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/faith_belief_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/habit_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/lifestyle_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/gender_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/inspire_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/height_weight_view.dart';
@@ -17,6 +19,10 @@ import '../modules/onboarding/onboarding_view.dart';
 import '../modules/onboarding/onboarding_binding.dart';
 import '../modules/auth/views/login_view.dart';
 import '../modules/auth/bindings/auth_binding.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/like_to_do_view.dart';
+
+
+
 
 class AppRoutes {
   // Route names
@@ -35,8 +41,10 @@ class AppRoutes {
   static const String educationView = '/education_view';
   static const String inspireView = '/inspire_view';
   static const String faithBeliefView = '/faith_belief_view';
-
-  // Route getters
+  static const String lifestyleView = '/lifestyle_view';
+  static const String habitView = '/habit_view';
+  static const String likeToDoView = '/like_to_do_view';
+  
   static String getSplashRoute() => splash;
   static String getOnboardingRoute() => onboarding;
   static String getLoginRoute() => login;
@@ -51,6 +59,8 @@ class AppRoutes {
   static String getEducationViewRoute() => educationView;
   static String getInspireViewRoute() => inspireView;
   static String getFaithBeliefViewRoute() => faithBeliefView;
+  static String getLifestyleViewRoute() => lifestyleView;
+  static String getHabitViewRoute() => habitView;  
 
   // Route definitions
   static final List<GetPage> routes = [
@@ -122,6 +132,21 @@ class AppRoutes {
     GetPage(
       name: faithBeliefView,
       page: () => FaithBeliefView(),
+      binding: AccountsBinding(),
+    ),
+    GetPage(
+      name: lifestyleView,
+      page: () => const LifestyleView(),
+      binding: AccountsBinding(),
+    ),
+    GetPage(
+      name: habitView,
+      page: () => const HabitView(),
+      binding: AccountsBinding(),
+    ),
+    GetPage(
+      name: likeToDoView,
+      page: () => const LikeToDoView(),
       binding: AccountsBinding(),
     ),
   ];

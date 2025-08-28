@@ -13,7 +13,6 @@ class FaithBeliefController extends GetxController {
     'Muslim',
     'Sikh',
     'Spiritual',
-    'Other',
     'Prefer not to say'
   ];
 
@@ -42,11 +41,13 @@ class FaithBeliefController extends GetxController {
   // Toggle religion selection
   void toggleReligion(int index) {
     selectedReligion.value = selectedReligion.value == index ? null : index;
+    update(); // Notify listeners to rebuild UI
   }
 
   // Toggle zodiac selection
   void toggleZodiac(int index) {
     selectedZodiac.value = selectedZodiac.value == index ? null : index;
+    update(); // Notify listeners to rebuild UI
   }
 
   // Get selected religion

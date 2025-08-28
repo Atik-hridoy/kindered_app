@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kindered_app/config/app_routes.dart';
 import '../controller/faith_belief_controller.dart';
 import '../widget/progress_bar.dart';
 import '../widget/button.dart';
@@ -16,8 +17,7 @@ class _FaithBeliefViewState extends State<FaithBeliefView> {
   final FaithBeliefController controller = Get.put(FaithBeliefController());
 
   void _onNextPressed() {
-    // TODO: Add navigation to next screen
-    // Get.to(() => NextScreen());
+    Get.toNamed(AppRoutes.lifestyleView);
   }
 
   @override
@@ -185,7 +185,7 @@ class _FaithBeliefViewState extends State<FaithBeliefView> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12), // Reduced from 25 to 12 for less rounded corners
           border: Border.all(
@@ -205,14 +205,14 @@ class _FaithBeliefViewState extends State<FaithBeliefView> {
               text,
               style: GoogleFonts.playfairDisplay(
                 color: Colors.white,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Container(
-              width: 14,
-              height: 14,
+              width: 16,
+              height: 16,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
@@ -224,8 +224,8 @@ class _FaithBeliefViewState extends State<FaithBeliefView> {
               child: isSelected 
                 ? Center(
                     child: Container(
-                      width: 10,
-                      height: 10,
+                      width: 12,
+                      height: 12,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         color: Color(0xFF2E3A59), // Changed to red

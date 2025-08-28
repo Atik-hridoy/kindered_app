@@ -11,6 +11,7 @@ class CustomPillCheckbox extends StatelessWidget {
   final double borderRadius;
   final EdgeInsetsGeometry? padding;
   final TextStyle? textStyle;
+  final double selectedOpacity;
 
   const CustomPillCheckbox({
     Key? key,
@@ -23,6 +24,7 @@ class CustomPillCheckbox extends StatelessWidget {
     this.borderRadius = 12.0,
     this.padding,
     this.textStyle,
+    this.selectedOpacity = 0.6,
   }) : super(key: key);
 
   @override
@@ -37,7 +39,7 @@ class CustomPillCheckbox extends StatelessWidget {
             color: isSelected ? selectedColor : unselectedColor.withOpacity(0.5),
             width: isSelected ? 1.2 : 0.8,
           ),
-          color: isSelected ? unselectedColor.withOpacity(0.2) : Colors.transparent,
+          color: isSelected ? unselectedColor.withOpacity(selectedOpacity) : Colors.transparent,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
