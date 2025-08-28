@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kindered_app/config/app_routes.dart';
-import 'package:kindered_app/modules/acccounts_setting/controller/height_weight_controller.dart';
+import 'package:kindered_app/modules/acccounts_setting/controller/education_controller.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/input_box.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 
-class HeightWeightView extends GetView<HeightWeightController> {
-  final HeightWeightController controller = Get.put(HeightWeightController());
+class EducationView extends GetView<EducationController> {
+  final EducationController controller = Get.put(EducationController());
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,7 @@ class HeightWeightView extends GetView<HeightWeightController> {
           child: Padding(
             padding: const EdgeInsets.only(top: 10.0, left: 20.0, right: 20.0),
             child: CustomProgressBar(
-              value: 0.8, // 80% progress
+              value: 1.0, // 100% progress
             ),
           ),
         ),
@@ -41,7 +41,7 @@ class HeightWeightView extends GetView<HeightWeightController> {
           children: [
             const SizedBox(height: 8),
             Text(
-              'What is your height and weight?',
+              'What is your Education Level And job status?',
               style: GoogleFonts.playfairDisplay(
                 fontSize: 20.0,
                 fontWeight: FontWeight.bold,
@@ -50,7 +50,7 @@ class HeightWeightView extends GetView<HeightWeightController> {
             ),
             const SizedBox(height: 20),
             Text(
-              "We are glad that you're here, please pick the gender which describes you the best",
+              "Please share with us your education level or what you do for living",
               style: GoogleFonts.playfairDisplay(
                 fontSize: 16.0,
                 color: Colors.grey[400],
@@ -58,9 +58,9 @@ class HeightWeightView extends GetView<HeightWeightController> {
               ),
             ),
             const SizedBox(height: 32),
-            // Height Input
+            // Education Level Input
             Text(
-              'Height (cm)',
+              'Education Level',
               style: GoogleFonts.playfairDisplay(
                 fontSize: 16.0,
                 color: Colors.white,
@@ -69,16 +69,16 @@ class HeightWeightView extends GetView<HeightWeightController> {
             ),
             const SizedBox(height: 8),
             CustomInputField(
-              controller: controller.heightController,
-              hintText: 'Enter your height',
-              keyboardType: TextInputType.number,
+              controller: controller.educationController,
+              hintText: 'e.g., High School, Bachelor\'s Degree, etc.',
               onChanged: (_) => controller.validateInputs(),
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 20),
-            // Weight Input
+            
+            // Job Status Input
             Text(
-              'Weight (kg)',
+              'Job Status',
               style: GoogleFonts.playfairDisplay(
                 fontSize: 16.0,
                 color: Colors.white,
@@ -87,8 +87,26 @@ class HeightWeightView extends GetView<HeightWeightController> {
             ),
             const SizedBox(height: 8),
             CustomInputField(
-              controller: controller.weightController,
-              hintText: 'Enter your weight',
+              controller: controller.jobStatusController,
+              hintText: 'e.g., Employed, Student, Self-employed, etc.',
+              onChanged: (_) => controller.validateInputs(),
+              textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: 20),
+            
+            // Income Input
+            Text(
+              'Annual Income',
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 16.0,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            CustomInputField(
+              controller: controller.incomeController,
+              hintText: r'e.g., $50,000',
               keyboardType: TextInputType.number,
               onChanged: (_) => controller.validateInputs(),
               textInputAction: TextInputAction.done,
@@ -102,11 +120,11 @@ class HeightWeightView extends GetView<HeightWeightController> {
         color: Theme.of(context).scaffoldBackgroundColor,
         child: CustomGradientButton(
           text: 'Next',
-          onPressed: controller.areInputsValid ? () {
-            // Navigate to education view
-            Get.toNamed(AppRoutes.educationView);
+          onPressed: controller.isButtonEnabled.value ? () {
+            // Navigate to inspire view
+            Get.toNamed(AppRoutes.inspireView);
           } : null,
-          enabled: controller.areInputsValid,
+          enabled: controller.isButtonEnabled.value,
         ),
       )),
     );

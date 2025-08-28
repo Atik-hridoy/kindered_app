@@ -1,0 +1,116 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
+import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
+import 'package:kindered_app/modules/acccounts_setting/widget/checkbox.dart';
+
+class FaithBeliefView extends StatefulWidget {
+  const FaithBeliefView({Key? key}) : super(key: key);
+
+  @override
+  State<FaithBeliefView> createState() => _FaithBeliefViewState();
+}
+
+class _FaithBeliefViewState extends State<FaithBeliefView> {
+  final List<String> beliefs = [
+    'Agnostic',
+    'Atheist',
+    'Buddhist',
+    'Christian',
+    'Hindu',
+    'Jewish',
+    'Muslim',
+    'Sikh',
+    'Spiritual but not religious',
+    'Other',
+    'Prefer not to say'
+  ];
+  
+  int? selectedIndex;
+  
+  bool get isButtonEnabled => selectedIndex != null;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(top: 20.0, left: 20.0),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFFD4A373)),
+            onPressed: () => Get.back(),
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(35.0),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 10.0, left: 20.0, right: 20.0),
+            child: CustomProgressBar(
+              value: 1.0, // 100% progress
+            ),
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 8.0, bottom: 20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8),
+            Text(
+              'What is your faith or belief?',
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 24.0,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'This helps us match you with like-minded individuals.',
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 16.0,
+                color: Colors.grey[400],
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: beliefs.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                return CustomCheckbox(
+                  label: beliefs[index],
+                  isSelected: selectedIndex == index,
+                  onTap: () => setState(() {
+                    selectedIndex = index;
+                  }),
+                  titleFontSize: 16.0,
+                  descriptionFontSize: 14.0,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 8.0, bottom: 50.0),
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: CustomGradientButton(
+          text: 'Next',
+          onPressed: isButtonEnabled ? () {
+            // Navigate to the next screen
+            // Get.toNamed('/next-screen');
+          } : null,
+          enabled: isButtonEnabled,
+        ),
+      ),
+    );
+  }
+}

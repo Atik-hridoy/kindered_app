@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kindered_app/modules/acccounts_setting/binding/accounts_binding.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/choice_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/education_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/gender_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/height_weight_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/interest_view.dart';
@@ -80,6 +81,11 @@ class MyApp extends StatelessWidget {
         GetPage(
           name: AppRoutes.heightWeight,
           page: () => HeightWeightView(),
+          binding: AccountsBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.educationView,
+          page: () => EducationView(),
           binding: AccountsBinding(),
         ),
       ],
