@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kindered_app/config/app_routes.dart';
 import '../widget/button.dart';
 import '../widget/progress_bar.dart';
 import 'dart:math' as math;
@@ -294,7 +295,7 @@ class _VisualStoryState extends State<VisualStory> {
         child: CustomGradientButton(
           text: 'Next',
           onPressed: () {
-            // Add your navigation logic here
+            Get.toNamed(AppRoutes.locationView);
           },
           width: double.infinity,
           height: 48,

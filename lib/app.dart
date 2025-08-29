@@ -15,6 +15,10 @@ import 'package:kindered_app/modules/acccounts_setting/view/like_to_do_view.dart
 import 'package:kindered_app/modules/acccounts_setting/view/visual_story.dart';
 import 'package:kindered_app/modules/auth/views/create_account_view.dart';
 import 'package:kindered_app/modules/auth/views/otp_view.dart';
+import 'package:kindered_app/modules/home/bindings.dart';
+import 'package:kindered_app/modules/home/home_suggestion_view.dart';
+import 'package:kindered_app/modules/location/bindings.dart';
+import 'package:kindered_app/modules/location/location_view.dart';
 import 'config/app_routes.dart';
 import 'config/app_themes.dart';
 import 'modules/splash/splash_view.dart';
@@ -123,6 +127,16 @@ class MyApp extends StatelessWidget {
           name: AppRoutes.visualStoryView,
           page: () => VisualStory(),
           binding: AccountsBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.locationView,
+          page: () => LocationView(),
+          binding: LocationBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.homeSuggestionView,
+          page: () => HomeSuggestionView(),
+          binding: HomeBinding(),
         ),
       ],
       defaultTransition: Transition.fade,

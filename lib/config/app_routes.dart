@@ -13,6 +13,8 @@ import 'package:kindered_app/modules/acccounts_setting/view/interest_view.dart';
 import 'package:kindered_app/modules/auth/views/create_account_view.dart';
 import 'package:kindered_app/modules/auth/views/extended_login_view.dart';
 import 'package:kindered_app/modules/auth/views/otp_view.dart';
+import 'package:kindered_app/modules/home/bindings.dart';
+import 'package:kindered_app/modules/location/bindings.dart';
 import '../modules/splash/splash_view.dart';
 import '../modules/splash/splash_binding.dart';
 import '../modules/onboarding/onboarding_view.dart';
@@ -21,6 +23,8 @@ import '../modules/auth/views/login_view.dart';
 import '../modules/auth/bindings/auth_binding.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/like_to_do_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/visual_story.dart';
+import 'package:kindered_app/modules/location/location_view.dart';
+import 'package:kindered_app/modules/home/home_suggestion_view.dart';
 
 
 
@@ -46,6 +50,8 @@ class AppRoutes {
   static const String habitView = '/habit_view';
   static const String likeToDoView = '/like_to_do_view';
   static const String visualStoryView = '/visual_story_view';
+  static const String locationView = '/location_view';
+  static const String homeSuggestionView = '/home_suggestion_view';
   
   static String getSplashRoute() => splash;
   static String getOnboardingRoute() => onboarding;
@@ -65,6 +71,9 @@ class AppRoutes {
   static String getHabitViewRoute() => habitView;  
   static String getLikeToDoViewRoute() => likeToDoView;
   static String getVisualStoryViewRoute() => visualStoryView;
+  static String getLocationViewRoute() => locationView;
+  static String getHomeSuggestionViewRoute() => homeSuggestionView;
+  
   // Route definitions
   static final List<GetPage> routes = [
     GetPage(
@@ -156,6 +165,16 @@ class AppRoutes {
       name: visualStoryView,
       page: () => const VisualStory(),
       binding: AccountsBinding(),
+    ),
+    GetPage(
+      name: locationView,
+      page: () => const LocationView(),
+      binding: LocationBinding(),
+    ),
+    GetPage(
+      name: homeSuggestionView,
+      page: () => const HomeSuggestionView(),
+      binding: HomeBinding(),
     ),
   ];
 }

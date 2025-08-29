@@ -41,6 +41,8 @@ dependencies:
   shared_preferences: ^2.5.3
   smooth_page_indicator: ^1.2.1
   dotted_border: 3.1.0
+  location: ^5.0.0
+  permission_handler: ^11.3.0
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +79,12 @@ flutter:
     - assets/svg/Kindred.svg
     - assets/svg/google.svg
     - assets/svg/phone.svg
+    - assets/svg/location.svg
+    - assets/svg/explore.svg
+    - assets/svg/ai.svg
+    - assets/svg/Chat.svg
+    - assets/svg/menu Frame.svg
+    - assets/svg/see more arrow.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
