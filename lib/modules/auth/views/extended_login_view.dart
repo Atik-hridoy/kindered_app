@@ -90,7 +90,7 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
                                   width: double.infinity,
                                   height: 48,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFD47A6A), // Google button color
+                                    color: Colors.black, // Black background for phone button
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
@@ -105,7 +105,8 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
                                       // TODO: Implement Google sign in
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.transparent,
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: Colors.black,
                                       shadowColor: Colors.transparent,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
@@ -139,45 +140,58 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
 
                             // Secondary CTA
                             Center(
-                              child: SizedBox(
-                                width: isSmallScreen ? 280 : 335,
-                                height: 48,
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Get.toNamed(AppRoutes.createAccount);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: const Color(0xFF2E3A59),
-                                    elevation: 0,
-                                    side: const BorderSide(color: Color(0xFF2E3A59), width: 1.2),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SvgPicture.asset(
-                                        'assets/svg/phone.svg',
-                                        width: 20,
-                                        height: 20,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: 400,
+                                  minWidth: isSmallScreen ? 280 : 335,
+                                ),
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.15),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
                                       ),
-                                      const SizedBox(width: 8),
-                                      Flexible(
-                                        child: Text(
+                                    ],
+                                  ),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Get.toNamed(AppRoutes.createAccount);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        SvgPicture.asset(
+                                          'assets/svg/Frame.svg',  // Using the new SVG icon
+                                          width: 24,
+                                          height: 24,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
                                           '${AppStrings.continueText} ${AppStrings.orContinueWith} ${AppStrings.phoneNumber}',
                                           style: const TextStyle(
-                                            fontSize: 14,
+                                            color: Color(0xFF2E3A59),
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w600,
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           maxLines: 1,
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -186,36 +200,52 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
                             // Terms and Privacy Text
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-                              child: RichText(
-                                textAlign: TextAlign.center,
-                                text: TextSpan(
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
-                                    height: 1.4,
+                              child: Column(
+                                children: [
+                                  RichText(
+                                    textAlign: TextAlign.center,
+                                    text: TextSpan(
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                        height: 1.4,
+                                      ),
+                                      children: [
+                                        TextSpan(text: '${AppStrings.bySigningUp} '),
+                                        TextSpan(
+                                          text: AppStrings.terms,
+                                          style: const TextStyle(
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                          // TODO: Add onTap handler for Terms
+                                          // onTap: () => _launchTermsUrl(),
+                                        ),
+                                        TextSpan(text: ' ${AppStrings.and} '),
+                                        TextSpan(
+                                          text: AppStrings.privacyPolicy,
+                                          style: const TextStyle(
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                          // TODO: Add onTap handler for Privacy Policy
+                                          // onTap: () => _launchPrivacyPolicyUrl(),
+                                        ),
+                                        const TextSpan(text: '.'),
+                                      ],
+                                    ),
                                   ),
-                                  children: [
-                                    TextSpan(text: '${AppStrings.bySigningUp} '),
-                                    TextSpan(
-                                      text: AppStrings.terms,
-                                      style: const TextStyle(
-                                        decoration: TextDecoration.underline,
+                                  const SizedBox(height: 8),
+                                  RichText(
+                                    textAlign: TextAlign.center,
+                                    text: const TextSpan(
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                        height: 1.4,
                                       ),
-                                      // TODO: Add onTap handler for Terms
-                                      // onTap: () => _launchTermsUrl(),
+                                      text: 'See how we use your data in our Privacy Policy',
                                     ),
-                                    TextSpan(text: ' ${AppStrings.and} '),
-                                    TextSpan(
-                                      text: AppStrings.privacyPolicy,
-                                      style: const TextStyle(
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                      // TODO: Add onTap handler for Privacy Policy
-                                      // onTap: () => _launchPrivacyPolicyUrl(),
-                                    ),
-                                    const TextSpan(text: '.'),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
 

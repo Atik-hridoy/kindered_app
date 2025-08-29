@@ -66,11 +66,17 @@ flutter:
 
   # Assets management
   assets:
+    # Images
     - assets/images/ob1.jpg
     - assets/images/ob2.jpg
     - assets/images/ob3.jpg
     - assets/images/au1.jpg
-    - assets/svg/
+    
+    # SVG files
+    - assets/svg/Frame.svg
+    - assets/svg/Kindred.svg
+    - assets/svg/google.svg
+    - assets/svg/phone.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
