@@ -20,6 +20,7 @@ import '../modules/onboarding/onboarding_binding.dart';
 import '../modules/auth/views/login_view.dart';
 import '../modules/auth/bindings/auth_binding.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/like_to_do_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/visual_story.dart';
 
 
 
@@ -44,6 +45,7 @@ class AppRoutes {
   static const String lifestyleView = '/lifestyle_view';
   static const String habitView = '/habit_view';
   static const String likeToDoView = '/like_to_do_view';
+  static const String visualStoryView = '/visual_story_view';
   
   static String getSplashRoute() => splash;
   static String getOnboardingRoute() => onboarding;
@@ -61,7 +63,8 @@ class AppRoutes {
   static String getFaithBeliefViewRoute() => faithBeliefView;
   static String getLifestyleViewRoute() => lifestyleView;
   static String getHabitViewRoute() => habitView;  
-
+  static String getLikeToDoViewRoute() => likeToDoView;
+  static String getVisualStoryViewRoute() => visualStoryView;
   // Route definitions
   static final List<GetPage> routes = [
     GetPage(
@@ -147,6 +150,11 @@ class AppRoutes {
     GetPage(
       name: likeToDoView,
       page: () => const LikeToDoView(),
+      binding: AccountsBinding(),
+    ),
+    GetPage(
+      name: visualStoryView,
+      page: () => const VisualStory(),
       binding: AccountsBinding(),
     ),
   ];

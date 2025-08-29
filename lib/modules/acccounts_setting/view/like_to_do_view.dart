@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kindered_app/config/app_routes.dart';
 import '../controller/habit_controller.dart';
 import '../widget/progress_bar.dart';
 import '../widget/button.dart';
@@ -16,71 +17,140 @@ class LikeToDoView extends StatefulWidget {
 class _LikeToDoViewState extends State<LikeToDoView> {
   final ScrollController _scrollController = ScrollController();
   
-  // State variables
-  final RxnInt _selectedCommunicationStyle = RxnInt();
-  final RxnInt _selectedExerciseFrequency = RxnInt();
-  final RxnInt _selectedFoodPreference = RxnInt();
-  final RxnInt _selectedWeekendActivity = RxnInt();
-  final RxnInt _selectedTravelPreference = RxnInt();
-  final RxnInt _selectedTryNewExperiences = RxnInt();
+  // State variables for selected options (using Set to store multiple selections)
+  final Map<String, Set<int>> _selectedOptions = {
+    'creativity': {},
+    'activities': {},
+    'sportsFitness': {},
+    'tvMovies': {},
+    'freeTime': {},
+    'music': {},
+    'wellnessLifestyle': {},
+    'booksContent': {},
+  };
   
-  // Check if all questions are answered
+  // Check if all questions have at least one selection
   bool get _isCompleted => 
-      _selectedCommunicationStyle.value != null &&
-      _selectedExerciseFrequency.value != null &&
-      _selectedFoodPreference.value != null &&
-      _selectedWeekendActivity.value != null &&
-      _selectedTravelPreference.value != null &&
-      _selectedTryNewExperiences.value != null;
+      _selectedOptions.values.every((selections) => selections.isNotEmpty);
 
-  // View-specific data
-  final List<String> communicationStyles = [
-    'Good texter',
-    'Bad texter',
-    'Video Chatter',
-    'Phone caller'
+  // Categories and options
+  final List<String> creativityOptions = [
+    'Painting',
+    'Writing',
+    'Photography',
+    'Crafting',
+    'Design',
+    'Drawing',
+    'Sculpting',
+    'Pottery',
+    'Digital Art',
+    'Knitting',
+    'Calligraphy',
+    'Woodworking',
+    'Other'
   ];
 
-  final List<String> exerciseFrequencies = [
-    'Yes',
-    'Several times a week',
-    'Rarely',
-    'Never'
+  final List<String> activitiesOptions = [
+    'Hiking',
+    'Cooking',
+    'Traveling',
+    'Gaming',
+    'Reading',
+    'Camping',
+    'Fishing',
+    'Cycling',
+    'Photography',
+    'Gardening',
+    'Other'
   ];
 
-  final List<String> foodPreferences = [
-    'Healthy and balanced',
-    'Whatever I feel like',
-    'Specific diet',
-    "I don't eat"
+  final List<String> sportsFitnessOptions = [
+    'Gym',
+    'Running',
+    'Yoga',
+    'Cycling',
+    'Swimming',
+    'Weight Training',
+    'Pilates',
+    'Martial Arts',
+    'Dance',
+    'Hiking',
+    'Other'
   ];
 
-  final List<String> weekendActivities = [
-    'Yes',
-    'Occafacially',
-    'Frequently',
-    'Rarely',
-    'Never'
+  final List<String> tvMoviesOptions = [
+    'Action',
+    'Comedy',
+    'Drama',
+    'Sci-Fi',
+    'Documentary',
+    'Thriller',
+    'Romance',
+    'Horror',
+    'Anime',
+    'Fantasy',
+    'Other'
   ];
 
-  final List<String> travelPreferences = [
-    'Yes',
-    'Occasionally',
-    'No',
+  final List<String> freeTimeOptions = [
+    'Socializing',
+    'Meditation',
+    'Learning',
+    'Volunteering',
+    'Shopping',
+    'Reading',
+    'Gaming',
+    'Watching TV/Movies',
+    'Listening to Music',
+    'Other'
   ];
 
-  final List<String> tryNewExperiences = [
-    'Absolutely',
-    'Sometimes',
-    'Rarely',
-    'Never'
+  final List<String> musicOptions = [
+    'Pop',
+    'Rock',
+    'Hip Hop',
+    'Classical',
+    'Jazz',
+    'R&B',
+    'Electronic',
+    'Country',
+    'Reggae',
+    'Metal',
+    'Other'
+  ];
+
+  final List<String> wellnessLifestyleOptions = [
+    'Meditation',
+    'Healthy Eating',
+    'Fitness',
+    'Mindfulness',
+    'Self-care',
+    'Yoga',
+    'Veganism',
+    'Minimalism',
+    'Sustainable Living',
+    'Mental Health',
+    'Other'
+  ];
+
+  final List<String> booksContentOptions = [
+    'Fiction',
+    'Non-fiction',
+    'Biography',
+    'Science',
+    'History',
+    'Fantasy',
+    'Mystery',
+    'Self-help',
+    'Science Fiction',
+    'Poetry',
+    'Other'
   ];
 
 
   void _onNextPressed() {
     if (_isCompleted) {
-      // TODO: Add navigation to next screen
-      // Get.to(() => NextScreen());
+      Get.toNamed(AppRoutes.visualStoryView);
     }
   }
 
@@ -90,15 +160,19 @@ class _LikeToDoViewState extends State<LikeToDoView> {
     super.dispose();
   }
 
-  Widget _buildOptions(List<String> options, String? selectedOption, void Function(String) onTap) {
+  Widget _buildOptions(List<String> options, Set<int> selectedIndices, Function(int, bool) onOptionChanged) {
     return Wrap(
       spacing: 10,
       runSpacing: 12,
-      children: options.map((option) {
+      children: options.asMap().entries.map((entry) {
+        final index = entry.key;
+        final option = entry.value;
+        final isSelected = selectedIndices.contains(index);
+        
         return CustomPillCheckbox(
           text: option,
-          isSelected: selectedOption == option,
-          onChanged: (_) => onTap(option),
+          isSelected: isSelected,
+          onChanged: (_) => onOptionChanged(index, !isSelected),
           selectedOpacity: 0.8,
           textStyle: GoogleFonts.playfairDisplay(
             color: Colors.white,
@@ -111,9 +185,9 @@ class _LikeToDoViewState extends State<LikeToDoView> {
     );
   }
 
-  Widget _buildQuestionSection(String question, List<String> options, RxnInt selectedOption, void Function(int) onOptionSelected) {
+  Widget _buildQuestionSection(String question, String sectionKey, List<String> options) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
+      margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF2E3A59).withOpacity(0.2),
@@ -136,8 +210,14 @@ class _LikeToDoViewState extends State<LikeToDoView> {
             ),
           ),
           const SizedBox(height: 12),
-          _buildOptions(options, selectedOption.value != null ? options[selectedOption.value!] : null, (option) {
-            onOptionSelected(options.indexOf(option));
+          _buildOptions(options, _selectedOptions[sectionKey] ?? {}, (index, isSelected) {
+            setState(() {
+              if (isSelected) {
+                _selectedOptions[sectionKey]!.add(index);
+              } else {
+                _selectedOptions[sectionKey]!.remove(index);
+              }
+            });
           }),
         ],
       ),
@@ -188,7 +268,7 @@ class _LikeToDoViewState extends State<LikeToDoView> {
                       SizedBox(
                         width: 308,
                         child: Text(
-                          'Tell us about habit?',
+                          'Tell us what you really like to do or interested in!',
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 22.0, // Increased from 17.0
                             fontWeight: FontWeight.bold,
@@ -199,7 +279,7 @@ class _LikeToDoViewState extends State<LikeToDoView> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        "Share as much about your habit as you’re comfortable with the most.",
+                        "Choose those things on which you mostly interested that will help you to match with people who love them too.",
                         style: GoogleFonts.playfairDisplay(
                           fontSize: 15.0, // Increased from 12.5
                           color: Colors.white70,
@@ -211,45 +291,51 @@ class _LikeToDoViewState extends State<LikeToDoView> {
                       
                       
                       _buildQuestionSection(
-                        'What is your communication style?',
-                        communicationStyles,
-                        _selectedCommunicationStyle,
-                        (index) => setState(() => _selectedCommunicationStyle.value = _selectedCommunicationStyle.value == index ? null : index),
+                        'Creativity',
+                        'creativity',
+                        creativityOptions,
                       ),
                       
                       _buildQuestionSection(
-                        'Do you exercise regularly?',
-                        exerciseFrequencies,
-                        _selectedExerciseFrequency,
-                        (index) => setState(() => _selectedExerciseFrequency.value = _selectedExerciseFrequency.value == index ? null : index),
+                        'Activities',
+                        'activities',
+                        activitiesOptions,
                       ),
 
                       _buildQuestionSection(
-                        'What do you usually eat?',
-                        foodPreferences,
-                        _selectedFoodPreference,
-                        (index) => setState(() => _selectedFoodPreference.value = _selectedFoodPreference.value == index ? null : index),
+                        'Sports and Fitness',
+                        'sportsFitness',
+                        sportsFitnessOptions,
                       ),
                       
                       _buildQuestionSection(
-                        'How often do you use social media?',
-                        weekendActivities,
-                        _selectedWeekendActivity,
-                        (index) => setState(() => _selectedWeekendActivity.value = _selectedWeekendActivity.value == index ? null : index),
+                        'TV and Movies',
+                        'tvMovies',
+                        tvMoviesOptions,
                       ),
                       
                       _buildQuestionSection(
-                        'Do you smoke or drink?',
-                        travelPreferences,
-                        _selectedTravelPreference,
-                        (index) => setState(() => _selectedTravelPreference.value = _selectedTravelPreference.value == index ? null : index),
+                        'Free Time',
+                        'freeTime',
+                        freeTimeOptions,
                       ),
 
                       _buildQuestionSection(
-                        'Do you enjoy trying new experiences?',
-                        tryNewExperiences,
-                        _selectedTryNewExperiences,
-                        (index) => setState(() => _selectedTryNewExperiences.value = _selectedTryNewExperiences.value == index ? null : index),
+                        'Music',
+                        'music',
+                        musicOptions,
+                      ),
+
+                      _buildQuestionSection(
+                        'Wellness and Lifestyle',
+                        'wellnessLifestyle',
+                        wellnessLifestyleOptions,
+                      ),
+
+                      _buildQuestionSection(
+                        'Books and Content',
+                        'booksContent',
+                        booksContentOptions,
                       ),
 
                     ],

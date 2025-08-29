@@ -7,6 +7,7 @@ import '../controller/habit_controller.dart';
 import '../controller/faith_belief_controller.dart';
 import '../controller/lifestyle_controller.dart';
 import '../controller/like_to_do_view_controller.dart';
+import '../controller/visual_story_controller.dart';
 
 class AccountsBinding extends Bindings {
   @override
@@ -19,5 +20,6 @@ class AccountsBinding extends Bindings {
     Get.lazyPut<FaithBeliefController>(() => FaithBeliefController());
     Get.lazyPut<LifestyleController>(() => LifestyleController());
     Get.lazyPut<LikeToDoViewController>(() => LikeToDoViewController());
+    Get.lazyPut<VisualStoryController>(() => VisualStoryController());
   }
 }

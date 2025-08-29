@@ -111,13 +111,13 @@ class _HabitViewState extends State<HabitView> {
 
   Widget _buildQuestionSection(String question, List<String> options, RxnInt selectedOption, void Function(int) onOptionSelected) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
+      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2E3A59).withOpacity(0.2),
+        color: const Color(0xFF2E3A59).withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF2E3A59).withOpacity(0.3),
+          color: const Color(0xFF2E3A59).withValues(alpha: 0.3),
           width: 1,
         ),
       ),

@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       //initialRoute: AppRoutes.splash,
-      initialRoute: AppRoutes.lifestyleView,
+      initialRoute: AppRoutes.likeToDoView,
       getPages: AppRoutes.routes,
       translations: AppStrings(),
       locale: AppLocalization.getDeviceLocale(),

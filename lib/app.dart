@@ -12,6 +12,7 @@ import 'package:kindered_app/modules/acccounts_setting/view/interest_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/intro_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/lifestyle_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/like_to_do_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/visual_story.dart';
 import 'package:kindered_app/modules/auth/views/create_account_view.dart';
 import 'package:kindered_app/modules/auth/views/otp_view.dart';
 import 'config/app_routes.dart';
@@ -116,6 +117,11 @@ class MyApp extends StatelessWidget {
         GetPage(
           name: AppRoutes.likeToDoView,
           page: () => LikeToDoView(),
+          binding: AccountsBinding(),
+        ),
+        GetPage(
+          name: AppRoutes.visualStoryView,
+          page: () => VisualStory(),
           binding: AccountsBinding(),
         ),
       ],
