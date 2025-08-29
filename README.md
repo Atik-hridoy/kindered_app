@@ -23,7 +23,7 @@ A modern Flutter application for [brief description of what the app does]. Built
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/kindered_app.git
+   git clone https://github.com/Atik-hridoy/kindered_app.git
    cd kindered_app
    ```
 
@@ -44,7 +44,11 @@ lib/
 ├── config/              # App configurations, themes, and routes
 ├── core/               # Core functionality and utilities
 ├── modules/            # Feature modules
-│   └── accounts_setting/ # Example feature module
+│   ├── home/           # Home screen module
+│   │   ├── bindings/   # Dependency injections
+│   │   ├── controller/ # Business logic
+│   │   └── widget/     # Reusable widgets
+│   └── accounts_setting/ # Account settings module
 │       ├── controller/  # Business logic
 │       ├── model/      # Data models
 │       ├── view/       # UI components
