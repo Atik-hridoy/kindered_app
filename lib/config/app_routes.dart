@@ -24,11 +24,15 @@ import '../modules/auth/bindings/auth_binding.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/like_to_do_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/visual_story.dart';
 import 'package:kindered_app/modules/location/location_view.dart';
-import 'package:kindered_app/modules/home/home_suggestion_view.dart';
+import 'package:kindered_app/modules/home/view/home_suggestion_view.dart';
+import 'package:kindered_app/modules/home/view/ai_assistent_view.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/profile_view.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/account_setting.dart';
-
-
+import 'package:kindered_app/modules/profile_and_settings/bindings/bindings.dart';
+import 'package:kindered_app/modules/profile_and_settings/view/update_phon_number_view.dart';
+import 'package:kindered_app/modules/profile_and_settings/view/number_verify_view.dart';
+import 'package:kindered_app/modules/home/view/message_view.dart';
+import 'package:kindered_app/modules/home/view/chat_view.dart';
 
 
 class AppRoutes {
@@ -54,8 +58,15 @@ class AppRoutes {
   static const String visualStoryView = '/visual_story_view';
   static const String locationView = '/location_view';
   static const String homeSuggestionView = '/home-suggestion';
+  static const String aiAssistantView = '/ai-assistant';
   static const String profileView = '/profile_view';
   static const String accountSettingView = '/account_setting_view';
+  static const String updatePhonNumberView = '/update_phon_number_view';
+  static const String numberVerifyView = '/number_verify_view';
+  static const String messageView = '/message_view';
+  static const String chatView = '/chat_view';
+
+  // Route getters
 
   static String getSplashRoute() => splash;
   static String getOnboardingRoute() => onboarding;
@@ -77,8 +88,13 @@ class AppRoutes {
   static String getVisualStoryViewRoute() => visualStoryView;
   static String getLocationViewRoute() => locationView;
   static String getHomeSuggestionViewRoute() => homeSuggestionView;
+  static String getAiAssistantViewRoute() => aiAssistantView; // Added getter method
   static String getProfileViewRoute() => profileView;
   static String getAccountSettingViewRoute() => accountSettingView;
+  static String getUpdatePhonNumberViewRoute() => updatePhonNumberView;
+  static String getNumberVerifyViewRoute() => numberVerifyView;
+  static String getMessageViewRoute() => messageView;
+  static String getChatViewRoute() => chatView;
 
   // Route definitions
   static final List<GetPage> routes = [
@@ -183,12 +199,37 @@ class AppRoutes {
       binding: HomeBinding(),
     ),
     GetPage(
+      name: aiAssistantView,
+      page: () => const AiAssistantView(),
+      binding: HomeBinding(),
+    ),
+    GetPage(
       name: profileView,
       page: () => const ProfileView(),
     ),
     GetPage(
       name: accountSettingView,
       page: () => const AccountSettingView(),
+    ),
+    GetPage(
+      name: updatePhonNumberView,
+      page: () => const UpdatePhonNumberView(),
+      binding: ProfileAndStettings(),
+    ),
+    GetPage(
+      name: numberVerifyView,
+      page: () => const NumberVerifyView(),
+      binding: ProfileAndStettings(),
+    ),
+    GetPage(
+      name: messageView,
+      page: () => const MessageView(),
+      binding: HomeBinding(),
+    ),
+    GetPage(
+      name: chatView,
+      page: () => const ChatConversationView(),
+      binding: HomeBinding(),
     ),
   ];
 }

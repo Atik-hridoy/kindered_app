@@ -19,5 +19,6 @@ class AppPages {
       page: () => OnboardingView(),
       binding: OnboardingBinding(),
     ),
+    
   ];
 }

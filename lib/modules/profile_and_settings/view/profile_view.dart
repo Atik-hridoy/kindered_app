@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:kindered_app/modules/home/widget/nav_card.dart';
 import 'package:kindered_app/config/app_routes.dart';
+import 'package:kindered_app/modules/home/widget/nav_card.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -14,11 +14,25 @@ class ProfileView extends StatefulWidget {
 class _ProfileViewState extends State<ProfileView> {
   int _currentIndex = 3; // Profile tab index
 
-  void _onItemTapped(int index) {
-    if (index != _currentIndex) {
-      setState(() => _currentIndex = index);
-      if (index == 0) Get.offAllNamed(AppRoutes.homeSuggestionView);
+  void _onNavItemTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+    
+    // Handle navigation based on the selected index
+    if (index == 0) {
+      Get.offAllNamed(AppRoutes.homeSuggestionView);
+    } 
+    else if (index == 1) {
+      Get.offAllNamed(AppRoutes.aiAssistantView);
     }
+    else if (index == 2) {
+      Get.offAllNamed(AppRoutes.chatView);
+    }
+    else if (index == 3) {
+      // Already on profile view
+    }
+    
   }
 
   @override
@@ -68,19 +82,19 @@ class _ProfileViewState extends State<ProfileView> {
             
             // Fixed Navigation Card at the bottom
             Positioned(
-              left: 16,
+               left: 16,
               right: 16,
-              bottom: 16, // 16px from bottom
+              bottom: 20, 
               child: NavCard(
                 currentIndex: _currentIndex,
-                onTap: _onItemTapped,
+                onTap: _onNavItemTapped,
                 iconPaths: const [
                   'assets/svg/explore.svg',
                   'assets/svg/ai.svg',
                   'assets/svg/Chat.svg',
                   'assets/svg/menu Frame.svg',
                 ],
-                labels: const ['', '', '', ''], // Empty labels since we're just using icons
+                labels: const ['', '', '', ''],
               ),
             ),
           ],

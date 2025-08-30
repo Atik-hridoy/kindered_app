@@ -21,11 +21,18 @@ class _HomeSuggestionViewState extends State<HomeSuggestionView> {
     });
     
     // Handle navigation based on the selected index
-    if (index == 3) { // Menu icon is at index 3
-      // Navigate to profile view
-      Get.toNamed(AppRoutes.profileView);
+    switch (index) {
+      case 1: // AI Assistant tab
+        Get.toNamed(AppRoutes.aiAssistantView);
+        break;
+      case 2: // Chat tab
+        Get.toNamed(AppRoutes.messageView);
+        break;
+      case 3: // Profile tab
+        Get.toNamed(AppRoutes.profileView);
+        break;
+      // Other cases can be added here
     }
-    // Add more navigation logic for other tabs if needed
   }
 
   @override

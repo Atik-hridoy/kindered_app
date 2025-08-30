@@ -30,7 +30,7 @@ class NavCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: padding, vertical: padding),
+      padding: EdgeInsets.symmetric(horizontal: padding, vertical: padding * 0.6),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(24),
@@ -67,7 +67,7 @@ class NavCard extends StatelessWidget {
       curve: Curves.easeInOut,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFD4A373).withOpacity(0.1) : Colors.transparent,
+        color: isActive ? const Color(0xFFD4A373).withValues(alpha: 0.1) : Colors.transparent,
         shape: BoxShape.circle,
       ),
       child: GestureDetector(
@@ -82,15 +82,7 @@ class NavCard extends StatelessWidget {
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                 ),
-                child: SvgPicture.asset(
-                  iconPath,
-                  width: isActive ? iconSize + 2 : iconSize,
-                  height: isActive ? iconSize + 2 : iconSize,
-                  colorFilter: ColorFilter.mode(
-                    isActive ? activeColor : inactiveColor,
-                    BlendMode.srcIn,
-                  ),
-                ),
+                child: _buildSvgIcon(iconPath, isActive),
               ),
               if (label.isNotEmpty) ...[
                 const SizedBox(height: 4),
@@ -107,5 +99,48 @@ class NavCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildSvgIcon(String iconPath, bool isActive) {
+    try {
+      return SvgPicture.asset(
+        iconPath,
+        width: isActive ? iconSize + 2 : iconSize,
+        height: isActive ? iconSize + 2 : iconSize,
+        colorFilter: ColorFilter.mode(
+          isActive ? activeColor : inactiveColor,
+          BlendMode.srcIn,
+        ),
+        placeholderBuilder: (BuildContext context) => Icon(
+          Icons.error_outline,
+          size: isActive ? iconSize + 2 : iconSize,
+          color: Colors.red,
+        ),
+      );
+    } catch (e) {
+      // Fallback to a default icon if SVG fails to load
+      IconData iconData;
+      switch (iconPath) {
+        case 'assets/svg/explore.svg':
+          iconData = Icons.explore;
+          break;
+        case 'assets/svg/ai.svg':
+          iconData = Icons.smart_toy;
+          break;
+        case 'assets/svg/Chat.svg':
+          iconData = Icons.chat_bubble_outline;
+          break;
+        case 'assets/svg/see more arrow.svg':
+          iconData = Icons.more_vert;
+          break;
+        default:
+          iconData = Icons.error_outline;
+      }
+      return Icon(
+        iconData,
+        size: isActive ? iconSize + 2 : iconSize,
+        color: isActive ? activeColor : inactiveColor,
+      );
+    }
   }
 }

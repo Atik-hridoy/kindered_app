@@ -16,11 +16,13 @@ import 'package:kindered_app/modules/acccounts_setting/view/visual_story.dart';
 import 'package:kindered_app/modules/auth/views/create_account_view.dart';
 import 'package:kindered_app/modules/auth/views/otp_view.dart';
 import 'package:kindered_app/modules/home/bindings.dart';
-import 'package:kindered_app/modules/home/home_suggestion_view.dart';
+import 'package:kindered_app/modules/home/view/message_view.dart';
+import 'package:kindered_app/modules/home/view/home_suggestion_view.dart';
 import 'package:kindered_app/modules/location/bindings.dart';
 import 'package:kindered_app/modules/location/location_view.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/account_setting.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/profile_view.dart';
+import 'package:kindered_app/modules/profile_and_settings/view/update_phon_number_view.dart';
 import 'config/app_routes.dart';
 import 'config/app_themes.dart';
 import 'modules/splash/splash_view.dart';
@@ -147,6 +149,15 @@ class MyApp extends StatelessWidget {
         GetPage(
           name: AppRoutes.accountSettingView,
           page: () => const AccountSettingView(),
+        ),
+        GetPage(
+          name: AppRoutes.updatePhonNumberView,
+          page: () => const UpdatePhonNumberView(),
+        ),
+        GetPage(
+          name: AppRoutes.messageView,
+          page: () => const MessageView(),
+          binding: HomeBinding(),
         ),
       ],
       defaultTransition: Transition.fade,
