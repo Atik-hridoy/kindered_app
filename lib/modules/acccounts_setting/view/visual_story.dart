@@ -59,13 +59,13 @@ class _VisualStoryState extends State<VisualStory> {
             // Content
             Center(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(12.0), // Reduced from 16.0
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 32,
-                      height: 32,
+                      width: 24, // Reduced from 32
+                      height: 24, // Reduced from 32
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
@@ -76,7 +76,7 @@ class _VisualStoryState extends State<VisualStory> {
                       child: Icon(
                         Icons.add,
                         color: Colors.white.withOpacity(0.9),
-                        size: 18,
+                        size: 16, // Reduced from 18
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -170,7 +170,7 @@ class _VisualStoryState extends State<VisualStory> {
                   
                   // Photo Grid with 2 boxes on right and 2 below
                   SizedBox(
-                    height: 600, // Adjusted height for the layout
+                    height: 500, // Reduced from 600
                     child: Column(
                       children: [
                         // First row - Big box on left, 2 stacked boxes on right
@@ -181,8 +181,9 @@ class _VisualStoryState extends State<VisualStory> {
                               // Big box on left
                               Expanded(
                                 flex: 2, // Takes more horizontal space
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 6, bottom: 12),
+                                child: Container(
+                                  margin: const EdgeInsets.only(right: 6, bottom: 12),
+                                  height: 300, // Reduced height
                                   child: _buildPhotoCard(
                                     label: 'Full Body',
                                     onTap: () => _handleImageSelection(0),
@@ -195,23 +196,21 @@ class _VisualStoryState extends State<VisualStory> {
                                 child: Column(
                                   children: [
                                     // Top right box
-                                    Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(bottom: 6),
-                                        child: _buildPhotoCard(
-                                          label: 'Headshot',
-                                          onTap: () => _handleImageSelection(1),
-                                        ),
+                                    Container(
+                                      height: 140, // Reduced height
+                                      margin: const EdgeInsets.only(bottom: 6),
+                                      child: _buildPhotoCard(
+                                        label: 'Headshot',
+                                        onTap: () => _handleImageSelection(1),
                                       ),
                                     ),
                                     // Bottom right box
-                                    Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(top: 6),
-                                        child: _buildPhotoCard(
-                                          label: 'Personality',
-                                          onTap: () => _handleImageSelection(2),
-                                        ),
+                                    Container(
+                                      height: 140, // Reduced height
+                                      margin: const EdgeInsets.only(top: 6),
+                                      child: _buildPhotoCard(
+                                        label: 'Personality',
+                                        onTap: () => _handleImageSelection(2),
                                       ),
                                     ),
                                   ],
@@ -222,13 +221,13 @@ class _VisualStoryState extends State<VisualStory> {
                         ),
                         // Second row - 2 boxes below matching right side boxes
                         SizedBox(
-                          height: 200, // Fixed height to match right side boxes
+                          height: 160, // Reduced from 200
                           child: Row(
                             children: [
                               // Bottom left box
                               Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 6, top: 12),
+                                child: Container(
+                                  margin: const EdgeInsets.only(right: 6, top: 12),
                                   child: _buildPhotoCard(
                                     label: 'Add Image',
                                     onTap: () => _handleImageSelection(3),
@@ -238,8 +237,8 @@ class _VisualStoryState extends State<VisualStory> {
                               const SizedBox(width: 12),
                               // Bottom right box
                               Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 6, top: 12),
+                                child: Container(
+                                  margin: const EdgeInsets.only(left: 6, top: 12),
                                   child: _buildPhotoCard(
                                     label: 'Add Image',
                                     onTap: () => _handleImageSelection(4),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/modules/home/widget/custom_photo_card.dart';
-import 'package:kindered_app/modules/home/widget/nav_card.dart'; // Add this import
+import 'package:kindered_app/modules/home/widget/nav_card.dart';
 
 class HomeSuggestionView extends StatefulWidget {  // Changed to StatefulWidget
   const HomeSuggestionView({super.key});
@@ -12,6 +14,19 @@ class HomeSuggestionView extends StatefulWidget {  // Changed to StatefulWidget
 
 class _HomeSuggestionViewState extends State<HomeSuggestionView> {
   int _currentIndex = 0;  // Add this line to track the selected tab
+
+  void _onNavItemTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+    
+    // Handle navigation based on the selected index
+    if (index == 3) { // Menu icon is at index 3
+      // Navigate to profile view
+      Get.toNamed(AppRoutes.profileView);
+    }
+    // Add more navigation logic for other tabs if needed
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,12 +84,14 @@ class _HomeSuggestionViewState extends State<HomeSuggestionView> {
               bottom: 20,
               child: NavCard(
                 currentIndex: _currentIndex,
-                onTap: (index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                  // Add navigation logic here based on index
-                },
+                onTap: _onNavItemTapped,
+                iconPaths: const [
+                  'assets/svg/explore.svg',
+                  'assets/svg/ai.svg',
+                  'assets/svg/Chat.svg',
+                  'assets/svg/menu Frame.svg',
+                ],
+                labels: const ['', '', '', ''], // Empty labels since we're just using icons
               ),
             ),
           ],

@@ -47,6 +47,9 @@ class _OnboardingViewState extends State<OnboardingView> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isSmallScreen = size.width < 375;
+    final buttonBottomPadding = isSmallScreen ? 20.0 : 40.0;
+    final pageIndicatorBottom = isSmallScreen ? 100.0 : 120.0;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -74,7 +77,7 @@ class _OnboardingViewState extends State<OnboardingView> {
 
             // Page Indicator
             Positioned(
-              bottom: 120,  // Position above the buttons
+              bottom: pageIndicatorBottom,
               left: 0, 
               right: 0,
               child: Center(
@@ -84,14 +87,14 @@ class _OnboardingViewState extends State<OnboardingView> {
                     final isActive = _currentPage == index;
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      width: isActive ? 32 : 16,  // Increased width for both active and inactive dots
-                      height: 8,  // Slightly reduced height for a more modern look
-                      margin: const EdgeInsets.symmetric(horizontal: 6),  // Increased horizontal margin
+                      width: isActive ? size.width * 0.08 : size.width * 0.04,
+                      height: size.height * 0.01,
+                      margin: EdgeInsets.symmetric(horizontal: size.width * 0.015),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),  // Slightly more rounded
+                        borderRadius: BorderRadius.circular(4),
                         color: isActive
-                            ? Colors.white  // Solid white for active dot
-                            : Colors.white.withOpacity(0.4),  // 40% opacity for inactive dots
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.4),
                       ),
                     );
                   }),
@@ -102,12 +105,12 @@ class _OnboardingViewState extends State<OnboardingView> {
             // Bottom Buttons
             if (_currentPage < onboardingPages.length - 1)
               Positioned(
-                bottom: 40,  // Position from bottom of screen
+                bottom: buttonBottomPadding,
                 left: 0,
                 right: 0,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.symmetric(horizontal: size.width * 0.05),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -118,8 +121,8 @@ class _OnboardingViewState extends State<OnboardingView> {
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: const Color(0xFFE2DFDC),
-                          textStyle: const TextStyle(
-                            fontSize: 18,
+                          textStyle: TextStyle(
+                            fontSize: isSmallScreen ? 16 : 18,
                             fontWeight: FontWeight.w600,
                             decoration: TextDecoration.none,
                           ),
@@ -137,8 +140,8 @@ class _OnboardingViewState extends State<OnboardingView> {
                           );
                         },
                         backgroundColor: const Color(0xFF21293F),
-                        size: 64,
-                        iconSize: 34,
+                        size: size.width * 0.16,
+                        iconSize: size.width * 0.08,
                       ),
                     ],
                   ),
@@ -146,11 +149,11 @@ class _OnboardingViewState extends State<OnboardingView> {
               )
             else
               Positioned(
-                bottom: 40,
+                bottom: buttonBottomPadding,
                 left: 0,
                 right: 0,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.symmetric(horizontal: size.width * 0.05),
                   child: OnboardingButton(
                     text: 'Begin your Journey',
                     onPressed: () {
@@ -170,16 +173,35 @@ class _OnboardingViewState extends State<OnboardingView> {
     required String title,
     required String description,
   }) {
+    final size = MediaQuery.of(context).size;
+    final isSmallScreen = size.width < 375;
+    final titleStyle = TextStyle(
+      fontSize: isSmallScreen ? 24 : 28,
+      fontFamily: 'PlayfairDisplay',
+      fontWeight: FontWeight.w600,
+      color: Colors.white,
+      height: 1.33,
+      letterSpacing: 0,
+    );
+    
+    final descriptionStyle = TextStyle(
+      fontSize: isSmallScreen ? 14 : 16,
+      fontFamily: 'Inter',
+      fontWeight: FontWeight.w500,
+      color: Colors.white,
+      height: 1.5,
+    );
+
     return Stack(
       children: [
-        // Background Image with ColorFilter to make it brighter
+        // Background Image with ColorFilter
         Positioned.fill(
           child: Transform.translate(
-            offset: Offset(0, -60), // Increased shift up to 60 pixels
+            offset: Offset(0, isSmallScreen ? -30 : -60),
             child: Image.asset(
               image,
               width: double.infinity,
-              height: MediaQuery.of(context).size.height * 1.2, // Increased height to ensure coverage
+              height: size.height * (isSmallScreen ? 1.1 : 1.2),
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
               color: Colors.white.withOpacity(0.2),
@@ -187,59 +209,47 @@ class _OnboardingViewState extends State<OnboardingView> {
             ),
           ),
         ),
+        
         // Gradient Overlay
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              stops: [0.0, 0.5, 0.8],  // Start fade lower down the screen
+              stops: const [0.0, 0.5, 0.8],
               colors: [
-                Colors.transparent, // Fully transparent at top
-                Color(0xFF2E3A59).withOpacity(0.2),  // Start color transition lower
-                Color(0xFF2E3A59),  // Full color at bottom
+                Colors.transparent,
+                const Color(0xFF2E3A59).withOpacity(0.2),
+                const Color(0xFF2E3A59),
               ],
             ),
           ),
         ),
-        // Content
-        Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Spacer(flex:4), // Reduced space above title
-              // Title
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontFamily: 'PlayfairDisplay',
-                  fontWeight: FontWeight.w600, // SemiBold weight
-                  color: Colors.white,
-                  height: 1.33, // 32px line height / 24px font size
-                  letterSpacing: 0,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Description
-              Text(
-                description,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w500,
-                  
 
-                  color: Colors.white,
-                  height: 1.5,
+        // Content
+        SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(size.width * 0.06),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Spacer(flex: 4),
+                // Title
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: titleStyle,
                 ),
-              ),
-              const Spacer(flex: 1),
-              
-            ],
+                SizedBox(height: size.height * 0.02),
+                // Description
+                Text(
+                  description,
+                  textAlign: TextAlign.center,
+                  style: descriptionStyle,
+                ),
+                const Spacer(flex: 1),
+              ],
+            ),
           ),
         ),
       ],

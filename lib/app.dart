@@ -19,6 +19,8 @@ import 'package:kindered_app/modules/home/bindings.dart';
 import 'package:kindered_app/modules/home/home_suggestion_view.dart';
 import 'package:kindered_app/modules/location/bindings.dart';
 import 'package:kindered_app/modules/location/location_view.dart';
+import 'package:kindered_app/modules/profile_and_settings/view/account_setting.dart';
+import 'package:kindered_app/modules/profile_and_settings/view/profile_view.dart';
 import 'config/app_routes.dart';
 import 'config/app_themes.dart';
 import 'modules/splash/splash_view.dart';
@@ -138,8 +140,17 @@ class MyApp extends StatelessWidget {
           page: () => HomeSuggestionView(),
           binding: HomeBinding(),
         ),
+        GetPage(
+          name: AppRoutes.profileView,
+          page: () => const ProfileView(),
+        ),
+        GetPage(
+          name: AppRoutes.accountSettingView,
+          page: () => const AccountSettingView(),
+        ),
       ],
       defaultTransition: Transition.fade,
     );
+    
   }
 }

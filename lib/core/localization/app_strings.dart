@@ -20,7 +20,7 @@ class AppStrings extends Translations {
           'enterVerificationCode': 'Please enter the verification code sent to',
           'sentTo': 'Sent to',
           'resendCodePrompt': "Didn't receive the code? ",
-          'resend': 'Resend',
+          'resend': 'Resend Code',
           'verify': 'Verify',
           'verifyYourEmail': 'Verify Your Email',
           'enterOtp': 'Enter the 4-digit code sent to',
@@ -128,8 +128,8 @@ class AppStrings extends Translations {
   static String get verifyYourNumber => 'verify Your Number'.tr;
   static String get enterVerificationCode => 'enter Verification Code'.tr;
   static String get sentTo => 'sent To'.tr;
-  static String get resendCodePrompt => 'resend Code Prompt'.tr;
-  static String get resend => 'resend'.tr;
+  static String get resendCodePrompt => 'Didn\'t receive code?' .tr;
+  static String get resend => ' Resend Code'.tr;
   static String get verify => 'verify'.tr;
   
   // Account Settings Getters

@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../config/app_themes.dart';
+import 'package:kindered_app/config/app_themes.dart';
 import 'package:get/get.dart';
-import '../../config/app_routes.dart';
+import 'package:kindered_app/config/app_routes.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -24,6 +24,15 @@ class _SplashViewState extends State<SplashView> {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Calculate responsive dimensions
+    final logoWidth = screenWidth * 0.55; // 55% of screen width
+    final logoHeight = logoWidth * (40/206); // Maintain aspect ratio
+    final topPadding = screenHeight * 0.1; // 10% from top
+
     return Scaffold(
       backgroundColor: AppTheme.lightTheme.primaryColor,
       body: Stack(
@@ -36,18 +45,20 @@ class _SplashViewState extends State<SplashView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo with exact dimensions
+                // Logo with responsive dimensions
                 SizedBox(
-                  width: 206,
-                  height: 40,
-                  child: SvgPicture.asset(
-                    'assets/svg/Kindred.svg',
-                    width: 206,
-                    height: 40,
+                  width: logoWidth,
+                  height: logoHeight,
+                  child: FittedBox(
                     fit: BoxFit.contain,
+                    child: SvgPicture.asset(
+                      'assets/svg/Kindred.svg',
+                      width: 206, // Original design width
+                      height: 40,  // Original design height
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: screenHeight * 0.03), // 3% of screen height
               ],
             ),
           ),

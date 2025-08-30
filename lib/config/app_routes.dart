@@ -25,6 +25,8 @@ import 'package:kindered_app/modules/acccounts_setting/view/like_to_do_view.dart
 import 'package:kindered_app/modules/acccounts_setting/view/visual_story.dart';
 import 'package:kindered_app/modules/location/location_view.dart';
 import 'package:kindered_app/modules/home/home_suggestion_view.dart';
+import 'package:kindered_app/modules/profile_and_settings/view/profile_view.dart';
+import 'package:kindered_app/modules/profile_and_settings/view/account_setting.dart';
 
 
 
@@ -51,8 +53,10 @@ class AppRoutes {
   static const String likeToDoView = '/like_to_do_view';
   static const String visualStoryView = '/visual_story_view';
   static const String locationView = '/location_view';
-  static const String homeSuggestionView = '/home_suggestion_view';
-  
+  static const String homeSuggestionView = '/home-suggestion';
+  static const String profileView = '/profile_view';
+  static const String accountSettingView = '/account_setting_view';
+
   static String getSplashRoute() => splash;
   static String getOnboardingRoute() => onboarding;
   static String getLoginRoute() => login;
@@ -73,7 +77,9 @@ class AppRoutes {
   static String getVisualStoryViewRoute() => visualStoryView;
   static String getLocationViewRoute() => locationView;
   static String getHomeSuggestionViewRoute() => homeSuggestionView;
-  
+  static String getProfileViewRoute() => profileView;
+  static String getAccountSettingViewRoute() => accountSettingView;
+
   // Route definitions
   static final List<GetPage> routes = [
     GetPage(
@@ -175,6 +181,14 @@ class AppRoutes {
       name: homeSuggestionView,
       page: () => const HomeSuggestionView(),
       binding: HomeBinding(),
+    ),
+    GetPage(
+      name: profileView,
+      page: () => const ProfileView(),
+    ),
+    GetPage(
+      name: accountSettingView,
+      page: () => const AccountSettingView(),
     ),
   ];
 }
