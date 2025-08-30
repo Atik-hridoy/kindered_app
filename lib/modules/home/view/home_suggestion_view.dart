@@ -63,7 +63,7 @@ class _HomeSuggestionViewState extends State<HomeSuggestionView> {
                         // Handle chat action
                       },
                       onSharePressed: () {
-                        // Handle share action
+                        Get.toNamed(AppRoutes.displayProfile);
                       },
                     ),
                   ),

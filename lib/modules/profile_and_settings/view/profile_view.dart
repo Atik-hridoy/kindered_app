@@ -27,12 +27,12 @@ class _ProfileViewState extends State<ProfileView> {
       Get.offAllNamed(AppRoutes.aiAssistantView);
     }
     else if (index == 2) {
-      Get.offAllNamed(AppRoutes.chatView);
+      Get.offAllNamed(AppRoutes.getMessageViewRoute());
     }
     else if (index == 3) {
       // Already on profile view
     }
-    
+
   }
 
   @override

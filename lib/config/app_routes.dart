@@ -33,6 +33,7 @@ import 'package:kindered_app/modules/profile_and_settings/view/update_phon_numbe
 import 'package:kindered_app/modules/profile_and_settings/view/number_verify_view.dart';
 import 'package:kindered_app/modules/home/view/message_view.dart';
 import 'package:kindered_app/modules/home/view/chat_view.dart';
+import 'package:kindered_app/modules/profile_and_settings/view/display_profile.dart';
 
 
 class AppRoutes {
@@ -64,7 +65,8 @@ class AppRoutes {
   static const String updatePhonNumberView = '/update_phon_number_view';
   static const String numberVerifyView = '/number_verify_view';
   static const String messageView = '/message_view';
-  static const String chatView = '/chat_view';
+  static const String chat = '/chat';
+  static const String displayProfile = '/display-profile_view';
 
   // Route getters
 
@@ -94,7 +96,8 @@ class AppRoutes {
   static String getUpdatePhonNumberViewRoute() => updatePhonNumberView;
   static String getNumberVerifyViewRoute() => numberVerifyView;
   static String getMessageViewRoute() => messageView;
-  static String getChatViewRoute() => chatView;
+  static String getChatViewRoute() => chat;
+  static String getDisplayProfileRoute() => displayProfile;
 
   // Route definitions
   static final List<GetPage> routes = [
@@ -227,7 +230,12 @@ class AppRoutes {
       binding: HomeBinding(),
     ),
     GetPage(
-      name: chatView,
+      name: displayProfile,
+      page: () => const DisplayProfileView(),
+      binding: ProfileAndStettings(),
+    ),
+    GetPage(
+      name: chat,
       page: () => const ChatConversationView(),
       binding: HomeBinding(),
     ),

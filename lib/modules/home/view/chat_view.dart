@@ -1,8 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class ChatConversationView extends StatelessWidget {
+class ChatConversationView extends StatefulWidget {
   const ChatConversationView({super.key});
+
+  @override
+  State<ChatConversationView> createState() => _ChatConversationViewState();
+}
+
+class _ChatConversationViewState extends State<ChatConversationView> {
+  final TextEditingController _messageController = TextEditingController();
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  void _handleSendMessage() {
+    final message = _messageController.text.trim();
+    if (message.isNotEmpty) {
+      // TODO: Implement actual message sending logic
+      print('Sending message: $message');
+      _messageController.clear();
+      // Update UI if needed
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -123,38 +147,62 @@ class ChatConversationView extends StatelessWidget {
             
             // Message input
             Container(
-              padding: const EdgeInsets.all(20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3A4A6B),
-                  borderRadius: BorderRadius.circular(25),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E3A59),
+                border: Border(
+                  top: BorderSide(color: Colors.white.withOpacity(0.1)),
                 ),
-                child: const Row(
-                  children: [
-                    Icon(
+              ),
+              child: Row(
+                children: [
+                  // Image attachment button
+                  IconButton(
+                    icon: const Icon(
                       Icons.image_outlined,
                       color: Colors.white54,
-                      size: 22,
+                      size: 24,
                     ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Type a message',
-                        style: TextStyle(
-                          color: Colors.white54,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
+                    onPressed: () {
+                      // TODO: Implement image picker
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  
+                  // Text input field
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF21293F),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: TextField(
+                        controller: _messageController,
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
+                        decoration: const InputDecoration(
+                          hintText: 'Type a message...',
+                          hintStyle: TextStyle(color: Colors.white54),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 8),
                         ),
+                        textCapitalization: TextCapitalization.sentences,
+                        maxLines: null,
+                        onSubmitted: (_) => _handleSendMessage(),
                       ),
                     ),
-                    Icon(
+                  ),
+                  
+                  // Send button
+                  IconButton(
+                    icon: const Icon(
                       Icons.send,
-                      color: Colors.white,
-                      size: 22,
+                      color: Color(0xFF5D7AFF),
+                      size: 28,
                     ),
-                  ],
-                ),
+                    onPressed: _handleSendMessage,
+                  ),
+                ],
               ),
             ),
           ],
@@ -172,19 +220,6 @@ class ChatConversationView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Sender name
-        const Padding(
-          padding: EdgeInsets.only(left: 8, bottom: 4),
-          child: Text(
-            'Edward Davidson',
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ),
-        
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -264,19 +299,6 @@ class ChatConversationView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // Sender name
-        const Padding(
-          padding: EdgeInsets.only(right: 8, bottom: 4),
-          child: Text(
-            'Edward Davidson',
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ),
-        
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: MainAxisAlignment.end,
@@ -286,7 +308,7 @@ class ChatConversationView extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 margin: const EdgeInsets.only(left: 60),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4A5A7A),
+                  color: const Color(0xFF21293F),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
