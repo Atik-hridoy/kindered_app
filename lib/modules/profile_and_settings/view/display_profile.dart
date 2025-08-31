@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:kindered_app/config/app_routes.dart';
 
 class DisplayProfileView extends StatelessWidget {
   const DisplayProfileView({super.key});
@@ -111,27 +112,31 @@ class DisplayProfileView extends StatelessWidget {
                             ),
                             const Spacer(),
                             Transform.translate(
-                              offset: const Offset(0, -40), // Increased vertical offset to move it up more
-                              child: Container(
-                                padding: const EdgeInsets.all(12), // Increased padding for larger touch target
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF21293F),
-                                  borderRadius: BorderRadius.circular(12), // More rounded corners
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFF21293F).withOpacity(0.4),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 3),
+                              offset: const Offset(0, -40),
+                              child: InkWell(
+                                onTap: () => Navigator.pushNamed(context, AppRoutes.chat),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF21293F),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF21293F).withOpacity(0.4),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: SvgPicture.asset(
+                                    'assets/svg/Chat.svg',
+                                    width: 32,
+                                    height: 32,
+                                    colorFilter: const ColorFilter.mode(
+                                      Color(0xFFD4A373),
+                                      BlendMode.srcIn,
                                     ),
-                                  ],
-                                ),
-                                child: SvgPicture.asset(
-                                  'assets/svg/Chat.svg',
-                                  width: 32, // Larger icon
-                                  height: 32, // Larger icon
-                                  colorFilter: const ColorFilter.mode(
-                                    Color(0xFFD4A373),
-                                    BlendMode.srcIn,
                                   ),
                                 ),
                               ),
