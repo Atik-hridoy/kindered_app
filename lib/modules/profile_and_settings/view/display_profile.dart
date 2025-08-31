@@ -1,560 +1,670 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../controller/display_profile_controller.dart';
 
 class DisplayProfileView extends StatelessWidget {
   const DisplayProfileView({super.key});
-
-  // Section Header Widget
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0, top: 8.0),
-      child: Text(
-        title,
-        style: GoogleFonts.playfairDisplay(
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  // Info Row Widget
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: const Color(0xFFD4A373), size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Build photo item
-  Widget _buildPhotoItem(String imageUrl) {
-    return Container(
-      width: 100,
-      height: 100,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        image: DecorationImage(
-          image: NetworkImage(imageUrl),
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
-
-  // Build add photo button
-  Widget _buildAddPhotoButton() {
-    return GestureDetector(
-      onTap: () {
-        // Handle add photo
-      },
-      child: Container(
-        width: 100,
-        height: 100,
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Icon(Icons.add, size: 32, color: Colors.grey),
-      ),
-    );
-  }
-
-  Widget _buildOptionRow({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.blue[50],
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: Colors.blue, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF2E3A59),
-      body: NestedScrollView(
-        physics: const BouncingScrollPhysics(),
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              backgroundColor: const Color(0xFF2E3A59),
-              elevation: 0,
-              pinned: true,
-              automaticallyImplyLeading: false,
-              title: Row(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header with back button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Row(
                 children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Color(0xFFD4A373),
-                      size: 24,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        'Profile',
-                        style: GoogleFonts.playfairDisplay(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.5,
-                        ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: SvgPicture.asset(
+                      'assets/svg/profile/personal/left_arrow_5.svg',
+                      width: 20,
+                      height: 20,
+                      colorFilter: const ColorFilter.mode(
+                        Color(0xFFD4A373),
+                        BlendMode.srcIn,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 48), // Balance the back button
+                  const Expanded(
+                    child: Text(
+                      'Profile',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontFamily: 'PlayfairDisplay',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
                 ],
               ),
             ),
-          ];
-        },
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Full-length Profile Card
-              const SizedBox(height: 20),
-              Center(
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 600,
-                  child: Card(
-                    elevation: 12,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // Full-length Background Image
-                        Image.network(
-                          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&q=80',
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
-                                color: const Color(0xFFD4A373),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: Colors.grey[300],
-                            child: const Icon(Icons.person, size: 50, color: Colors.grey),
+            
+            // Main content
+            Expanded(
+              child: Container(
+                color: const Color(0xFF2E3A59),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Main profile image - clean without overlays
+                      Container(
+                        margin: const EdgeInsets.all(16.0),
+                        height: 520,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                          image: const DecorationImage(
+                            image: NetworkImage('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=600&fit=crop&crop=face'),
+                            fit: BoxFit.cover,
                           ),
                         ),
-                        // Gradient Overlay
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.transparent,
-                                Colors.black.withOpacity(0.3),
-                                Colors.black.withOpacity(0.7),
-                              ],
-                              stops: const [0.0, 0.5, 0.7, 1.0],
+                      ),
+                      
+                      // Name - under the image
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Kalvin, 23',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontFamily: 'PlayfairDisplay',
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        // Content Overlay
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(16.0),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [
-                                  Colors.black.withOpacity(0.8),
-                                  Colors.transparent,
-                                ],
+                      ),
+                      const SizedBox(height: 4),
+                      
+                      // Location on left, message icon on right - under name
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              color: Colors.white70,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              '5 km away',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                                fontFamily: 'inter',
                               ),
                             ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Alex Johnson, 28',
-                                  style: GoogleFonts.playfairDisplay(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.location_on_outlined,
-                                      color: Colors.white70,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'New York, USA',
-                                      style: GoogleFonts.inter(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                      ),
+                            const Spacer(),
+                            Transform.translate(
+                              offset: const Offset(0, -40), // Increased vertical offset to move it up more
+                              child: Container(
+                                padding: const EdgeInsets.all(12), // Increased padding for larger touch target
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF21293F),
+                                  borderRadius: BorderRadius.circular(12), // More rounded corners
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF21293F).withOpacity(0.4),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 3),
                                     ),
                                   ],
                                 ),
-                              ],
+                                child: SvgPicture.asset(
+                                  'assets/svg/Chat.svg',
+                                  width: 32, // Larger icon
+                                  height: 32, // Larger icon
+                                  colorFilter: const ColorFilter.mode(
+                                    Color(0xFFD4A373),
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
+                              ),
                             ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Divider line
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                        height: 1,
+                        color: const Color(0xFF594430),
+                        width: double.infinity,
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Looking for section with yellow icon
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.search,
+                              color: Color(0xFFD4A373),
+                              size: 17,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Looking for',
+                              style: TextStyle(
+                                color: Color(0xFFD4A373),
+                                fontSize: 18,
+                                fontFamily: 'PlayfairDisplay',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 8),
+                      
+                      // Casual Connection
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Casual Connection',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontFamily: 'PlayfairDisplay',
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const SizedBox(height: 24),
-              
-              // About Me Section
-              _buildSectionHeader('About Me'),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.1),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  'Passionate about outdoor adventures, photography, and good coffee. Love meeting new people and sharing stories. Always up for a hike or a deep conversation!',
-                  style: GoogleFonts.inter(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 14,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              // Photos Section
-              _buildSectionHeader('Photos'),
-              SizedBox(
-                height: 120,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _buildPhotoItem('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&q=80'),
-                    _buildPhotoItem('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80'),
-                    _buildPhotoItem('https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=800&q=80'),
-                    _buildAddPhotoButton(),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              // Personal Info Section
-              _buildSectionHeader('Personal Info'),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.1),
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _buildInfoRow(Icons.person_outline, 'Name', 'Alex Johnson'),
-                    const Divider(color: Colors.white12, height: 1),
-                    _buildInfoRow(Icons.cake_outlined, 'Age', '28 years'),
-                    const Divider(color: Colors.white12, height: 1),
-                    _buildInfoRow(Icons.location_on_outlined, 'Location', 'New York, USA'),
-                    const Divider(color: Colors.white12, height: 1),
-                    _buildInfoRow(Icons.work_outline, 'Occupation', 'Photographer & Traveler'),
-                    const Divider(color: Colors.white12, height: 1),
-                    _buildInfoRow(Icons.favorite_border, 'Interests', 'Hiking, Photography, Coffee, Travel'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              // Contact Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Handle contact action
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD4A373),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    'Message',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              // Name and Age with Chat Icon
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Kalvin, 23',
-                    style: GoogleFonts.playfairDisplay(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFFD4A373).withOpacity(0.5),
-                          width: 2,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                            spreadRadius: 1,
+                      ),
+                      
+                      // About Me section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/svg/profile/Coma.svg',
+                                  height: 18,
+                                  width: 18,
+                                  colorFilter: const ColorFilter.mode(
+                                    Color(0xFFD4A373),
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'About Me',
+                                  style: TextStyle(
+                                    color: Color(0xFFD4A373),
+                                    fontSize: 18,
+                                    fontFamily: 'PlayfairDisplay',
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'I\'m a mix of curiosity and kindness, always up for good conversation, genuine laughs, and new adventures. Life\'s too short for anything less than connections.',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontFamily: 'PlayfairDisplay',
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Photos section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Photos',
+                              style: TextStyle(
+                                color:  Color(0xFFD4A373),
+                                fontSize: 20,
+                                fontFamily: 'PlayfairDisplay',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            // First row of photos
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: 160,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      image: const DecorationImage(
+                                        image: NetworkImage('https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&h=400&fit=crop'),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Container(
+                                    height: 160,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      image: const DecorationImage(
+                                        image: NetworkImage('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&h=400&fit=crop'),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Container(
+                                    height: 160,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      image: const DecorationImage(
+                                        image: NetworkImage('https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=300&h=400&fit=crop'),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            // Second row of photos
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: 160,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      image: const DecorationImage(
+                                        image: NetworkImage('https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=300&h=400&fit=crop'),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Container(
+                                    height: 160,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      image: const DecorationImage(
+                                        image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop'),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(child: SizedBox()), // Empty space to match layout
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Personal Information section
+                      const _InfoSection(
+                        title: 'Personal Information',
+                        titleColor: Color(0xFFD4A373),
+                        items: [
+                          _InfoWithIcon(
+                            icon: 'assets/svg/profile/personal/Group.svg',
+                            text: 'Woman (She/her/hers)',
+                          ),
+                          _InfoWithIcon(
+                            icon: 'assets/svg/profile/personal/single.svg',
+                            text: 'Single',
+                          ),
+                          _InfoWithIcon(
+                            icon: 'assets/svg/profile/personal/height.svg',
+                            text: '171 cm, 64 kg',
+                          ),
+                          _InfoWithIcon(
+                            icon: 'assets/svg/profile/personal/job.svg',
+                            text: 'Fashion designer',
+                          ),
+                          _InfoWithIcon(
+                            icon: 'assets/svg/profile/personal/edu.svg',
+                            text: 'Oxford brookes university',
+                          ),
+                          _InfoWithIcon(
+                            icon: 'assets/svg/profile/personal/home.svg',
+                            text: 'California, USA',
                           ),
                         ],
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: SvgPicture.asset(
-                          'assets/svg/Chat.svg',
-                          width: 20,
-                          height: 20,
-                          colorFilter: const ColorFilter.mode(
-                            Colors.white,
-                            BlendMode.srcIn,
-                          ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Divider line
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                        height: 1,
+                        color: const Color(0xFF594430),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Personal Traits section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Personal Traits',
+                              style: TextStyle(
+                                color: Color(0xFFD4A373),
+                                fontSize: 20,
+                                fontFamily: 'PlayfairDisplay',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(child: _buildTraitBadge('Ambition')),
+                                const SizedBox(width: 10),
+                                Expanded(child: _buildTraitBadge('Confidence')),
+                                const SizedBox(width: 10),
+                                Expanded(child: _buildTraitBadge('Generosity')),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(child: _buildTraitBadge('Humility')),
+                                const SizedBox(width: 10),
+                                Expanded(child: _buildTraitBadge('Kindness')),
+                                const SizedBox(width: 10),
+                                Expanded(child: _buildTraitBadge('Loyalty')),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Location
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    color: Colors.white.withOpacity(0.7),
-                    size: 16,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '5 km away',
-                    style: GoogleFonts.playfairDisplay(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-              
-              // Divider
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                child: Divider(
-                  color: const Color(0xFFD4A373).withOpacity(0.5),
-                  height: 1,
-                  thickness: 1,
-                ),
-              ),
-              
-              // Next section
-              const SizedBox(height: 20),
-              
-              // Looking for
-              Text(
-                'Looking for',
-                style: GoogleFonts.playfairDisplay(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 14,
-                ),
-              ),
-              
-              const SizedBox(height: 8),
-              
-              // Casual Connection Tag
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  'Casual Connection',
-                  style: GoogleFonts.playfairDisplay(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                      
+                      const SizedBox(height: 28),
+                      
+                      // Basics section
+                      const _DetailSection(
+                        title: 'Basics',
+                        titleColor: const Color(0xFFD4A373),
+                        items: [
+                          _DetailItem(label: 'Zodiac', value: 'Leo'),
+                          _DetailItem(label: 'Education', value: 'Bachelor'),
+                          _DetailItem(label: 'Religion', value: 'Christian'),
+                          _DetailItem(label: 'Job', value: 'UX/UI designer'),
+                          _DetailItem(label: 'Yearly income', value: '\$100,000'),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 28),
+                      
+                      // Lifestyle section
+                      const _DetailSection(
+                        title: 'Lifestyle',
+                        titleColor: const Color(0xFFD4A373),
+                        items: [
+                          _DetailItem(label: 'Sleeping style', value: 'Night owl'),
+                          _DetailItem(label: 'Love style', value: 'Thoughtful gestures'),
+                          _DetailItem(label: 'Weekends', value: 'Relaxing home'),
+                          _DetailItem(label: 'Traveling', value: 'Occasionally'),
+                          _DetailItem(label: 'Home environment', value: 'Quiet and clean'),
+                          _DetailItem(label: 'Living Space', value: 'Very organized'),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 28),
+                      
+                      // Habits section
+                      const _DetailSection(
+                        title: 'Habits',
+                        titleColor: const Color(0xFFD4A373),
+                        items: [
+                          _DetailItem(label: 'Communication Style', value: 'Good texter'),
+                          _DetailItem(label: 'Workout', value: 'Rarely'),
+                          _DetailItem(label: 'Eating style', value: 'Balanced'),
+                          _DetailItem(label: 'Social media', value: 'Frequently'),
+                          _DetailItem(label: 'Smoke/drink', value: 'Occasionally'),
+                          _DetailItem(label: 'Sleep schedule', value: 'Sometimes'),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 100),
+                    ],
                   ),
                 ),
               ),
-              
-              const SizedBox(height: 16),
-              
-              // Dummy Options
-              _buildOptionRow(
-                icon: Icons.coffee,
-                title: 'Coffee & Chat',
-                description: 'Grab a casual coffee and get to know each other',
-              ),
-              
-              const SizedBox(height: 12),
-              
-              _buildOptionRow(
-                icon: Icons.hiking,
-                title: 'Outdoor Activities',
-                description: 'Hiking, cycling, or just a walk in the park',
-              ),
-              
-              const SizedBox(height: 12),
-              
-              _buildOptionRow(
-                icon: Icons.sports_esports,
-                title: 'Gaming',
-                description: 'Casual gaming sessions or board games',
-              ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTraitBadge(String trait) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF21293F),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          trait,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontFamily: 'PlayfairDisplay',
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
+    );
+  }
+}
+
+class _InfoSection extends StatelessWidget {
+  final String title;
+  final List<Widget> items;
+  final Color titleColor;
+
+  const _InfoSection({
+    required this.title,
+    required this.items,
+    this.titleColor = const Color(0xFFD4A373),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: titleColor,
+              fontSize: 20,
+              fontFamily: 'PlayfairDisplay',
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...items,
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoWithIcon extends StatelessWidget {
+  final String icon;
+  final String text;
+
+  const _InfoWithIcon({
+    required this.icon,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Row(
+        children: [
+          SvgPicture.asset(
+            icon,
+            height: 20,
+            width: 20,
+            colorFilter: const ColorFilter.mode(
+              Color(0xFFB6B6B6),
+              BlendMode.srcIn,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontFamily: 'PlayfairDisplay',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailSection extends StatelessWidget {
+  final String title;
+  final List<Widget> items;
+  final Color titleColor;
+
+  const _DetailSection({
+    required this.title,
+    required this.items,
+    this.titleColor = const Color(0xFFD4A373),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: titleColor,
+              fontSize: 20,
+              fontFamily: 'PlayfairDisplay',
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF21293F),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                for (int i = 0; i < items.length; i++) ...[
+                  items[i],
+                  if (i < items.length - 1)
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      height: 1,
+                      color: Colors.white.withOpacity(0.1),
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailItem extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DetailItem({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white60,
+            fontSize: 14,
+            fontFamily: 'PlayfairDisplay',
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontFamily: 'PlayfairDisplay',
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

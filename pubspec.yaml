@@ -97,6 +97,14 @@ flutter:
     - assets/svg/profile/phone.svg
     - assets/svg/profile/mail.svg
     - assets/svg/profile/delete.svg
+    - assets/svg/profile/Coma.svg
+    - assets/svg/profile/personal/home.svg
+    - assets/svg/profile/personal/edu.svg
+    - assets/svg/profile/personal/job.svg
+    - assets/svg/profile/personal/height.svg
+    - assets/svg/profile/personal/Group.svg
+    - assets/svg/profile/personal/single.svg
+    - assets/svg/profile/personal/left_arrow_5.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
