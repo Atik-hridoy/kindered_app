@@ -161,19 +161,22 @@ class _ProfileViewState extends State<ProfileView> {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF21293F), // #21293F
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFD4A373)),
-          ),
-          child: const Text(
-            'Profile Details',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+        GestureDetector(
+          onTap: () => Get.toNamed(AppRoutes.editProfile),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF21293F), // #21293F
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFD4A373)),
+            ),
+            child: const Text(
+              'Profile Details',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ),
@@ -194,10 +197,11 @@ class _ProfileViewState extends State<ProfileView> {
   List<Widget> _buildListTileOptions() {
     return [
       _buildListTile('assets/svg/profile/setting.svg', 'Setting', () => Get.toNamed(AppRoutes.accountSettingView)),
-      _buildListTile('assets/svg/profile/location.svg', 'Location', () {}),
-      _buildListTile('assets/svg/profile/terms.svg', 'Terms and Conditions', () {}),
-      _buildListTile('assets/svg/profile/informations.svg', 'About', () {}),
-      _buildListTile('assets/svg/profile/faq.svg', 'Help and Support', () {}),
+      _buildListTile('assets/svg/profile/location.svg', 'Location', () => Get.toNamed(AppRoutes.newLocationView)),
+      _buildListTile('assets/svg/profile/terms.svg', 'Terms and Conditions', 
+          () => Get.toNamed(AppRoutes.termsAndConditions)),
+      _buildListTile('assets/svg/profile/informations.svg', 'About', () => Get.toNamed(AppRoutes.aboutUsView)),
+      _buildListTile('assets/svg/profile/faq.svg', 'Help and Support', () => Get.toNamed(AppRoutes.helpSupportView)),
       _buildListTile('assets/svg/profile/log out.svg', 'Logout', () {}),
     ];
   }

@@ -34,7 +34,12 @@ import 'package:kindered_app/modules/profile_and_settings/view/number_verify_vie
 import 'package:kindered_app/modules/home/view/message_view.dart';
 import 'package:kindered_app/modules/home/view/chat_view.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/display_profile.dart';
-
+import 'package:kindered_app/modules/profile_and_settings/view/edit_profile.dart';
+import 'package:kindered_app/modules/profile_and_settings/view/about_us.dart';
+import 'package:kindered_app/modules/profile_and_settings/view/help_support.dart';
+import 'package:kindered_app/modules/profile_and_settings/view/terms_condition.dart';
+import 'package:kindered_app/modules/location/location_view.dart' as location_module;
+import 'package:kindered_app/modules/profile_and_settings/view/location_vieww.dart' as settings_module;
 
 class AppRoutes {
   // Route names
@@ -67,6 +72,12 @@ class AppRoutes {
   static const String messageView = '/message_view';
   static const String chat = '/chat';
   static const String displayProfile = '/display-profile_view';
+  static const String editProfile = '/edit-profile_view';
+  static const String termsConditionView = '/terms_condition_view';
+  static const String newLocationView = '/new_location_view';
+  static const String aboutUsView = '/about_us_view';
+  static const String helpSupportView = '/help-support';
+  static const String termsAndConditions = '/terms-and-conditions';
 
   // Route getters
 
@@ -98,6 +109,11 @@ class AppRoutes {
   static String getMessageViewRoute() => messageView;
   static String getChatViewRoute() => chat;
   static String getDisplayProfileRoute() => displayProfile;
+  static String getEditProfileRoute() => editProfile;
+  static String getTermsConditionViewRoute() => termsConditionView;
+  static String getNewLocationViewRoute() => newLocationView;
+  static String getAboutUsViewRoute() => aboutUsView;
+  static String getHelpSupportViewRoute() => helpSupportView;
 
   // Route definitions
   static final List<GetPage> routes = [
@@ -193,8 +209,13 @@ class AppRoutes {
     ),
     GetPage(
       name: locationView,
-      page: () => const LocationView(),
+      page: () => const location_module.LocationView(),
       binding: LocationBinding(),
+    ),
+    GetPage(
+      name: locationView,
+      page: () => const settings_module.LocationView(),
+      binding: ProfileAndStettings(),
     ),
     GetPage(
       name: homeSuggestionView,
@@ -238,6 +259,32 @@ class AppRoutes {
       name: chat,
       page: () => const ChatConversationView(),
       binding: HomeBinding(),
+    ),
+    GetPage(
+      name: editProfile,
+      page: () => EditProfile(),
+      binding: ProfileAndStettings(),
+    ),
+    GetPage(
+      name: termsAndConditions,
+      page: () => const TermsAndConditions(),
+      binding: ProfileAndStettings(),
+    ),
+    GetPage(
+      name: newLocationView,
+      page: () => const LocationView(),
+      binding: ProfileAndStettings(),
+    ),
+    
+    GetPage(
+      name: aboutUsView,
+      page: () => const AboutUsView(),
+      binding: ProfileAndStettings(),
+    ),
+    GetPage(
+      name: helpSupportView,
+      page: () => const HelpSupportView(),
+      binding: ProfileAndStettings(),
     ),
   ];
 }

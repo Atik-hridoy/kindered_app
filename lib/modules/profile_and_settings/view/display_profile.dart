@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
 import 'package:kindered_app/config/app_routes.dart';
+import '../controller/display_profile_controller.dart';
 
-class DisplayProfileView extends StatelessWidget {
+class DisplayProfileView extends GetView<DisplayProfileController> {
   const DisplayProfileView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Initialize the controller
+    Get.put(DisplayProfileController());
+    
     return Scaffold(
       backgroundColor: const Color(0xFF2E3A59),
       body: SafeArea(
@@ -64,7 +69,7 @@ class DisplayProfileView extends StatelessWidget {
                               color: Colors.black.withOpacity(0.3),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
-                            ),
+                            )
                           ],
                           image: const DecorationImage(
                             image: NetworkImage('https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=600&fit=crop&crop=face'),
@@ -78,15 +83,15 @@ class DisplayProfileView extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Align(
                           alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Kalvin, 23',
-                            style: TextStyle(
+                          child: Obx(() => Text(
+                            '${controller.name.value}, ${controller.age.value}',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 32,
                               fontFamily: 'PlayfairDisplay',
                               fontWeight: FontWeight.bold,
                             ),
-                          ),
+                          )),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -102,14 +107,14 @@ class DisplayProfileView extends StatelessWidget {
                               size: 16,
                             ),
                             const SizedBox(width: 4),
-                            const Text(
-                              '5 km away',
-                              style: TextStyle(
+                            Obx(() => Text(
+                              controller.location.value,
+                              style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 14,
                                 fontFamily: 'inter',
                               ),
-                            ),
+                            )),
                             const Spacer(),
                             Transform.translate(
                               offset: const Offset(0, -40),
@@ -186,18 +191,15 @@ class DisplayProfileView extends StatelessWidget {
                       // Casual Connection
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Casual Connection',
-                          style: TextStyle(
+                        child: Obx(() => Text(
+                          controller.bio.value,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontFamily: 'PlayfairDisplay',
                             fontWeight: FontWeight.w500,
                           ),
-                        ),
-                        ),
+                        )),
                       ),
                       
                       // About Me section
@@ -238,7 +240,7 @@ class DisplayProfileView extends StatelessWidget {
                                 fontFamily: 'PlayfairDisplay',
                                 height: 1.5,
                               ),
-                            ),
+                            )
                           ],
                         ),
                       ),
@@ -254,7 +256,7 @@ class DisplayProfileView extends StatelessWidget {
                             const Text(
                               'Photos',
                               style: TextStyle(
-                                color:  Color(0xFFD4A373),
+                                color: Color(0xFFD4A373),
                                 fontSize: 20,
                                 fontFamily: 'PlayfairDisplay',
                                 fontWeight: FontWeight.bold,
@@ -282,7 +284,7 @@ class DisplayProfileView extends StatelessWidget {
                                     height: 160,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(16),
-                                      image: const DecorationImage(
+image: const DecorationImage(
                                         image: NetworkImage('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&h=400&fit=crop'),
                                         fit: BoxFit.cover,
                                       ),
@@ -430,7 +432,7 @@ class DisplayProfileView extends StatelessWidget {
                       // Basics section
                       const _DetailSection(
                         title: 'Basics',
-                        titleColor: const Color(0xFFD4A373),
+                        titleColor: Color(0xFFD4A373),
                         items: [
                           _DetailItem(label: 'Zodiac', value: 'Leo'),
                           _DetailItem(label: 'Education', value: 'Bachelor'),

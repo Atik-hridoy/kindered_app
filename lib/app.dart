@@ -20,7 +20,9 @@ import 'package:kindered_app/modules/home/view/message_view.dart';
 import 'package:kindered_app/modules/home/view/home_suggestion_view.dart';
 import 'package:kindered_app/modules/location/bindings.dart';
 import 'package:kindered_app/modules/location/location_view.dart';
+import 'package:kindered_app/modules/profile_and_settings/bindings/bindings.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/account_setting.dart';
+import 'package:kindered_app/modules/profile_and_settings/view/edit_profile.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/profile_view.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/update_phon_number_view.dart';
 import 'config/app_routes.dart';
@@ -159,6 +161,12 @@ class MyApp extends StatelessWidget {
           page: () => const MessageView(),
           binding: HomeBinding(),
         ),
+        GetPage(
+          name: AppRoutes.editProfile,
+          page: () => EditProfile(),
+          binding: ProfileAndStettings(),
+        ),
+        
       ],
       defaultTransition: Transition.fade,
     );
