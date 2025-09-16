@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../../app.dart' as app;
-import '../utils/app_logger.dart';
+import '../../../app.dart' as app;
+import '../../utils/app_logger.dart';
 
 class AppErrorHandler {
   static void setup() {

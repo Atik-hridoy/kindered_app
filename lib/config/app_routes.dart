@@ -12,6 +12,7 @@ import 'package:kindered_app/modules/acccounts_setting/view/choice_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/interest_view.dart';
 import 'package:kindered_app/modules/auth/views/create_account_view.dart';
 import 'package:kindered_app/modules/auth/views/extended_login_view.dart';
+import 'package:kindered_app/modules/auth/views/login_with_email.dart';
 import 'package:kindered_app/modules/auth/views/otp_view.dart';
 import 'package:kindered_app/modules/home/bindings.dart';
 import 'package:kindered_app/modules/location/bindings.dart';
@@ -78,6 +79,7 @@ class AppRoutes {
   static const String aboutUsView = '/about_us_view';
   static const String helpSupportView = '/help-support';
   static const String termsAndConditions = '/terms-and-conditions';
+  static const String loginWithEmail = '/login-with-email';
 
   // Route getters
 
@@ -285,6 +287,11 @@ class AppRoutes {
       name: helpSupportView,
       page: () => const HelpSupportView(),
       binding: ProfileAndStettings(),
+    ),
+    GetPage(
+      name: loginWithEmail,
+      page: () => const LoginWithEmail(),
+      binding: AuthBinding(),
     ),
   ];
 }

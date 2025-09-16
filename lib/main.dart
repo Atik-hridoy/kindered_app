@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/config/app_themes.dart';
-import 'package:kindered_app/core/error/app_error_handler.dart';
+import 'package:kindered_app/core/logger/error/app_error_handler.dart';
 import 'package:kindered_app/core/localization/app_localization.dart';
 import 'package:kindered_app/core/localization/app_strings.dart';
 
@@ -43,8 +43,8 @@ class MyApp extends StatelessWidget {
   title: AppStrings.appName,
   debugShowCheckedModeBanner: false,
   theme: AppTheme.lightTheme,
-  //initialRoute: AppRoutes.splash,
-  initialRoute: AppRoutes.homeSuggestionView,
+  initialRoute: AppRoutes.splash,
+  //initialRoute: AppRoutes.homeSuggestionView,
   getPages: AppRoutes.routes,
   translations: AppStrings(),
   locale: AppLocalization.getDeviceLocale(),
