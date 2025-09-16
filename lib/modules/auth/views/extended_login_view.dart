@@ -161,7 +161,7 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
                                   ),
                                   child: ElevatedButton(
                                     onPressed: () {
-                                      Get.toNamed(AppRoutes.createAccount);
+                                      Get.toNamed(AppRoutes.loginWithEmail);
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,

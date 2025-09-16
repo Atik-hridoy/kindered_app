@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kindered_app/core/localization/app_strings.dart';
-import 'package:kindered_app/modules/auth/controllers/create_account_view_controller.dart';
+import 'package:kindered_app/modules/auth/controllers/login_email_controller.dart';
+
 import 'package:kindered_app/modules/auth/widget_button.dart';
 
-class CreateAccountView extends GetView<CreateAccountViewController> {
-  const CreateAccountView({super.key});
+class LoginWithEmail extends GetView<LoginEmailController> {
+  const LoginWithEmail({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +75,7 @@ class CreateAccountView extends GetView<CreateAccountViewController> {
                       ),
                       SizedBox(height: 16),
                       Text(
-                        'Creating your account...',
+                        'Sending OTP...',
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ],
@@ -184,8 +185,8 @@ class CreateAccountView extends GetView<CreateAccountViewController> {
           minWidth: isSmallScreen ? 280 : 335,
         ),
         child: Obx(() => AuthCtaButton(
-              text: controller.isLoading.value ? 'Creating...' : AppStrings.continueText,
-              onPressed: controller.isLoading.value ? () {} : controller.onNextPressed,
+              text: controller.isLoading.value ? 'Logging in...' : AppStrings.continueText,
+              onPressed: controller.isLoading.value ? () {} : () => controller.login(),
               style: AuthButtonStyle.filled,
             )
             ),

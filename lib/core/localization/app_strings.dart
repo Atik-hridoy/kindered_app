@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 
 class AppStrings extends Translations {
+  static var emailTitle;
+
   @override
   Map<String, Map<String, String>> get keys => {
         'en_US': {
@@ -12,7 +14,7 @@ class AppStrings extends Translations {
           'cancel': 'Cancel',
           'error': 'Error',
           'success': 'Success',
-          'phoneNumberTitle': 'Can we get your phone number',
+          'emailTitle': 'Can we get your Email, please?',
           'please': 'Please?',
           'enterPhoneNumber': 'Enter phone number',
           'phoneVerificationMessage': 'We will send you a verification code to verify your phone number.',
@@ -22,7 +24,7 @@ class AppStrings extends Translations {
           'resendCodePrompt': "Didn't receive the code? ",
           'resend': 'Resend Code',
           'verify': 'Verify',
-          'verifyYourEmail': 'Verify Your Email',
+          'verifyYourEmail': 'Can we get your Email, please?',
           'enterOtp': 'Enter the 4-digit code sent to',
           'resendCode': 'Resend Code',
           'didntReceiveCode': "Didn't receive a code?",
@@ -120,7 +122,7 @@ class AppStrings extends Translations {
   static String get please => 'please'.tr;
   static String get enterPhoneNumber => 'enter Phone Number'.tr;
   static String get continueText => 'Continue'.tr;
-  static String get verifyYourEmail => 'verify Your Email'.tr;
+  static String get verifyYourEmail => 'Can we get your Email, please?'.tr;
   static String get enterOtp => 'enter Otp'.tr;
   static String get resendCode => 'resend Code'.tr;
   static String get didntReceiveCode => 'didnt Receive Code'.tr;
