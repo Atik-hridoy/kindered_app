@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kindered_app/config/app_routes.dart';
-import 'package:kindered_app/modules/acccounts_setting/controller/like_to_do_view_controller.dart';
+import '../controller/accounts_controller.dart';
 import '../widget/progress_bar.dart';
 import '../widget/button.dart';
 import '../widget/custom_pill_checkbox.dart';
 
-class LikeToDoView extends GetView<LikeToDoController> {
+class LikeToDoView extends GetView<AccountsController> {
   const LikeToDoView({super.key});
 
   Widget _buildQuestionSection(String question, String category) {
-    final controller = Get.find<LikeToDoController>();
+    final controller = Get.find<AccountsController>();
     return Obx(() => Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
@@ -36,15 +36,15 @@ class LikeToDoView extends GetView<LikeToDoController> {
               Wrap(
                 spacing: 10,
                 runSpacing: 12,
-                children: controller.options[category]!.asMap().entries.map((entry) {
+                children: controller.likeToDoOptions[category]!.asMap().entries.map((entry) {
                   final idx = entry.key;
                   final option = entry.value;
-                  final isSelected = controller.selectedOptions[category]!.contains(idx);
+                  final isSelected = controller.selectedLikeToDoOptions[category]!.contains(idx);
 
                   return CustomPillCheckbox(
                     text: option,
                     isSelected: isSelected,
-                    onChanged: (_) => controller.toggleOption(category, idx),
+                    onChanged: (_) => controller.toggleLikeToDoOption(category, idx),
                     selectedOpacity: 0.8,
                     textStyle: GoogleFonts.playfairDisplay(
                       color: Colors.white,
@@ -62,7 +62,7 @@ class LikeToDoView extends GetView<LikeToDoController> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(LikeToDoController());
+    final controller = Get.find<AccountsController>();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -120,8 +120,8 @@ class LikeToDoView extends GetView<LikeToDoController> {
         padding: const EdgeInsets.all(20),
         child: Obx(() => CustomGradientButton(
               text: 'Next',
-              enabled: controller.isCompleted,
-              onPressed: controller.isCompleted ? () => Get.toNamed(AppRoutes.visualStoryView) : null,
+              enabled: controller.isLikeToDoCompleted,
+              onPressed: controller.isLikeToDoCompleted ? () => Get.toNamed(AppRoutes.visualStoryView) : null,
             )),
       ),
     );

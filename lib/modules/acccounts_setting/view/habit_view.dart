@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kindered_app/config/app_routes.dart';
-import '../controller/habit_controller.dart';
+import '../controller/accounts_controller.dart';
 import '../widget/progress_bar.dart';
 import '../widget/button.dart';
 import '../widget/custom_pill_checkbox.dart';
 
-class HabitView extends GetView<HabitController> {
+class HabitView extends GetView<AccountsController> {
   const HabitView({super.key});
 
   Widget _buildQuestion(String question) => Text(
@@ -67,7 +67,7 @@ class HabitView extends GetView<HabitController> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(HabitController());
+    final controller = Get.find<AccountsController>();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -124,8 +124,8 @@ class HabitView extends GetView<HabitController> {
         padding: const EdgeInsets.all(20),
         child: Obx(() => CustomGradientButton(
               text: 'Next',
-              enabled: controller.isCompleted,
-              onPressed: controller.isCompleted ? () => Get.toNamed(AppRoutes.likeToDoView) : null,
+              enabled: controller.areHabitsCompleted,
+              onPressed: controller.areHabitsCompleted ? () => Get.toNamed(AppRoutes.likeToDoView) : null,
             )),
       ),
     );

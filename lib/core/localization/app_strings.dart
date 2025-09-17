@@ -135,6 +135,7 @@ class AppStrings extends Translations {
   static String get verify => 'verify'.tr;
   
   // Account Settings Getters
+  static String get accountSetup => 'Account Setup'.tr;
   static String get thatsGreatAlex => "That's Great, Alex".tr;
   static String get whichGenderDescribeYouTheBest => 'which Gender Describe You The Best?'.tr;
   static String get letsStartWithIntro => 'let\'s Start With Intro'.tr;

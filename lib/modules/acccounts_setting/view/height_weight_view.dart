@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kindered_app/config/app_routes.dart';
-import 'package:kindered_app/modules/acccounts_setting/controller/height_weight_controller.dart';
+import 'package:kindered_app/modules/acccounts_setting/controller/accounts_controller.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/input_box.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 
-class HeightWeightView extends GetView<HeightWeightController> {
+class HeightWeightView extends GetView<AccountsController> {
   HeightWeightView({super.key});
 
   @override
-  final HeightWeightController controller = Get.put(HeightWeightController());
+  final AccountsController controller = Get.find<AccountsController>();
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +46,7 @@ class HeightWeightView extends GetView<HeightWeightController> {
             CustomInputField(
               controller: controller.heightController,
               hintText: 'Enter your height',
-              onChanged: (_) => controller.validateInputs(),
+              onChanged: (_) => controller.validateHeightWeightInputs(),
             ),
             const SizedBox(height: 20),
             // Weight Input
@@ -55,7 +55,7 @@ class HeightWeightView extends GetView<HeightWeightController> {
             CustomInputField(
               controller: controller.weightController,
               hintText: 'Enter your weight',
-              onChanged: (_) => controller.validateInputs(),
+              onChanged: (_) => controller.validateHeightWeightInputs(),
             ),
           ],
         ),
@@ -65,8 +65,8 @@ class HeightWeightView extends GetView<HeightWeightController> {
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
           child: CustomGradientButton(
             text: 'Next',
-            enabled: controller.areInputsValid,
-            onPressed: controller.areInputsValid
+            enabled: controller.areHeightWeightValid,
+            onPressed: controller.areHeightWeightValid
                 ? () => Get.toNamed(AppRoutes.educationView)
                 : null,
           ),

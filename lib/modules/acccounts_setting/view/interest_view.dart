@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kindered_app/config/app_routes.dart';
-import 'package:kindered_app/modules/acccounts_setting/controller/interest_view_controller.dart';
+import '../controller/accounts_controller.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/checkbox_muilti.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 
-class InterestView extends GetView<InterestViewController> {
+class InterestView extends GetView<AccountsController> {
   InterestView({super.key});
 
   @override
-  final InterestViewController controller = Get.put(InterestViewController());
+  final AccountsController controller = Get.find<AccountsController>();
 
   @override
   Widget build(BuildContext context) {
@@ -53,8 +53,8 @@ class InterestView extends GetView<InterestViewController> {
                   return Obx(
                     () => CustomCheckboxMulty(
                       label: '${option['title']!}\n${option['description']!}',
-                      isSelected: controller.selectedIndices.contains(index),
-                      onTap: () => controller.toggleSelection(index),
+                      isSelected: controller.selectedInterestIndices.contains(index),
+                      onTap: () => controller.toggleInterestSelection(index),
                       selectedColor: const Color(0xFFD4A574).withOpacity(0.8),
                       unselectedColor: Colors.transparent,
                       textColor: const Color(0xFFD4A373),
@@ -74,9 +74,9 @@ class InterestView extends GetView<InterestViewController> {
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
           child: Obx(
             () => CustomGradientButton(
-              onPressed: controller.selectedIndices.isNotEmpty
+              onPressed: controller.selectedInterestIndices.isNotEmpty
                   ? () {
-                      final error = controller.validateSelections();
+                      final error = controller.validateInterestSelections();
                       if (error != null) {
                         Get.snackbar(
                           'Error',

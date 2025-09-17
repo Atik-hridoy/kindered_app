@@ -5,43 +5,14 @@ import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/checkbox.dart';
+import '../controller/accounts_controller.dart';
 
-
-class InspireView extends StatefulWidget {
+class InspireView extends GetView<AccountsController> {
   const InspireView({Key? key}) : super(key: key);
 
   @override
-  State<InspireView> createState() => _InspireViewState();
-}
-
-class _InspireViewState extends State<InspireView> {
-  final List<String> traits = [
-    'Ambition',
-    'Emotional inteligence',
-    'Curiosity',
-    'Humble',
-    'Witty',
-    'Loyal',
-    'Kind',
-    'Humour',
-  ];
-  
-  final Set<int> selectedIndices = {};
-  
-  bool get isButtonEnabled => selectedIndices.length >= 3;
-  
-  void toggleTrait(int index) {
-    setState(() {
-      if (selectedIndices.contains(index)) {
-        selectedIndices.remove(index);
-      } else {
-        selectedIndices.add(index);
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.find<AccountsController>();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -92,41 +63,44 @@ class _InspireViewState extends State<InspireView> {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: traits.length,
+              itemCount: controller.traits.length,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 return CustomCheckbox(
-                  label: traits[index],
-                  isSelected: selectedIndices.contains(index),
-                  onTap: () => toggleTrait(index),
+                  label: controller.traits[index],
+                  isSelected: controller.selectedTraitIndices.contains(index),
+                  onTap: () => controller.toggleTrait(index),
                   titleFontSize: 16.0,
                   descriptionFontSize: 14.0,
                 );
               },
             ),
             const SizedBox(height: 24),
-            if (selectedIndices.isNotEmpty && selectedIndices.length < 3)
-              Text(
-                'Select ${3 - selectedIndices.length} more to continue',
-                style: GoogleFonts.playfairDisplay(
-                  color: Colors.amber[300],
-                  fontSize: 14.0,
-                ),
-              ),
+            Obx(() {
+              if (controller.selectedTraitIndices.isNotEmpty && controller.selectedTraitIndices.length < 3)
+                return Text(
+                  'Select ${3 - controller.selectedTraitIndices.length} more to continue',
+                  style: GoogleFonts.playfairDisplay(
+                    color: Colors.amber[300],
+                    fontSize: 14.0,
+                  ),
+                );
+              return const SizedBox.shrink();
+            }),
           ],
         ),
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 8.0, bottom: 50.0),
         color: Theme.of(context).scaffoldBackgroundColor,
-        child: CustomGradientButton(
+        child: Obx(() => CustomGradientButton(
           text: 'Next',
-          onPressed: isButtonEnabled ? () {
+          onPressed: controller.isInspireButtonEnabled ? () {
             // Navigate to Faith/Belief view
             Get.toNamed(AppRoutes.faithBeliefView);
           } : null,
-          enabled: isButtonEnabled,
-        ),
+          enabled: controller.isInspireButtonEnabled,
+        )),
       ),
     );
   }

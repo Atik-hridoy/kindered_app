@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kindered_app/config/app_routes.dart';
-import 'package:kindered_app/modules/acccounts_setting/controller/education_controller.dart';
+import 'package:kindered_app/modules/acccounts_setting/controller/accounts_controller.dart';
+//import 'package:kindered_app/modules/acccounts_setting/controller/education_controller.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/input_box.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 
-class EducationView extends GetView<EducationController> {
-  final EducationController controller = Get.put(EducationController());
+class EducationView extends GetView<AccountsController> {
+  final AccountsController controller = Get.find<AccountsController>();
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +64,7 @@ class EducationView extends GetView<EducationController> {
             CustomInputField(
               controller: controller.educationController,
               hintText: 'e.g., High School, Bachelor\'s Degree',
-              onChanged: (_) => controller.validateInputs(),
+              onChanged: (_) => controller.validateEducationInputs(),
             ),
             const SizedBox(height: 20),
             
@@ -73,7 +74,7 @@ class EducationView extends GetView<EducationController> {
             CustomInputField(
               controller: controller.jobStatusController,
               hintText: 'e.g., Employed, Student, Self-employed',
-              onChanged: (_) => controller.validateInputs(),
+              onChanged: (_) => controller.validateEducationInputs(),
             ),
             const SizedBox(height: 20),
             
@@ -83,7 +84,7 @@ class EducationView extends GetView<EducationController> {
             CustomInputField(
               controller: controller.incomeController,
               hintText: 'e.g., 50000 or 50,000',
-              onChanged: (_) => controller.validateInputs(),
+              onChanged: (_) => controller.validateEducationInputs(),
             ),
             const SizedBox(height: 20),
           ],
@@ -94,8 +95,8 @@ class EducationView extends GetView<EducationController> {
         color: Theme.of(context).scaffoldBackgroundColor,
         child: CustomGradientButton(
           text: 'Next',
-          enabled: controller.isButtonEnabled.value,
-          onPressed: controller.isButtonEnabled.value
+          enabled: controller.isEducationButtonEnabled.value,
+          onPressed: controller.isEducationButtonEnabled.value
               ? () => Get.toNamed(AppRoutes.inspireView)
               : null,
         ),

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kindered_app/config/app_routes.dart';
-import 'package:kindered_app/modules/acccounts_setting/controller/choice_view_controller.dart';
+import 'package:kindered_app/modules/acccounts_setting/controller/accounts_controller.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/checkbox.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 
-class ChoiceView extends GetView<ChoiceViewController> {
+class ChoiceView extends GetView<AccountsController> {
   final List<String> genderOptions = [
     'Men',
     'Women',
@@ -19,7 +19,7 @@ class ChoiceView extends GetView<ChoiceViewController> {
   ChoiceView({super.key});
 
   @override
-  final ChoiceViewController controller = Get.put(ChoiceViewController());
+  final AccountsController controller = Get.find<AccountsController>();
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +68,7 @@ class ChoiceView extends GetView<ChoiceViewController> {
                   child: Obx(
                     () => CustomCheckbox(
                       label: gender,
-                      isSelected: controller.isGenderSelected(gender),
+                      isSelected: controller.isGenderSelectedInList(gender),
                       onTap: () => controller.toggleGender(gender),
                       titleFontSize: 12.0,
                       descriptionFontSize: 10.0,
@@ -90,7 +90,7 @@ class ChoiceView extends GetView<ChoiceViewController> {
                       fontWeight: FontWeight.w600,
                     ),
                     onPressed: () {
-                      final error = controller.validateSelections();
+                      final error = controller.validateGenderSelections();
                       if (error != null) {
                         Get.snackbar('Error', error,
                             snackPosition: SnackPosition.BOTTOM,

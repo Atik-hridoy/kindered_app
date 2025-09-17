@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kindered_app/modules/acccounts_setting/controller/intro_view_controller.dart';
 import 'package:kindered_app/core/localization/app_strings.dart';
+import '../controller/accounts_controller.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/input_box.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 
-class IntroView extends GetView<IntroViewController> {
+class IntroView extends GetView<AccountsController> {
   final _formKey = GlobalKey<FormState>();
 
-  IntroView({super.key}) {
-    Get.put(IntroViewController());
-  }
+  IntroView({super.key});
 
   @override
   Widget build(BuildContext context) {

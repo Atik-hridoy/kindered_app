@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kindered_app/config/app_routes.dart';
-import '../controller/lifestyle_controller.dart';
+import '../controller/accounts_controller.dart';
 import '../widget/progress_bar.dart';
 import '../widget/button.dart';
 import '../widget/custom_pill_checkbox.dart';
 
-class LifestyleView extends GetView<LifestyleController> {
+class LifestyleView extends GetView<AccountsController> {
   const LifestyleView({super.key});
 
   Widget _buildQuestion(String text) {
@@ -50,7 +50,7 @@ class LifestyleView extends GetView<LifestyleController> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(LifestyleController());
+    final controller = Get.find<AccountsController>();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -120,8 +120,8 @@ class LifestyleView extends GetView<LifestyleController> {
         padding: const EdgeInsets.all(20),
         child: Obx(() => CustomGradientButton(
               text: 'Next',
-              enabled: controller.isCompleted,
-              onPressed: controller.isCompleted
+              enabled: controller.isLifestyleCompleted,
+              onPressed: controller.isLifestyleCompleted
                   ? () => Get.toNamed(AppRoutes.habitView)
                   : null,
             )),

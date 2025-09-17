@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kindered_app/core/localization/app_strings.dart';
-import 'package:kindered_app/modules/acccounts_setting/controller/gender_view_controller.dart';
+import 'package:kindered_app/modules/acccounts_setting/controller/accounts_controller.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/checkbox.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 import 'package:kindered_app/config/app_routes.dart';
 
-class GenderView extends GetView<GenderViewController> {
+class GenderView extends GetView<AccountsController> {
   final _formKey = GlobalKey<FormState>();
 
   GenderView({super.key});
 
   @override
-  final GenderViewController controller = Get.put(GenderViewController());
+  final AccountsController controller = Get.find<AccountsController>();
 
   @override
   Widget build(BuildContext context) {

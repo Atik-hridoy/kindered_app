@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kindered_app/config/app_routes.dart';
-import '../controller/faith_belief_controller.dart';
+import '../controller/accounts_controller.dart';
 import '../widget/progress_bar.dart';
 import '../widget/button.dart';
 
-class FaithBeliefView extends GetView<FaithBeliefController> {
+class FaithBeliefView extends GetView<AccountsController> {
   const FaithBeliefView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(FaithBeliefController());
+    final controller = Get.find<AccountsController>();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -106,8 +106,8 @@ class FaithBeliefView extends GetView<FaithBeliefController> {
             color: Theme.of(context).scaffoldBackgroundColor,
             child: CustomGradientButton(
               text: 'Next',
-              enabled: controller.isCompleted,
-              onPressed: controller.isCompleted
+              enabled: controller.isFaithCompleted,
+              onPressed: controller.isFaithCompleted
                   ? () => Get.toNamed(AppRoutes.lifestyleView)
                   : null,
             ),

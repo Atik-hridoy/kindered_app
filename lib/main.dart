@@ -7,6 +7,7 @@ import 'package:kindered_app/core/localization/app_localization.dart';
 import 'package:kindered_app/core/localization/app_strings.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'modules/acccounts_setting/controller/accounts_controller.dart';
 
 void main() async {
   // Ensure Flutter binding is initialized
@@ -77,7 +78,13 @@ class MyApp extends StatelessWidget {
   debugShowCheckedModeBanner: false,
   theme: AppTheme.lightTheme,
   //initialRoute: AppRoutes.splash,
-  initialRoute: AppRoutes.visualStoryView,
+  initialRoute: AppRoutes.intro,
+  initialBinding: BindingsBuilder(() {
+    // Register a single, permanent AccountsController instance for the whole app
+    if (!Get.isRegistered<AccountsController>()) {
+      Get.put(AccountsController(), permanent: true);
+    }
+  }),
   getPages: AppRoutes.routes,
   translations: AppStrings(),
   locale: AppLocalization.getDeviceLocale(),
