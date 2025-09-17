@@ -19,7 +19,7 @@ class AccountsBinding extends Bindings {
     Get.lazyPut<HabitController>(() => HabitController());
     Get.lazyPut<FaithBeliefController>(() => FaithBeliefController());
     Get.lazyPut<LifestyleController>(() => LifestyleController());
-    Get.lazyPut<LikeToDoViewController>(() => LikeToDoViewController());
+    Get.lazyPut<LikeToDoController>(() => LikeToDoController());
     Get.lazyPut<VisualStoryController>(() => VisualStoryController());
   }
 }

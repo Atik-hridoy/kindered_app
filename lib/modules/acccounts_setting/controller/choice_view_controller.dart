@@ -1,24 +1,29 @@
 import 'package:get/get.dart';
 
 class ChoiceViewController extends GetxController {
-  // Observable variable to track the selected option
-  final RxString selectedOption = ''.obs;
+  /// Observable list for multiple selections
+  final RxList<String> selectedGenders = <String>[].obs;
 
-  // Method to update the selected option
-  void selectOption(String option) {
-    selectedOption.value = option;
+  /// Toggle a gender in the selection list
+  void toggleGender(String gender) {
+    if (selectedGenders.contains(gender)) {
+      selectedGenders.remove(gender);
+    } else {
+      selectedGenders.add(gender);
+    }
   }
 
-  // Method to check if an option is selected
-  bool isOptionSelected(String option) {
-    return selectedOption.value == option;
-  }
+  /// Check if a gender is selected
+  bool isGenderSelected(String gender) => selectedGenders.contains(gender);
 
-  // Method to clear selection
-  void clearSelection() {
-    selectedOption.value = '';
-  }
+  /// Clear all selections
+  void clearSelections() => selectedGenders.clear();
 
-  // Method to validate if an option is selected
-  bool get hasSelectedOption => selectedOption.isNotEmpty;
+  /// Validate selections
+  String? validateSelections() {
+    if (selectedGenders.isEmpty) {
+      return 'Please select at least one option.';
+    }
+    return null;
+  }
 }

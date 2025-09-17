@@ -8,38 +8,21 @@ import 'package:kindered_app/modules/acccounts_setting/widget/input_box.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 
 class HeightWeightView extends GetView<HeightWeightController> {
+  HeightWeightView({super.key});
+
+  @override
   final HeightWeightController controller = Get.put(HeightWeightController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(top: 20.0, left: 20.0),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFFD4A373)),
-            onPressed: () => Get.back(),
-          ),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(35.0),
-          child: Padding(
-            padding: const EdgeInsets.only(top: 10.0, left: 20.0, right: 20.0),
-            child: CustomProgressBar(
-              value: 0.8, // 80% progress
-            ),
-          ),
-        ),
-      ),
+      appBar: _buildAppBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 8.0, bottom: 20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 8),
             Text(
               'What is your height and weight?',
               style: GoogleFonts.playfairDisplay(
@@ -48,67 +31,68 @@ class HeightWeightView extends GetView<HeightWeightController> {
                 color: Colors.white,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
-              "We are glad that you're here, please pick the gender which describes you the best",
+              "Please enter your height and weight",
               style: GoogleFonts.playfairDisplay(
                 fontSize: 16.0,
                 color: Colors.grey[400],
-                height: 1.5,
               ),
             ),
             const SizedBox(height: 32),
             // Height Input
-            Text(
-              'Height (cm)',
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 16.0,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            Text('Height', style: GoogleFonts.playfairDisplay(fontSize: 16, color: Colors.white)),
             const SizedBox(height: 8),
             CustomInputField(
               controller: controller.heightController,
               hintText: 'Enter your height',
-              keyboardType: TextInputType.number,
               onChanged: (_) => controller.validateInputs(),
-              textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 20),
             // Weight Input
-            Text(
-              'Weight (kg)',
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 16.0,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            Text('Weight', style: GoogleFonts.playfairDisplay(fontSize: 16, color: Colors.white)),
             const SizedBox(height: 8),
             CustomInputField(
               controller: controller.weightController,
               hintText: 'Enter your weight',
-              keyboardType: TextInputType.number,
               onChanged: (_) => controller.validateInputs(),
-              textInputAction: TextInputAction.done,
             ),
-            const SizedBox(height: 20),
           ],
         ),
       ),
-      bottomNavigationBar: Obx(() => Container(
-        padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 8.0, bottom: 50.0),
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: CustomGradientButton(
-          text: 'Next',
-          onPressed: controller.areInputsValid ? () {
-            // Navigate to education view
-            Get.toNamed(AppRoutes.educationView);
-          } : null,
-          enabled: controller.areInputsValid,
+      bottomNavigationBar: Obx(
+        () => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+          child: CustomGradientButton(
+            text: 'Next',
+            enabled: controller.areInputsValid,
+            onPressed: controller.areInputsValid
+                ? () => Get.toNamed(AppRoutes.educationView)
+                : null,
+          ),
         ),
-      )),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: Padding(
+        padding: const EdgeInsets.only(top: 20.0, left: 20.0),
+        child: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFFD4A373)),
+          onPressed: () => Get.back(),
+        ),
+      ),
+      bottom: const PreferredSize(
+        preferredSize: Size.fromHeight(35.0),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.0),
+          child: CustomProgressBar(value: 0.42),
+        ),
+      ),
     );
   }
 }

@@ -1,36 +1,32 @@
 import 'package:get/get.dart';
 
-/// Controller for managing the inspire/interest selection screen
-/// 
-/// This controller can be used to handle business logic related to interest
-/// selection, API calls, and state management when needed in the future.
 class InspireController extends GetxController {
-  // Reactive state for selected interests
-  final RxList<String> selectedInterests = <String>[].obs;
-  
-  // List of available interests
- 
+  final traits = [
+    'Ambition',
+    'Emotional intelligence',
+    'Curiosity',
+    'Humble',
+    'Witty',
+    'Loyal',
+    'Kind',
+    'Humour',
+  ];
 
-  // Toggle selection of an interest
-  void toggleInterest(String interest) {
-    if (selectedInterests.contains(interest)) {
-      selectedInterests.remove(interest);
-    } else if (selectedInterests.length < 5) {
-      selectedInterests.add(interest);
+  // Reactive set for selected indices
+  final RxSet<int> selectedIndices = <int>{}.obs;
+
+  // Toggle selection
+  void toggleTrait(int index) {
+    if (selectedIndices.contains(index)) {
+      selectedIndices.remove(index);
+    } else {
+      selectedIndices.add(index);
     }
   }
 
-  // Check if the minimum selection requirement is met
-  bool get hasMinimumSelections => selectedInterests.length >= 3;
-  
-  // For future use: Save selected interests to backend
-  Future<void> saveInterests() async {
-    // Implementation for saving to backend will go here
-  }
-  
-  @override
-  void onClose() {
-    selectedInterests.close();
-    super.onClose();
-  }
+  // Minimum selection check
+  bool get isButtonEnabled => selectedIndices.length >= 3;
+
+  // Remaining selection count
+  int get remainingSelections => selectedIndices.length < 3 ? 3 - selectedIndices.length : 0;
 }

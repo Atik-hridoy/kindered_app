@@ -10,66 +10,20 @@ import 'package:kindered_app/config/app_routes.dart';
 
 class GenderView extends GetView<GenderViewController> {
   final _formKey = GlobalKey<FormState>();
-  @override
-  final GenderViewController controller = Get.put(GenderViewController());
 
   GenderView({super.key});
+
+  @override
+  final GenderViewController controller = Get.put(GenderViewController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0, bottom: 1.0), // Add top padding to move the arrow down
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFFD4A373)),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            onPressed: () {
-              Get.offAllNamed(AppRoutes.intro);
-            },
-          ),
-        ),
-        toolbarHeight: 80,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(140), // Increased height
-          child: Padding(
-            padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 10.0, top: 40.0), // Added top padding
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const CustomProgressBar(value: 0.4),
-                const SizedBox(height: 16),
-                Text(
-                  AppStrings.thatsGreatAlex,
-                  style: GoogleFonts.playfairDisplay(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 20), // Increased from 1 to 20
-                Text(
-                  "We are glad that you're here, please pick the gender which describe you the best",
-                  style: GoogleFonts.playfairDisplay(
-                    color: Colors.white70,
-                    fontSize: 14,
-                    fontWeight: FontWeight.normal,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-            ),
-          ),
-        ),
-      ),
+      appBar: _buildAppBar(),
       body: Column(
         children: [
-          const SizedBox(height: 20), // Add space at the top of the body
+          const SizedBox(height: 20),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -79,16 +33,65 @@ class GenderView extends GetView<GenderViewController> {
               ),
             ),
           ),
-          Container(
-            padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 50.0, top: 20.0),
-            child: _buildContinueButton(),
-          ),
+          _buildContinueSection(),
         ],
       ),
     );
   }
 
+  /// 🔸 AppBar with title and description
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: Padding(
+        padding: const EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0, bottom: 1.0),
+        child: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFFD4A373)),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () => Get.offAllNamed(AppRoutes.intro),
+        ),
+      ),
+      toolbarHeight: 80,
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(140),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0).copyWith(top: 40.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const CustomProgressBar(value: 0.168),
+              const SizedBox(height: 16),
+              Text(
+                AppStrings.thatsGreatAlex,
+                style: GoogleFonts.playfairDisplay(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "We are glad that you're here, please pick the gender which describe you the best",
+                style: GoogleFonts.playfairDisplay(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  fontWeight: FontWeight.normal,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 🔸 Gender Selection List
   Widget _buildGenderSelection() {
+    final genders = ['Woman', 'Man', 'Nonbinary', "I'm Trans"];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -101,42 +104,49 @@ class GenderView extends GetView<GenderViewController> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildGenderCheckbox('Woman'),
-        const SizedBox(height: 12),
-        _buildGenderCheckbox('Man'),
-        const SizedBox(height: 12),
-        _buildGenderCheckbox('Nonbinary'),
-        const SizedBox(height: 12),
-        _buildGenderCheckbox('I\'m Trans'),
+        ...genders.map((gender) => Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Obx(
+                () => CustomCheckbox(
+                  label: gender,
+                  isSelected: controller.selectedGender.value == gender,
+                  onTap: () => controller.selectGender(gender),
+                  titleFontSize: 12.0,
+                  descriptionFontSize: 12.0,
+                ),
+              ),
+            )),
       ],
     );
   }
 
-  Widget _buildGenderCheckbox(String label) {
-    return Obx(
-      () => CustomCheckbox(
-        label: label,
-        isSelected: controller.selectedGender.value == label,
-        onTap: () => controller.selectedGender.value = label, titleFontSize: 12.0,
-        descriptionFontSize: 12.0,
-      ),
-    );
-  }
-
-  Widget _buildContinueButton() {
-    return CustomGradientButton(
-      onPressed: () {
-        Get.offAllNamed(AppRoutes.choice);
-      },
-      text: 'Next',
-      textStyle: GoogleFonts.inter(
-        color: const Color(0xFF2C3E50),
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-      ),
-      height: 56,
-      borderRadius: 12,
-      gradientColors: const [Color(0xFFD4A373), Color(0xFFB56E29)],
+  /// 🔸 Continue Button Section
+  Widget _buildContinueSection() {
+    return Container(
+      padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 50.0, top: 20.0),
+      child: Obx(() {
+        return CustomGradientButton(
+          onPressed: () {
+            final error = controller.validateGender();
+            if (error != null) {
+              Get.snackbar('Error', error,
+                  snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+              return;
+            }
+            controller.updateProfile();
+            Get.offAllNamed(AppRoutes.choice);
+          },
+          text: controller.isLoading.value ? 'Loading...' : 'Next',
+          textStyle: GoogleFonts.inter(
+            color: const Color(0xFF2C3E50),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+          height: 56,
+          borderRadius: 12,
+          gradientColors: const [Color(0xFFD4A373), Color(0xFFB56E29)],
+        );
+      }),
     );
   }
 }

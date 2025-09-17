@@ -4,12 +4,11 @@ import 'package:kindered_app/modules/acccounts_setting/binding/accounts_binding.
 import 'package:kindered_app/modules/acccounts_setting/view/choice_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/education_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/faith_belief_view.dart';
-import 'package:kindered_app/modules/acccounts_setting/view/gender_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/habit_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/height_weight_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/inspire_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/interest_view.dart';
-import 'package:kindered_app/modules/acccounts_setting/view/intro_view.dart';
+import 'package:kindered_app/modules/acccounts_setting/view/account_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/lifestyle_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/like_to_do_view.dart';
 import 'package:kindered_app/modules/acccounts_setting/view/visual_story.dart';
@@ -76,12 +75,12 @@ class MyApp extends StatelessWidget {
         ),
         GetPage(
           name: AppRoutes.intro,
-          page: () => IntroView(),
+          page: () => AccountView(),
           binding: AccountsBinding(),
         ),
         GetPage(
           name: AppRoutes.gender,
-          page: () => GenderView(),
+          page: () => AccountView(),
           binding: AccountsBinding(),
         ),
         GetPage(

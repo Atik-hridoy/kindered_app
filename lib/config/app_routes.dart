@@ -206,7 +206,7 @@ class AppRoutes {
     ),
     GetPage(
       name: visualStoryView,
-      page: () => const VisualStory(),
+      page: () => VisualStory(),
       binding: AccountsBinding(),
     ),
     GetPage(

@@ -15,20 +15,29 @@ class GenderViewController extends GetxController {
 
   // Validate gender selection
   String? validateGender() {
-    if (selectedGender.isEmpty) {
+    if (selectedGender.value.isEmpty) {
       return 'Please select your gender';
     }
     return null;
   }
 
-  // Update profile with selected gender
-  
+  // Simulate profile update or API call
+  Future<void> updateProfile() async {
+    if (!isGenderSelected) return;
+    try {
+      isLoading.value = true;
+      await Future.delayed(const Duration(seconds: 1)); // Simulated network delay
+      // Add your API call here using Dio or any service.
+    } catch (e) {
+      // Handle error properly (logging or showing a message)
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
-
-  // Load user's current gender (if any)
+  // Load user's current gender (e.g., from API or cache)
   void loadUserGender() {
-    // You can replace this with actual data fetching logic
-    // For example: selectedGender.value = userData.gender;
+    // Example: selectedGender.value = "Man";
   }
 
   @override

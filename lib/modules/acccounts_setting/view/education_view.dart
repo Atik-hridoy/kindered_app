@@ -28,103 +28,76 @@ class EducationView extends GetView<EducationController> {
           preferredSize: const Size.fromHeight(35.0),
           child: Padding(
             padding: const EdgeInsets.only(top: 10.0, left: 20.0, right: 20.0),
-            child: CustomProgressBar(
-              value: 1.0, // 100% progress
-            ),
+            child: const CustomProgressBar(value: 0.504),
           ),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 8.0, bottom: 20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 8),
             Text(
-              'What is your Education Level And job status?',
+              'What is your Education Level and Job Status?',
               style: GoogleFonts.playfairDisplay(
                 fontSize: 20.0,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             Text(
-              "Please share with us your education level or what you do for living",
+              'Please share your education level, job status, or annual income.',
               style: GoogleFonts.playfairDisplay(
                 fontSize: 16.0,
-                color: Colors.grey[400],
+                color: Colors.grey,
                 height: 1.5,
               ),
             ),
             const SizedBox(height: 32),
+            
             // Education Level Input
-            Text(
-              'Education Level',
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 16.0,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            Text('Education Level', style: GoogleFonts.playfairDisplay(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             CustomInputField(
               controller: controller.educationController,
-              hintText: 'e.g., High School, Bachelor\'s Degree, etc.',
+              hintText: 'e.g., High School, Bachelor\'s Degree',
               onChanged: (_) => controller.validateInputs(),
-              textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 20),
             
             // Job Status Input
-            Text(
-              'Job Status',
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 16.0,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            Text('Job Status', style: GoogleFonts.playfairDisplay(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             CustomInputField(
               controller: controller.jobStatusController,
-              hintText: 'e.g., Employed, Student, Self-employed, etc.',
+              hintText: 'e.g., Employed, Student, Self-employed',
               onChanged: (_) => controller.validateInputs(),
-              textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 20),
             
-            // Income Input
-            Text(
-              'Annual Income',
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 16.0,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            // Annual Income Input
+            Text('Annual Income', style: GoogleFonts.playfairDisplay(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             CustomInputField(
               controller: controller.incomeController,
-              hintText: r'e.g., $50,000',
-              keyboardType: TextInputType.number,
+              hintText: 'e.g., 50000 or 50,000',
               onChanged: (_) => controller.validateInputs(),
-              textInputAction: TextInputAction.done,
             ),
             const SizedBox(height: 20),
           ],
         ),
       ),
       bottomNavigationBar: Obx(() => Container(
-        padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 8.0, bottom: 50.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
         color: Theme.of(context).scaffoldBackgroundColor,
         child: CustomGradientButton(
           text: 'Next',
-          onPressed: controller.isButtonEnabled.value ? () {
-            // Navigate to inspire view
-            Get.toNamed(AppRoutes.inspireView);
-          } : null,
           enabled: controller.isButtonEnabled.value,
+          onPressed: controller.isButtonEnabled.value
+              ? () => Get.toNamed(AppRoutes.inspireView)
+              : null,
         ),
       )),
     );

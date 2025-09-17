@@ -8,59 +8,19 @@ import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart'
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 
 class InterestView extends GetView<InterestViewController> {
+  InterestView({super.key});
 
+  @override
   final InterestViewController controller = Get.put(InterestViewController());
-  
-  final List<Map<String, String>> interestOptions = [
-    {
-      'title': 'Long-term partner',
-      'description': 'Looking for a serious relationship'
-    },
-    {
-      'title': 'Long-term, open to short',
-      'description': 'Looking for a serious relationship, but open to short-term fun'
-    },
-    {
-      'title': 'Short-term fun',
-      'description': 'Looking for something casual'
-    },
-    {
-      'title': 'Short-term, open to long',
-      'description': 'Looking for something casual, but open to a serious relationship'
-    },
-    {
-      'title': 'New friends',
-      'description': 'Looking for new friends to hang out with'
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(top: 20.0, left: 20.0),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFFD4A373)),
-            onPressed: () => Get.back(),
-          ),
-        ),
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(35.0),
-          child: Padding(
-            padding: EdgeInsets.only(top: 10.0, left: 20.0, right: 20.0),
-            child: CustomProgressBar(
-              value: 0.8, // 80% progress
-            ),
-          ),
-        ),
-      ),
+      appBar: _buildAppBar(),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 8.0, bottom: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -74,7 +34,8 @@ class InterestView extends GetView<InterestViewController> {
               ),
               const SizedBox(height: 12.0),
               Text(
-                'Choose a mode we\'ll find the best partner for you. What you Long-term partner, Casual connection or friendship?',
+                'Choose a mode and we\'ll find the best partner for you. '
+                'Do you prefer a long-term partner, a casual connection, or friendship?',
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 14.0,
                   color: Colors.white,
@@ -82,25 +43,27 @@ class InterestView extends GetView<InterestViewController> {
                 ),
               ),
               const SizedBox(height: 24.0),
-              const SizedBox(height: 16.0),
               ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: interestOptions.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 8.0),
-                itemBuilder: (context, index) => Obx(
-                  () => CustomCheckboxMulty(
-                    label: '${interestOptions[index]['title']!}\n${interestOptions[index]['description']!}',
-                    isSelected: controller.selectedIndices.contains(index),
-                    onTap: () => controller.toggleSelection(index),
-                    selectedColor: const Color(0xFFD4A574).withValues(alpha: 0.8),
-                    unselectedColor: Colors.transparent,
-                    textColor: const Color(0xFFD4A373),
-                    height: 70.0,
-                    titleFontSize: 14.0,
-                    descriptionFontSize: 12.0,
-                  ),
-                ),
+                itemCount: controller.interestOptions.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8.0),
+                itemBuilder: (context, index) {
+                  final option = controller.interestOptions[index];
+                  return Obx(
+                    () => CustomCheckboxMulty(
+                      label: '${option['title']!}\n${option['description']!}',
+                      isSelected: controller.selectedIndices.contains(index),
+                      onTap: () => controller.toggleSelection(index),
+                      selectedColor: const Color(0xFFD4A574).withOpacity(0.8),
+                      unselectedColor: Colors.transparent,
+                      textColor: const Color(0xFFD4A373),
+                      height: 70.0,
+                      titleFontSize: 14.0,
+                      descriptionFontSize: 12.0,
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -113,6 +76,17 @@ class InterestView extends GetView<InterestViewController> {
             () => CustomGradientButton(
               onPressed: controller.selectedIndices.isNotEmpty
                   ? () {
+                      final error = controller.validateSelections();
+                      if (error != null) {
+                        Get.snackbar(
+                          'Error',
+                          error,
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.red,
+                          colorText: Colors.white,
+                        );
+                        return;
+                      }
                       Get.toNamed(AppRoutes.heightWeight);
                     }
                   : null,
@@ -127,6 +101,27 @@ class InterestView extends GetView<InterestViewController> {
               gradientColors: const [Color(0xFFD4A373), Color(0xFFB56E29)],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: Padding(
+        padding: const EdgeInsets.only(top: 20.0, left: 20.0),
+        child: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFFD4A373)),
+          onPressed: () => Get.back(),
+        ),
+      ),
+      bottom: const PreferredSize(
+        preferredSize: Size.fromHeight(35.0),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.0),
+          child: CustomProgressBar(value: 0.336),
         ),
       ),
     );

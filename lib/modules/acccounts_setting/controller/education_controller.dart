@@ -11,7 +11,7 @@ class EducationController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Add listeners to all controllers
+    // Add listeners to validate inputs
     educationController.addListener(validateInputs);
     jobStatusController.addListener(validateInputs);
     incomeController.addListener(validateInputs);
@@ -19,22 +19,21 @@ class EducationController extends GetxController {
 
   @override
   void onClose() {
-    // Dispose all controllers
     educationController.dispose();
     jobStatusController.dispose();
     incomeController.dispose();
     super.onClose();
   }
 
+  /// Validate that all inputs are non-empty
   void validateInputs() {
-    // Enable button if all required fields are not empty
     isButtonEnabled.value = educationController.text.trim().isNotEmpty &&
-                          jobStatusController.text.trim().isNotEmpty &&
-                          incomeController.text.trim().isNotEmpty;
+                            jobStatusController.text.trim().isNotEmpty &&
+                            incomeController.text.trim().isNotEmpty;
   }
-  
-  // Method to get all the form data
-  Map<String, dynamic> getFormData() {
+
+  /// Retrieve form data as a Map (string values, numbers as strings)
+  Map<String, String> getFormData() {
     return {
       'education': educationController.text.trim(),
       'jobStatus': jobStatusController.text.trim(),

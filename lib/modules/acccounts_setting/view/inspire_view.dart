@@ -5,7 +5,7 @@ import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/checkbox.dart';
-import 'package:kindered_app/modules/acccounts_setting/view/faith_belief_view.dart';
+
 
 class InspireView extends StatefulWidget {
   const InspireView({Key? key}) : super(key: key);
@@ -59,7 +59,7 @@ class _InspireViewState extends State<InspireView> {
           child: Padding(
             padding: const EdgeInsets.only(top: 10.0, left: 20.0, right: 20.0),
             child: CustomProgressBar(
-              value: 1.0, // 100% progress
+              value: 0.588, // 100% progress
             ),
           ),
         ),

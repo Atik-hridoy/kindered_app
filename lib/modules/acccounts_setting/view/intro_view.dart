@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/modules/acccounts_setting/controller/intro_view_controller.dart';
 import 'package:kindered_app/core/localization/app_strings.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
@@ -42,7 +41,6 @@ class IntroView extends GetView<IntroViewController> {
                           const SizedBox(height: 16),
                           _buildAgeField(),
                           const SizedBox(height: 24),
-                          
                         ],
                       ),
                     ),
@@ -65,19 +63,18 @@ class IntroView extends GetView<IntroViewController> {
       elevation: 0,
       backgroundColor: Colors.transparent,
       leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFFD4A373)),
-          onPressed: () => Get.back(),
-        ),
-        toolbarHeight: 80,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(80),
-          child: Padding(
-            padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 10.0),
+        icon: const Icon(Icons.arrow_back, color: Color(0xFFD4A373)),
+        onPressed: () => Get.back(),
+      ),
+      toolbarHeight: 80,
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 10.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CustomProgressBar(value: 0.2),
-              
+              CustomProgressBar(value: 0.084),
               const SizedBox(height: 20),
               Text(
                 AppStrings.letsStartWithIntro,
@@ -108,17 +105,17 @@ class IntroView extends GetView<IntroViewController> {
           ),
         ),
         const SizedBox(height: 8),
-        CustomInputField(
-          controller: TextEditingController(text: controller.firstName.value),
-          hintText: '',
-          borderColor: const Color(0xFFD4A373),
-          borderRadius: 12,
-          onChanged: (value) => controller.firstName.value = value,
-          textStyle: GoogleFonts.playfairDisplay(
-            color: Colors.white,
-            fontSize: 16,
-          ),
-        ),
+        Obx(() => CustomInputField(
+              controller: TextEditingController(text: controller.firstName.value),
+              hintText: '',
+              borderColor: const Color(0xFFD4A373),
+              borderRadius: 12,
+              onChanged: controller.updateFirstName,
+              textStyle: GoogleFonts.playfairDisplay(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            )),
       ],
     );
   }
@@ -136,17 +133,17 @@ class IntroView extends GetView<IntroViewController> {
           ),
         ),
         const SizedBox(height: 8),
-        CustomInputField(
-          controller: TextEditingController(text: controller.lastName.value),
-          hintText: '',
-          borderColor: const Color(0xFFD4A373),
-          borderRadius: 12,
-          onChanged: (value) => controller.lastName.value = value,
-          textStyle: GoogleFonts.playfairDisplay(
-            color: Colors.white,
-            fontSize: 16,
-          ),
-        ),
+        Obx(() => CustomInputField(
+              controller: TextEditingController(text: controller.lastName.value),
+              hintText: '',
+              borderColor: const Color(0xFFD4A373),
+              borderRadius: 12,
+              onChanged: controller.updateLastName,
+              textStyle: GoogleFonts.playfairDisplay(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            )),
       ],
     );
   }
@@ -164,42 +161,36 @@ class IntroView extends GetView<IntroViewController> {
           ),
         ),
         const SizedBox(height: 8),
-        CustomInputField(
-          controller: TextEditingController(text: controller.age.value),
-          hintText: '',
-          keyboardType: TextInputType.number,
-          borderColor: const Color(0xFFD4A373),
-          borderRadius: 12,
-          onChanged: (value) => controller.age.value = value,
-          textStyle: GoogleFonts.playfairDisplay(
-            color: Colors.white,
-            fontSize: 16,
-          ),
-        ),
+        Obx(() => CustomInputField(
+              controller: TextEditingController(text: controller.age.value),
+              hintText: '',
+              keyboardType: TextInputType.number,
+              borderColor: const Color(0xFFD4A373),
+              borderRadius: 12,
+              onChanged: controller.updateAge,
+              textStyle: GoogleFonts.playfairDisplay(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            )),
       ],
     );
   }
 
-
-
   Widget _buildSaveButton() {
-    return CustomGradientButton(
-      text: AppStrings.next,
-      width: 335,
-      height: 48,
-      borderRadius: 12,
-      gradientColors: const [Color(0xFFD4A373), Color(0xFFB56E29)],
-      textStyle: GoogleFonts.inter(
-        color: const Color(0xFF1A1A1A),
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.5,
-      ),
-      onPressed: () {
-        if (_formKey.currentState?.validate() ?? false) {
-          Get.offAllNamed(AppRoutes.gender);
-        }
-      },
-    );
+    return Obx(() => CustomGradientButton(
+          text: controller.isLoading.value ? 'Saving...' : AppStrings.next,
+          width: 335,
+          height: 48,
+          borderRadius: 12,
+          gradientColors: const [Color(0xFFD4A373), Color(0xFFB56E29)],
+          textStyle: GoogleFonts.inter(
+            color: const Color(0xFF1A1A1A),
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+          onPressed: controller.onNextPressed,
+        ));
   }
 }
