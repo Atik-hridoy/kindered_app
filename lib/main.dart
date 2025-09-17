@@ -5,6 +5,8 @@ import 'package:kindered_app/config/app_themes.dart';
 import 'package:kindered_app/core/logger/error/app_error_handler.dart';
 import 'package:kindered_app/core/localization/app_localization.dart';
 import 'package:kindered_app/core/localization/app_strings.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() async {
   // Ensure Flutter binding is initialized
@@ -13,6 +15,9 @@ void main() async {
   try {
     // Initialize error handling and logging
     AppErrorHandler.initialize();
+    
+    // Initialize plugins
+    await _initializePlugins();
     
     // Run the app
     runApp(const MyApp());
@@ -31,6 +36,34 @@ void main() async {
         ),
       ),
     );
+  }
+}
+
+Future<void> _initializePlugins() async {
+  bool imagePickerOk = false;
+  
+  try {
+    // Test image picker plugin
+    ImagePicker();
+    debugPrint('✅ ImagePicker plugin initialized successfully');
+    imagePickerOk = true;
+  } catch (e) {
+    debugPrint('❌ ImagePicker plugin initialization failed: $e');
+  }
+  
+  try {
+    // Test permission handler plugin
+    await Permission.photos.status;
+    debugPrint('✅ PermissionHandler plugin initialized successfully');
+  } catch (e) {
+    debugPrint('⚠️ PermissionHandler plugin initialization failed: $e');
+    debugPrint('🔄 Will attempt to proceed without PermissionHandler');
+  }
+  
+  if (imagePickerOk) {
+    debugPrint('🔧 Core plugins initialized successfully');
+  } else {
+    debugPrint('❌ Critical plugin initialization failed');
   }
 }
 
