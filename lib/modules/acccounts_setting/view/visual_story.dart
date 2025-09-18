@@ -1,16 +1,19 @@
+
+
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:kindered_app/config/app_routes.dart';
 import '../widget/button.dart';
 import '../widget/progress_bar.dart';
+import 'package:kindered_app/modules/acccounts_setting/controller/accounts_controller.dart';
 
 class VisualStory extends StatefulWidget {
-  const VisualStory({Key? key}) : super(key: key);
+  const VisualStory({super.key});
 
   @override
   State<VisualStory> createState() => _VisualStoryState();
@@ -19,6 +22,7 @@ class VisualStory extends StatefulWidget {
 class _VisualStoryState extends State<VisualStory> {
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _picker = ImagePicker();
+  late final AccountsController _accountsController;
   
   // State variables
   List<XFile?> selectedImages = List<XFile?>.filled(5, null);
@@ -29,9 +33,15 @@ class _VisualStoryState extends State<VisualStory> {
     super.dispose();
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _accountsController = Get.find<AccountsController>();
+  }
+
   // Handle image selection
   Future<void> _handleImageSelection(int index) async {
-    print('📸 Starting image selection for index: $index');
+    AppLogger.info('📸 Starting image selection for index: $index');
     
     // Check if plugins are available
     if (!await _checkPluginsAvailable()) {
@@ -53,7 +63,7 @@ class _VisualStoryState extends State<VisualStory> {
         if (image != null) {
           await _processSelectedImage(image, index);
         } else {
-          print('❌ No image selected');
+          AppLogger.warning('❌ No image selected');
         }
       }
     } catch (e) {
@@ -68,29 +78,29 @@ class _VisualStoryState extends State<VisualStory> {
     // Test image picker
     try {
       ImagePicker();
-      print('✅ ImagePicker plugin is available');
+      AppLogger.info('✅ ImagePicker plugin is available');
       imagePickerAvailable = true;
     } catch (e) {
-      print('❌ ImagePicker plugin not available: $e');
+      AppLogger.warning('❌ ImagePicker plugin not available: $e');
     }
     
     // Test permission handler
     try {
       await Permission.photos.status;
-      print('✅ PermissionHandler plugin is available');
+      AppLogger.info('✅ PermissionHandler plugin is available');
     } catch (e) {
-      print('❌ PermissionHandler plugin not available: $e');
+      AppLogger.warning('❌ PermissionHandler plugin not available: $e');
       // Don't fail completely if permission handler is not available
       // We can try to proceed without it on some devices
     }
     
     // At minimum, we need image picker
     if (imagePickerAvailable) {
-      print('✅ Core functionality available (ImagePicker)');
+      AppLogger.info('✅ Core functionality available (ImagePicker)');
       return true;
     }
     
-    print('❌ Critical plugins not available');
+    AppLogger.warning('❌ Critical plugins not available');
     return false;
   }
   
@@ -102,35 +112,35 @@ class _VisualStoryState extends State<VisualStory> {
       try {
         await Permission.photos.status;
         permissionHandlerWorking = true;
-        print('✅ PermissionHandler is working');
+        AppLogger.info('✅ PermissionHandler is working');
       } catch (e) {
-        print('⚠️ PermissionHandler not working: $e');
-        print('🔄 Will attempt to proceed without permission checks');
+        AppLogger.warning('⚠️ PermissionHandler not working: $e');
+        AppLogger.info('🔄 Will attempt to proceed without permission checks');
       }
       
       if (!permissionHandlerWorking) {
         // If permission handler is not available, try to proceed anyway
         // Some Android versions work without explicit permission requests
-        print('🔄 Proceeding without explicit permission check');
+        AppLogger.info('🔄 Proceeding without explicit permission check');
         return true;
       }
       
       // Strategy 1: Try photos permission (Android 13+)
       var status = await Permission.photos.request();
-      print('📱 Photos permission status: $status');
+      AppLogger.info('📱 Photos permission status: $status');
       
       if (status.isGranted) {
-        print('✅ Photos permission granted');
+        AppLogger.info('✅ Photos permission granted');
         return true;
       }
       
       // Strategy 2: Try storage permission (Android 12 and below)
       if (status.isDenied) {
         status = await Permission.storage.request();
-        print('📱 Storage permission status: $status');
+        AppLogger.info('📱 Storage permission status: $status');
         
         if (status.isGranted) {
-          print('✅ Storage permission granted');
+          AppLogger.info('✅ Storage permission granted');
           return true;
         }
       }
@@ -138,23 +148,24 @@ class _VisualStoryState extends State<VisualStory> {
       // Strategy 3: Try external storage permission
       if (status.isDenied) {
         status = await Permission.manageExternalStorage.request();
-        print('📱 Manage external storage permission status: $status');
+        AppLogger.info('📱 Manage external storage permission status: $status');
         
+      
         if (status.isGranted) {
-          print('✅ Manage external storage permission granted');
+        
           return true;
         }
       }
       
       // Handle permanent denial
       if (status.isPermanentlyDenied) {
-        print('⚠️ Permissions permanently denied');
+        AppLogger.warning('⚠️ Permissions permanently denied');
         _showPermissionDialog();
         return false;
       }
       
       // If all strategies failed
-      print('❌ All permission strategies failed');
+      AppLogger.warning('❌ All permission strategies failed');
       _showSnackBar(
         'Permission Denied',
         'Gallery permission is required to select images',
@@ -163,8 +174,8 @@ class _VisualStoryState extends State<VisualStory> {
       return false;
       
     } catch (permissionError) {
-      print('⚠️ Permission handler error: $permissionError');
-      print('🔄 Attempting to proceed without explicit permission check');
+      AppLogger.warning('⚠️ Permission handler error: $permissionError');
+      AppLogger.info('🔄 Attempting to proceed without explicit permission check');
       // If permission handler fails, try to proceed anyway
       // Some devices work without explicit permission requests
       return true;
@@ -174,7 +185,7 @@ class _VisualStoryState extends State<VisualStory> {
   // Pick image with fallback strategies
   Future<XFile?> _pickImageWithFallback() async {
     try {
-      print('🔄 Attempting to pick image from gallery');
+      AppLogger.info('🔄 Attempting to pick image from gallery');
       
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -182,28 +193,28 @@ class _VisualStoryState extends State<VisualStory> {
       );
       
       if (image != null) {
-        print('📷 Image selected: ${image.path}');
+        AppLogger.info('📷 Image selected: ${image.path}');
         return image;
       }
       
       return null;
     } catch (e) {
-      print('❌ Error picking image from gallery: $e');
+      AppLogger.warning('❌ Error picking image from gallery: $e');
       
       // Fallback: Try camera if gallery fails
       try {
-        print('🔄 Attempting fallback to camera');
+        AppLogger.info('🔄 Attempting fallback to camera');
         final XFile? cameraImage = await _picker.pickImage(
           source: ImageSource.camera,
           imageQuality: 80,
         );
         
         if (cameraImage != null) {
-          print('📷 Camera image selected: ${cameraImage.path}');
+          AppLogger.info('📷 Camera image selected: ${cameraImage.path}');
           return cameraImage;
         }
       } catch (cameraError) {
-        print('❌ Camera fallback also failed: $cameraError');
+        AppLogger.warning('❌ Camera fallback also failed: $cameraError');
       }
       
       return null;
@@ -213,7 +224,7 @@ class _VisualStoryState extends State<VisualStory> {
   // Process the selected image
   Future<void> _processSelectedImage(XFile image, int index) async {
     try {
-      print('📊 Image size: ${await image.length()} bytes');
+      AppLogger.info('📊 Image size: ${await image.length()} bytes');
       
       // Validate image file
       final File imageFile = File(image.path);
@@ -231,9 +242,9 @@ class _VisualStoryState extends State<VisualStory> {
         Colors.green,
       );
       
-      print('✅ Image stored at index $index');
+      AppLogger.info('✅ Image stored at index $index');
     } catch (e) {
-      print('❌ Error processing selected image: $e');
+      AppLogger.warning('❌ Error processing selected image: $e');
       _showSnackBar(
         'Processing Error',
         'Failed to process selected image',
@@ -244,7 +255,7 @@ class _VisualStoryState extends State<VisualStory> {
   
   // Handle image selection errors
   Future<void> _handleImageSelectionError(dynamic error) async {
-    print('❌ Error picking image: $error');
+    AppLogger.warning('❌ Error picking image: $error');
     
     String errorMessage = 'Failed to pick image';
     String errorDetails = '';
@@ -252,7 +263,7 @@ class _VisualStoryState extends State<VisualStory> {
     if (error.toString().contains('MissingPluginException')) {
       errorMessage = 'Plugin not available';
       errorDetails = 'Required plugins are not properly initialized. Please restart the app.';
-      print('💡 Plugin issue detected - app may need restart');
+      AppLogger.info('💡 Plugin issue detected - app may need restart');
     } else if (error.toString().contains('permission')) {
       errorMessage = 'Permission denied';
       errorDetails = 'Please check app settings and grant gallery permissions.';
@@ -296,7 +307,7 @@ class _VisualStoryState extends State<VisualStory> {
 
   // Show snack bar with logging
   void _showSnackBar(String title, String message, Color backgroundColor) {
-    print('📢 Showing snack bar: $title - $message');
+    AppLogger.info('📢 Showing snack bar: $title - $message');
     
     // If message is too long, split it into title and details
     String displayTitle = title;
@@ -304,14 +315,14 @@ class _VisualStoryState extends State<VisualStory> {
     
     if (message.length > 100) {
       displayTitle = title;
-      displayMessage = message.substring(0, 100) + '...';
+      displayMessage = '${message.substring(0, 100)}...';
     }
     
     Get.snackbar(
       displayTitle,
       displayMessage,
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: backgroundColor.withOpacity(0.8),
+      backgroundColor: backgroundColor.withValues(alpha: 0.8),
       colorText: Colors.white,
       duration: const Duration(seconds: 4),
       isDismissible: true,
@@ -343,7 +354,7 @@ class _VisualStoryState extends State<VisualStory> {
             Positioned.fill(
               child: CustomPaint(
                 painter: _DashedBorderPainter(
-                  color: Colors.white.withOpacity(0.6), // Slightly more visible
+                  color: Colors.white.withValues(alpha: 0.6), // Slightly more visible
                   strokeWidth: 1.5,
                   dashLength: 8, // Slightly longer dashes
                   gapLength: 6,  // Slightly longer gaps
@@ -374,13 +385,13 @@ class _VisualStoryState extends State<VisualStory> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.6),
+                                color: Colors.white.withValues(alpha: 0.6),
                                 width: 1.5,
                               ),
                             ),
                             child: Icon(
                               Icons.add,
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               size: 16, // Reduced from 18
                             ),
                           ),
@@ -389,7 +400,7 @@ class _VisualStoryState extends State<VisualStory> {
                             label,
                             style: GoogleFonts.playfairDisplay(
                               fontSize: 14,
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontWeight: FontWeight.w500,
                               height: 1.2,
                             ),
@@ -466,7 +477,7 @@ class _VisualStoryState extends State<VisualStory> {
                     'Add at least 3 photos and choose images that reflect your personality, lifestyle, and warmth',
                     style: GoogleFonts.playfairDisplay(
                       fontSize: 16,
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       height: 1.4,
                       fontWeight: FontWeight.w400,
                     ),
@@ -580,7 +591,7 @@ class _VisualStoryState extends State<VisualStory> {
                           text: ' Tap + to add photos. Your first photo will be your main profile picture',
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 14,
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                             height: 1.4,
                           ),
                         ),
@@ -602,11 +613,14 @@ class _VisualStoryState extends State<VisualStory> {
         ),
         color: Theme.of(context).scaffoldBackgroundColor,
         child: CustomGradientButton(
-          text: 'Next',
+          text: 'Submit',
           onPressed: canProceed
-              ? () {
-                  print('✅ Proceeding to next screen with ${selectedImages.where((img) => img != null).length} images');
-                  Get.toNamed(AppRoutes.locationView);
+              ? () async {
+                  final paths = selectedImages
+                      .where((img) => img != null)
+                      .map((img) => img!.path)
+                      .toList();
+                  await _accountsController.submitCompleteProfileWithPhotos(paths);
                 }
               : null,
           width: double.infinity,
@@ -631,12 +645,12 @@ class DashRect extends StatelessWidget {
   final double gap;
 
   const DashRect({
-    Key? key,
+    super.key,
     required this.child,
     this.color = Colors.black,
     this.strokeWidth = 1,
     this.gap = 5,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

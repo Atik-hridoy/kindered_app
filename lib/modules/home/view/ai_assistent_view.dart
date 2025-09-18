@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widget/nav_card.dart';
+import '../controller/ai_assistent_controller.dart';
 import '../../../config/app_routes.dart';
 
-class AiAssistantView extends StatelessWidget {
+class AiAssistantView extends GetView<AiAssistentController> {
   const AiAssistantView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Initialize controller
+    Get.put(AiAssistentController());
+    
     return Scaffold(
       backgroundColor: const Color(0xFF2E3A59),
       body: SafeArea(
@@ -32,7 +36,33 @@ class AiAssistantView extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
                         children: [
-                          _buildMessageBubble(),
+                          // Dynamic messages from controller
+                          Obx(
+                            () => Column(
+                              children: controller.messages.map((message) {
+                                return _buildMessageBubble(
+                                  text: message['text'],
+                                  isMe: message['isMe'],
+                                  timestamp: message['timestamp'],
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          
+                          // Show loading indicator
+                          Obx(
+                            () => controller.isLoading.value
+                                ? const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFD4A574)),
+                                      ),
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                          
                           const SizedBox(height: 24),
                           _buildMatchSuggestionCard(),
                           const SizedBox(height: 32),
@@ -111,32 +141,39 @@ class AiAssistantView extends StatelessWidget {
     );
   }
 
-  Widget _buildMessageBubble({bool isMe = false}) {
+  Widget _buildMessageBubble({
+    required String text,
+    required bool isMe,
+    required DateTime timestamp,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      alignment: Alignment.centerRight,
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         padding: const EdgeInsets.all(16),
-        margin: const EdgeInsets.only(left: 100, right: 4, top: 4, bottom: 4),
+        margin: EdgeInsets.only(
+          left: isMe ? 100 : 4,
+          right: isMe ? 4 : 100,
+          top: 4,
+          bottom: 4,
+        ),
         decoration: BoxDecoration(
           color: isMe ? const Color(0xFFD4A574) : const Color(0xFF3A4A6B),
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(16),
-            topRight: Radius.circular(16),
-            bottomLeft: Radius.circular(16),
-            bottomRight: Radius.circular(4),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: isMe ? const Radius.circular(16) : const Radius.circular(4),
+            bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(16),
           ),
         ),
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(Get.context!).size.width * 0.75,
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isMe 
-                ? 'This is a sent message' 
-                : 'Looking for someone who loves to cook and enjoy new things',
+              text,
               style: TextStyle(
                 color: isMe ? const Color(0xFF2E3A59) : Colors.white,
                 fontSize: 14,
@@ -144,7 +181,7 @@ class AiAssistantView extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '10:30 AM',
+              controller.formatTime(timestamp),
               style: TextStyle(
                 color: isMe ? const Color(0xFF2E3A59).withOpacity(0.7) : Colors.white54,
                 fontSize: 10,
@@ -261,7 +298,11 @@ class AiAssistantView extends StatelessWidget {
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 8),
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: () {
+          // Set the text in the controller and send message
+          controller.messageController.text = text;
+          controller.sendMessage();
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF3A4A6B),
           foregroundColor: Colors.white,
@@ -276,14 +317,37 @@ class AiAssistantView extends StatelessWidget {
 
   Widget _buildMessageInput() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(color: const Color(0xFF3A4A6B), borderRadius: BorderRadius.circular(25)),
       child: Row(
         children: [
           const Icon(Icons.camera_alt_outlined, color: Colors.white54, size: 20),
           const SizedBox(width: 12),
-          const Expanded(child: Text('Ask about your love journey...', style: TextStyle(color: Colors.white54, fontSize: 14))),
-          const Icon(Icons.send, color: Colors.white, size: 20),
+          Expanded(
+            child: TextField(
+              controller: controller.messageController,
+              focusNode: controller.messageFocusNode,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'Ask about your love journey...',
+                hintStyle: const TextStyle(color: Colors.white54, fontSize: 14),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onSubmitted: (_) => controller.sendMessage(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Obx(
+            () => GestureDetector(
+              onTap: controller.isSendButtonEnabled.value ? () => controller.sendMessage() : null,
+              child: Icon(
+                Icons.send,
+                color: controller.isSendButtonEnabled.value ? Colors.white : Colors.white54,
+                size: 20,
+              ),
+            ),
+          ),
         ],
       ),
     );

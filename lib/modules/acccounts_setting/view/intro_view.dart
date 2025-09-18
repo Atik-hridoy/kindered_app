@@ -44,7 +44,7 @@ class IntroView extends GetView<AccountsController> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Center(child: _buildSaveButton()),
+                  _buildSaveButton(),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -103,17 +103,17 @@ class IntroView extends GetView<AccountsController> {
           ),
         ),
         const SizedBox(height: 8),
-        Obx(() => CustomInputField(
-              controller: TextEditingController(text: controller.firstName.value),
-              hintText: '',
-              borderColor: const Color(0xFFD4A373),
-              borderRadius: 12,
-              onChanged: controller.updateFirstName,
-              textStyle: GoogleFonts.playfairDisplay(
-                color: Colors.white,
-                fontSize: 16,
-              ),
-            )),
+        CustomInputField(
+          controller: controller.firstNameController,
+          hintText: '',
+          borderColor: const Color(0xFFD4A373),
+          borderRadius: 12,
+          onChanged: controller.updateFirstName,
+          textStyle: GoogleFonts.playfairDisplay(
+            color: Colors.white,
+            fontSize: 16,
+          ),
+        ),
       ],
     );
   }
@@ -131,17 +131,17 @@ class IntroView extends GetView<AccountsController> {
           ),
         ),
         const SizedBox(height: 8),
-        Obx(() => CustomInputField(
-              controller: TextEditingController(text: controller.lastName.value),
-              hintText: '',
-              borderColor: const Color(0xFFD4A373),
-              borderRadius: 12,
-              onChanged: controller.updateLastName,
-              textStyle: GoogleFonts.playfairDisplay(
-                color: Colors.white,
-                fontSize: 16,
-              ),
-            )),
+        CustomInputField(
+          controller: controller.lastNameController,
+          hintText: '',
+          borderColor: const Color(0xFFD4A373),
+          borderRadius: 12,
+          onChanged: controller.updateLastName,
+          textStyle: GoogleFonts.playfairDisplay(
+            color: Colors.white,
+            fontSize: 16,
+          ),
+        ),
       ],
     );
   }
@@ -159,36 +159,39 @@ class IntroView extends GetView<AccountsController> {
           ),
         ),
         const SizedBox(height: 8),
-        Obx(() => CustomInputField(
-              controller: TextEditingController(text: controller.age.value),
-              hintText: '',
-              keyboardType: TextInputType.number,
-              borderColor: const Color(0xFFD4A373),
-              borderRadius: 12,
-              onChanged: controller.updateAge,
-              textStyle: GoogleFonts.playfairDisplay(
-                color: Colors.white,
-                fontSize: 16,
-              ),
-            )),
+        CustomInputField(
+          controller: controller.ageController,
+          hintText: '',
+          keyboardType: TextInputType.number,
+          borderColor: const Color(0xFFD4A373),
+          borderRadius: 12,
+          onChanged: controller.updateAge,
+          textStyle: GoogleFonts.playfairDisplay(
+            color: Colors.white,
+            fontSize: 16,
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildSaveButton() {
-    return Obx(() => CustomGradientButton(
-          text: controller.isLoading.value ? 'Saving...' : AppStrings.next,
-          width: 335,
-          height: 48,
-          borderRadius: 12,
-          gradientColors: const [Color(0xFFD4A373), Color(0xFFB56E29)],
-          textStyle: GoogleFonts.inter(
-            color: const Color(0xFF1A1A1A),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
+    return Obx(() => SizedBox(
+          width: double.infinity,
+          child: CustomGradientButton(
+            text: controller.isLoading.value ? 'Saving...' : AppStrings.next,
+            width: double.infinity,
+            height: 48,
+            borderRadius: 12,
+            gradientColors: const [Color(0xFFD4A373), Color(0xFFB56E29)],
+            textStyle: GoogleFonts.inter(
+              color: const Color(0xFF1A1A1A),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+            onPressed: controller.onNextPressed,
           ),
-          onPressed: controller.onNextPressed,
         ));
   }
 }
