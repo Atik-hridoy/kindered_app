@@ -13,4 +13,14 @@ abstract class AppUrls {
 
   // accounts setting endpoints
   static const String completeProfile = '/users/complete-profile';
+
+
+
+  // home
+  static const String aiMatchmakingDefault = '/ai-chat/matchmaking';
+
+
+  //location
+
+  static const String userLocation = '/users/update-location';
 }

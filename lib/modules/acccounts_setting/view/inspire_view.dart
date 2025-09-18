@@ -66,13 +66,13 @@ class InspireView extends GetView<AccountsController> {
               itemCount: controller.traits.length,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                return CustomCheckbox(
-                  label: controller.traits[index],
-                  isSelected: controller.selectedTraitIndices.contains(index),
-                  onTap: () => controller.toggleTrait(index),
-                  titleFontSize: 16.0,
-                  descriptionFontSize: 14.0,
-                );
+                return Obx(() => CustomCheckbox(
+                      label: controller.traits[index],
+                      isSelected: controller.selectedTraitIndices.contains(index),
+                      onTap: () => controller.toggleTrait(index),
+                      titleFontSize: 16.0,
+                      descriptionFontSize: 14.0,
+                    ));
               },
             ),
             const SizedBox(height: 24),

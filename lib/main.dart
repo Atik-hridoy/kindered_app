@@ -8,6 +8,7 @@ import 'package:kindered_app/core/localization/app_strings.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'modules/acccounts_setting/controller/accounts_controller.dart';
+import 'local/storage_service.dart';
 
 void main() async {
   // Ensure Flutter binding is initialized
@@ -19,6 +20,9 @@ void main() async {
     
     // Initialize plugins
     await _initializePlugins();
+    
+    // Load persisted auth/session data so token/email are available
+    await LocalStorage.getAllPrefData();
     
     // Run the app
     runApp(const MyApp());
@@ -77,12 +81,16 @@ class MyApp extends StatelessWidget {
   title: AppStrings.appName,
   debugShowCheckedModeBanner: false,
   theme: AppTheme.lightTheme,
-  //initialRoute: AppRoutes.splash,
-  initialRoute: AppRoutes.intro,
+  initialRoute: AppRoutes.splash,
+  //initialRoute: AppRoutes.visualStoryView,
   initialBinding: BindingsBuilder(() {
     // Register a single, permanent AccountsController instance for the whole app
     if (!Get.isRegistered<AccountsController>()) {
-      Get.put(AccountsController(), permanent: true);
+      final c = Get.put(AccountsController(), permanent: true);
+      // Initialize bearer token if available
+      if (LocalStorage.token.isNotEmpty) {
+        c.initializeAccountSetupService(LocalStorage.token);
+      }
     }
   }),
   getPages: AppRoutes.routes,

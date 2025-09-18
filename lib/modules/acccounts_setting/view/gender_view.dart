@@ -63,14 +63,18 @@ class GenderView extends GetView<AccountsController> {
             children: [
               const CustomProgressBar(value: 0.168),
               const SizedBox(height: 16),
-              Text(
-                AppStrings.thatsGreatAlex,
-                style: GoogleFonts.playfairDisplay(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Obx(() {
+                final name = controller.firstName.value.trim();
+                final displayName = name.isNotEmpty ? name : 'there';
+                return Text(
+                  "That's great, $displayName",
+                  style: GoogleFonts.playfairDisplay(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              }),
               const SizedBox(height: 20),
               Text(
                 "We are glad that you're here, please pick the gender which describe you the best",
