@@ -44,11 +44,17 @@ class AccountsController extends GetxController {
     String _str(String? v) => (v ?? '').trim();
     int _int(String? v) => int.tryParse((v ?? '').trim()) ?? 0;
 
-    // Like-to-meet / relation type may come from choice view; best-effort mapping
-    // For now, attempt to reuse existing selected values if present; otherwise send empty types
+    // Like-to-meet: Get selected genders from choice view
+    final List<String> likeToMeet = selectedGenders.isNotEmpty ? selectedGenders : <String>[];
+    
+    // Relation type - map from selected interests or default to empty
+    final String relationType = selectedInterestIndices.isNotEmpty 
+        ? (selectedInterestIndices.contains(0) ? 'Long-term' : 
+           selectedInterestIndices.contains(1) ? 'Casual' : 
+           selectedInterestIndices.contains(2) ? 'Friendship' : '')
+        : '';
 
     final Map<String, dynamic> body = {
-      // Map from physical_attributes if needed; placeholder empty structure
       'height': _str(heightController.text),
       'weight': _str(weightController.text),
     };
@@ -73,7 +79,7 @@ class AccountsController extends GetxController {
       'newExercise': selectedTryNewExperiences.value != null ? tryNewExperiences[selectedTryNewExperiences.value!] : '',
     };
 
-    // Interests: flatten into arrays; if none selected, send []
+    // Interests: Populate with selected interest options
     final Map<String, List<String>> interestsPayload = {
       'hobbies': <String>[],
       'creativeOutlets': <String>[],
@@ -84,7 +90,21 @@ class AccountsController extends GetxController {
       'healthAndWellness': <String>[],
       'readingAndContent': <String>[],
     };
-    // If you have categories in interestOptions, you can populate accordingly; otherwise keep empty arrays.
+    
+    // Add selected interests to appropriate categories based on selection
+    if (selectedInterestIndices.isNotEmpty) {
+      for (final index in selectedInterestIndices) {
+        final interestTitle = interestOptions[index]['title'] ?? '';
+        // Categorize interests based on their titles
+        if (interestTitle.toLowerCase().contains('long-term')) {
+          interestsPayload['leisureActivities']?.add(interestTitle);
+        } else if (interestTitle.toLowerCase().contains('casual')) {
+          interestsPayload['entertainment']?.add(interestTitle);
+        } else if (interestTitle.toLowerCase().contains('bff') || interestTitle.toLowerCase().contains('friend')) {
+          interestsPayload['hobbies']?.add(interestTitle);
+        }
+      }
+    }
 
     // Traits/inspire
     final List<String> personalTraitsInspire = selectedTraitIndices.map((i) => traits[i]).toList();
@@ -96,7 +116,7 @@ class AccountsController extends GetxController {
       'phone': _str(LocalStorage.phone),
       'age': _int(age.value),
       'gender': _str(selectedGender.value),
-      'relationType': '',
+      'relationType': relationType,
       'religion': _str(selectedReligion),
       'zodiacSign': _str(selectedZodiac),
       // three named images will be sent via multipart; here we keep placeholders if server also parses JSON
@@ -105,7 +125,7 @@ class AccountsController extends GetxController {
       'personalityImage': '',
       // extra images array required by server schema
       'image': <String>[],
-      'likeToMeet': <String>[],
+      'likeToMeet': likeToMeet,
       'personalTraitsInspire': personalTraitsInspire,
       'body': body,
       'eduJob': eduJob,
@@ -159,6 +179,8 @@ class AccountsController extends GetxController {
           AppLogger.success('✅ Profile submitted successfully with photos');
           Get.snackbar('Success', 'Profile submitted successfully!',
               snackPosition: SnackPosition.BOTTOM);
+          // Navigate to location view after successful submission
+          Get.offAllNamed(AppRoutes.locationView);
         } else {
           AppLogger.warning('⚠️ Profile submit response not successful: ${result['message']}');
           Get.snackbar('Error', result['message'] ?? 'Profile submission failed',

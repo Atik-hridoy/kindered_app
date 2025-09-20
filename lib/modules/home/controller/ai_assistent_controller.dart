@@ -47,6 +47,15 @@ class AiAssistentController extends GetxController {
   
   // Last activity timestamp
   final Rx<DateTime> lastActivity = DateTime.now().obs;
+
+  // Quick questions observable
+  final RxList<String> quickQuestions = <String>[].obs;
+
+  // Quick questions loading state
+  final RxBool isQuickQuestionsLoading = false.obs;
+
+  // Quick questions error state
+  final RxString quickQuestionsError = ''.obs;
   
   @override
   void onInit() {
@@ -65,6 +74,9 @@ class AiAssistentController extends GetxController {
     
     // Load initial matchmaking data
     _loadMatchmakingData();
+    
+    // Load quick questions
+    _loadQuickQuestions();
   }
   
   @override
@@ -135,10 +147,10 @@ class AiAssistentController extends GetxController {
         updateConnectionStatus(false);
       }
       errorMessage.value = 'Network error: ${e.message ?? 'Connection failed'}';
-      AppLogger.error('Network error in matchmaking data', e);
-    } catch (e) {
+      AppLogger.error('Network error in matchmaking data', e, e.stackTrace);
+    } catch (e, stackTrace) {
       errorMessage.value = 'Failed to load matchmaking data: ${e.toString()}';
-      AppLogger.error('Failed to load matchmaking data', e);
+      AppLogger.error('Failed to load matchmaking data', e, stackTrace);
     } finally {
       isLoading.value = false;
     }
@@ -192,11 +204,11 @@ class AiAssistentController extends GetxController {
       }
       errorMessage.value = 'Network error: ${e.message ?? 'Connection failed'}';
       _addAIMessage('Sorry, I\'m having trouble connecting. Please check your internet connection.');
-      AppLogger.error('Network error in AI chat', e);
-    } catch (e) {
+      AppLogger.error('Network error in AI chat', e, e.stackTrace);
+    } catch (e, stackTrace) {
       errorMessage.value = 'Failed to send message: ${e.toString()}';
       _addAIMessage('Sorry, I encountered an error. Please try again.');
-      AppLogger.error('Error in AI chat', e);
+      AppLogger.error('Error in AI chat', e, stackTrace);
     } finally {
       isLoading.value = false;
       stopAiTyping(); // Hide typing indicator
@@ -329,5 +341,232 @@ class AiAssistentController extends GetxController {
       return Colors.orange;
     }
     return Colors.green;
+  }
+
+  /// Load quick questions from API
+  Future<void> _loadQuickQuestions() async {
+    try {
+      isQuickQuestionsLoading.value = true;
+      quickQuestionsError.value = '';
+      updateConnectionStatus(true);
+      
+      final questions = await _aiService.getQuickQuestions();
+      quickQuestions.value = questions;
+      
+      // If no questions returned, use default questions
+      if (questions.isEmpty) {
+        quickQuestions.value = [
+          'Give me a romantic date idea!',
+          "What's my love compatibility?",
+        ];
+      }
+      
+      AppLogger.success('✅ Quick questions loaded successfully');
+      
+    } on DioException catch (e) {
+      // Handle network errors specifically
+      if (e.type == DioExceptionType.connectionError || 
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        updateConnectionStatus(false);
+      }
+      quickQuestionsError.value = 'Network error: ${e.message ?? 'Connection failed'}';
+      
+      // Use default questions on error
+      quickQuestions.value = [
+        'Give me a romantic date idea!',
+        "What's my love compatibility?",
+      ];
+      
+      AppLogger.error('Network error in quick questions', e, e.stackTrace);
+    } catch (e, stackTrace) {
+      quickQuestionsError.value = 'Failed to load quick questions: ${e.toString()}';
+      
+      // Use default questions on error
+      quickQuestions.value = [
+        'Give me a romantic date idea!',
+        "What's my love compatibility?",
+      ];
+      
+      AppLogger.error('Failed to load quick questions', e, stackTrace);
+    } finally {
+      isQuickQuestionsLoading.value = false;
+    }
+  }
+
+  /// Refresh quick questions
+  Future<void> refreshQuickQuestions() async {
+    await _loadQuickQuestions();
+  }
+
+  /// Clear quick questions error
+  void clearQuickQuestionsError() {
+    quickQuestionsError.value = '';
+  }
+
+  /// Process a quick question and get formatted response
+  Future<void> processQuickQuestion(String question) async {
+    try {
+      // Show loading state
+      startAiTyping();
+      updateConnectionStatus(true);
+      clearError();
+
+      // Add user question to chat
+      messages.add({
+        'text': question,
+        'isMe': true,
+        'timestamp': DateTime.now(),
+      });
+
+      // Process the quick question
+      final response = await _aiService.processQuickQuestion(question: question);
+
+      // Add AI response to chat
+      if (response['data'] != null) {
+        _addAIMessage(response['data']);
+      } else if (response['message'] != null) {
+        _addAIMessage(response['message']);
+      } else {
+        _addAIMessage('Quick question processed successfully!');
+      }
+
+      // Update last activity
+      updateLastActivity();
+      resetRetryCount();
+
+      AppLogger.success('✅ Quick question processed and response displayed');
+
+    } on DioException catch (e) {
+      // Handle network errors specifically
+      if (e.type == DioExceptionType.connectionError || 
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        updateConnectionStatus(false);
+      }
+      
+      errorMessage.value = 'Network error: ${e.message ?? 'Connection failed'}';
+      _addAIMessage('Sorry, I encountered a network error while processing your question. Please try again.');
+      
+      AppLogger.error('Network error in quick question processing', e, e.stackTrace);
+    } catch (e, stackTrace) {
+      errorMessage.value = 'Failed to process quick question: ${e.toString()}';
+      _addAIMessage('Sorry, I encountered an error while processing your question. Please try again.');
+      
+      AppLogger.error('Failed to process quick question', e, stackTrace);
+    } finally {
+      stopAiTyping();
+    }
+  }
+
+  /// Handle Discover button action
+  Future<void> discoverMatch() async {
+    try {
+      // Show loading state
+      startAiTyping();
+      updateConnectionStatus(true);
+      clearError();
+
+      // Add user action to chat
+      _addUserMessage('I want to discover more about this match!');
+
+      // Process discover action
+      final response = await _aiService.processDiscoverAction();
+
+      // Add AI response to chat
+      if (response['data'] != null) {
+        _addAIMessage(response['data']);
+      } else if (response['message'] != null) {
+        _addAIMessage(response['message']);
+      } else {
+        _addAIMessage('Great! Here are more details about your match. Let me know what you think!');
+      }
+
+      // Update last activity
+      updateLastActivity();
+      resetRetryCount();
+
+      AppLogger.success('✅ Discover action processed successfully');
+
+    } on DioException catch (e) {
+      // Handle network errors specifically
+      if (e.type == DioExceptionType.connectionError || 
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        updateConnectionStatus(false);
+      }
+      
+      errorMessage.value = 'Network error: ${e.message ?? 'Connection failed'}';
+      _addAIMessage('Sorry, I encountered a network error while processing your discovery request. Please try again.');
+      
+      AppLogger.error('Network error in discover action', e, e.stackTrace);
+    } catch (e, stackTrace) {
+      errorMessage.value = 'Failed to process discover action: ${e.toString()}';
+      _addAIMessage('Sorry, I encountered an error while processing your discovery request. Please try again.');
+      
+      AppLogger.error('Failed to process discover action', e, stackTrace);
+    } finally {
+      stopAiTyping();
+    }
+  }
+
+  /// Handle Pass button action
+  Future<void> passMatch() async {
+    try {
+      // Show loading state
+      startAiTyping();
+      updateConnectionStatus(true);
+      clearError();
+
+      // Add user action to chat
+      _addUserMessage('I\'d like to pass on this match.');
+
+      // Process pass action
+      final response = await _aiService.processPassAction();
+
+      // Add AI response to chat - extract message from data.message
+      if (response['data'] != null && response['data']['message'] != null) {
+        _addAIMessage(response['data']['message']);
+      } else if (response['message'] != null) {
+        _addAIMessage(response['message']);
+      } else {
+        _addAIMessage('No problem! I understand this match wasn\'t quite right for you. Your next curated match will arrive soon!');
+      }
+
+      // Update last activity
+      updateLastActivity();
+      resetRetryCount();
+
+      AppLogger.success('✅ Pass action processed successfully');
+
+    } on DioException catch (e) {
+      // Handle network errors specifically
+      if (e.type == DioExceptionType.connectionError || 
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        updateConnectionStatus(false);
+      }
+      
+      errorMessage.value = 'Network error: ${e.message ?? 'Connection failed'}';
+      _addAIMessage('Sorry, I encountered a network error while processing your pass request. Please try again.');
+      
+      AppLogger.error('Network error in pass action', e, e.stackTrace);
+    } catch (e, stackTrace) {
+      errorMessage.value = 'Failed to process pass action: ${e.toString()}';
+      _addAIMessage('Sorry, I encountered an error while processing your pass request. Please try again.');
+      
+      AppLogger.error('Failed to process pass action', e, stackTrace);
+    } finally {
+      stopAiTyping();
+    }
+  }
+
+  /// Add user message to chat
+  void _addUserMessage(String text) {
+    messages.add({
+      'text': text,
+      'isMe': true,
+      'timestamp': DateTime.now(),
+    });
   }
 }

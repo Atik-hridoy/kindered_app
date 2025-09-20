@@ -11,6 +11,8 @@ abstract class AppUrls {
   static const String verifyOtp = '/auth/verify-otp';
   static const String login = '/auth/login';
 
+
+
   // accounts setting endpoints
   static const String completeProfile = '/users/complete-profile';
 
@@ -18,6 +20,8 @@ abstract class AppUrls {
 
   // home
   static const String aiMatchmakingDefault = '/ai-chat/matchmaking';
+  static const String aiQuickQuestions = '/ai-chat/quick-questions';
+  static const String aiNextMatch = '/ai-chat/actions';
 
 
   //location
