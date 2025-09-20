@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kindered_app/core/localization/app_strings.dart';
+import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:kindered_app/modules/auth/controllers/otp_controller.dart';
 import 'package:kindered_app/modules/auth/widget_button.dart';
 
@@ -81,11 +82,17 @@ class OtpView extends GetView<OtpController> {
                       contentPadding: EdgeInsets.only(bottom: 8),
                     ),
                     onChanged: (value) {
-                      controller.otpDigits[index].value = value;
-                      if (value.isNotEmpty && index < 3) {
-                        FocusScope.of(context).nextFocus();
-                      } else if (value.isEmpty && index > 0) {
-                        FocusScope.of(context).previousFocus();
+                      try {
+                        if (controller.otpDigits.isNotEmpty && index < controller.otpDigits.length) {
+                          controller.otpDigits[index].value = value;
+                        }
+                        if (value.isNotEmpty && index < 3) {
+                          FocusScope.of(context).nextFocus();
+                        } else if (value.isEmpty && index > 0) {
+                          FocusScope.of(context).previousFocus();
+                        }
+                      } catch (e) {
+                        AppLogger.error('❌ OTP input error: $e');
                       }
                     },
                   ),

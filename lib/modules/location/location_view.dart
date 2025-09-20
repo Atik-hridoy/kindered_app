@@ -15,10 +15,11 @@ class LocationView extends GetView<LocationController> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: Column(
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
               // Top spacer
-              const Spacer(flex: 2),
+              const SizedBox(height: 80), // Replaced Spacer(flex: 2) with fixed height
               
               // Location Icon
               SvgPicture.asset(
@@ -57,7 +58,7 @@ class LocationView extends GetView<LocationController> {
               ),
               
               // Bottom spacer
-              const Spacer(flex: 3),
+              const SizedBox(height: 120), // Replaced Spacer(flex: 3) with fixed height
               
               // Location Setting Button
               Obx(() {
@@ -142,7 +143,8 @@ class LocationView extends GetView<LocationController> {
               }),
               
               const SizedBox(height: 50),
-            ],
+              ],
+            ),
           ),
         ),
       ),

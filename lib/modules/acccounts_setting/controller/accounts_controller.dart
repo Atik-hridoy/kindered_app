@@ -138,7 +138,100 @@ class AccountsController extends GetxController {
       'aboutMe': '',
     };
 
-    AppLogger.debug('🧾 Backend payload keys: ${payload.keys.toList()}');
+    // =========================================
+    // COMPREHENSIVE DATA LOGGING - VERIFY ALL DATA IS SENT
+    // =========================================
+    AppLogger.info('📊 === COMPREHENSIVE PROFILE DATA SUBMISSION ===');
+    
+    // 1. PERSONAL INFO (from intro_view.dart)
+    AppLogger.info('👤 PERSONAL INFO:');
+    AppLogger.info('  • First Name: "${firstName.value}"');
+    AppLogger.info('  • Last Name: "${lastName.value}"');
+    AppLogger.info('  • Age: ${age.value}');
+    AppLogger.info('  • Email: "${_str(LocalStorage.myEmail)}"');
+    AppLogger.info('  • Phone: "${_str(LocalStorage.phone)}"');
+    
+    // 2. GENDER SELECTION (from gender_view.dart)
+    AppLogger.info('🚻 GENDER SELECTION:');
+    AppLogger.info('  • Selected Gender: "${_str(selectedGender.value)}"');
+    
+    // 3. CHOICE SELECTION (from choice_view.dart)
+    AppLogger.info('🎯 CHOICE SELECTION (Whom to meet):');
+    AppLogger.info('  • Selected Genders: $likeToMeet');
+    
+    // 4. HEIGHT & WEIGHT (from height_weight_view.dart)
+    AppLogger.info('📏 HEIGHT & WEIGHT:');
+    AppLogger.info('  • Height: "${_str(heightController.text)}"');
+    AppLogger.info('  • Weight: "${_str(weightController.text)}"');
+    
+    // 5. EDUCATION & CAREER (from education_view.dart)
+    AppLogger.info('🎓 EDUCATION & CAREER:');
+    AppLogger.info('  • Education Level: "${eduJob['educationLevel'] ?? ''}"');
+    AppLogger.info('  • Job Status: "${eduJob['jobStatus'] ?? ''}"');
+    AppLogger.info('  • Income: "${eduJob['income'] ?? ''}"');
+    
+    // 6. FAITH & BELIEF (from faith_belief_view.dart)
+    AppLogger.info('🙏 FAITH & BELIEF:');
+    AppLogger.info('  • Religion: "${_str(selectedReligion)}"');
+    AppLogger.info('  • Zodiac Sign: "${_str(selectedZodiac)}"');
+    
+    // 7. HABITS (from habit_view.dart)
+    AppLogger.info('🔄 HABITS:');
+    AppLogger.info('  • Communication Style: ${habitsPayload['communicationStyle']}');
+    AppLogger.info('  • Workout Frequency: "${habitsPayload['workout']}"');
+    AppLogger.info('  • Eating Style: ${habitsPayload['eatingStyle']}');
+    AppLogger.info('  • Social Media Usage: "${habitsPayload['socialMedia']}"');
+    AppLogger.info('  • Smoke/Drink: "${habitsPayload['smokeOrDrink']}"');
+    AppLogger.info('  • Try New Experiences: "${habitsPayload['newExercise']}"');
+    
+    // 8. INSPIRE/TRAITS (from inspire_view.dart)
+    AppLogger.info('✨ INSPIRE/TRAITS:');
+    AppLogger.info('  • Selected Traits: $personalTraitsInspire');
+    AppLogger.info('  • Traits Count: ${personalTraitsInspire.length}');
+    
+    // 9. INTERESTS (from like_to_do_view.dart)
+    AppLogger.info('🎯 INTERESTS:');
+    AppLogger.info('  • Relation Type: "${relationType}"');
+    AppLogger.info('  • Selected Interest Indices: $selectedInterestIndices');
+    interestsPayload.forEach((category, interests) {
+      if (interests.isNotEmpty) {
+        AppLogger.info('  • $category: $interests');
+      }
+    });
+    
+    // 10. LIFESTYLE (from lifestyle_view.dart)
+    AppLogger.info('🌅 LIFESTYLE:');
+    AppLogger.info('  • Sleeping Style: "${lifestyle['sleepingStyle']}"');
+    AppLogger.info('  • Love Style: "${lifestyle['loveStyle']}"');
+    AppLogger.info('  • Weekends: "${lifestyle['weekends']}"');
+    AppLogger.info('  • Traveling: "${lifestyle['traveling']}"');
+    
+    // 11. LIKE TO DO ACTIVITIES (from like_to_do_view.dart)
+    AppLogger.info('🎨 LIKE TO DO ACTIVITIES:');
+    selectedLikeToDoOptions.forEach((category, indices) {
+      if (indices.isNotEmpty) {
+        final activities = indices.map((i) => likeToDoOptions[category]![i]).toList();
+        AppLogger.info('  • $category: $activities');
+      }
+    });
+    
+    // 12. LOCATION (from LocalStorage)
+    AppLogger.info('📍 LOCATION:');
+    AppLogger.info('  • Address: "${_str(LocalStorage.myAddress)}"');
+    
+    // 13. IMAGES
+    AppLogger.info('🖼️ IMAGES:');
+    AppLogger.info('  • Body Image: "${payload['bodyImage']}"');
+    AppLogger.info('  • Head Shot Image: "${payload['headShotImage']}"');
+    AppLogger.info('  • Personality Image: "${payload['personalityImage']}"');
+    AppLogger.info('  • Extra Images Count: ${(payload['image'] as List).length}');
+    
+    // FINAL PAYLOAD SUMMARY
+    AppLogger.info('📋 FINAL PAYLOAD SUMMARY:');
+    AppLogger.info('  • Total Fields: ${payload.length}');
+    AppLogger.info('  • Payload Keys: ${payload.keys.toList()}');
+    AppLogger.info('🚀 === END PROFILE DATA SUBMISSION ===\n');
+    
     return payload;
   }
 
@@ -153,7 +246,11 @@ class AccountsController extends GetxController {
 
       // Convert to File list for the service
       final files = photoPaths.where((p) => p.isNotEmpty).map((p) => File(p)).toList();
-      AppLogger.debug('🖼️ Resolved photo files: ${files.length}');
+      AppLogger.info('🖼️ PHOTO PROCESSING:');
+      AppLogger.info('  • Valid Photo Paths: ${files.length}');
+      for (int i = 0; i < files.length; i++) {
+        AppLogger.info('  • Photo ${i + 1}: ${files[i].path}');
+      }
 
       // Map first three images to named fields per backend: bodyImage, headShotImage, personalityImage
       File? bodyImage;
@@ -165,6 +262,13 @@ class AccountsController extends GetxController {
       if (files.length > 2) personalityImage = files[2];
       if (files.length > 3) extraImages.addAll(files.sublist(3));
 
+      AppLogger.info('📤 IMAGE MAPPING:');
+      AppLogger.info('  • Body Image: ${bodyImage?.path ?? 'Not provided'}');
+      AppLogger.info('  • Head Shot Image: ${headShotImage?.path ?? 'Not provided'}');
+      AppLogger.info('  • Personality Image: ${personalityImage?.path ?? 'Not provided'}');
+      AppLogger.info('  • Extra Images Count: ${extraImages.length}');
+
+      AppLogger.info('🌐 SENDING TO BACKEND...');
       final response = await _accountSetupService.completeProfileMultipart(
         data: profileData,
         bodyImage: bodyImage,
@@ -173,10 +277,19 @@ class AccountsController extends GetxController {
         extraImages: extraImages,
       );
 
+      AppLogger.info('📡 BACKEND RESPONSE:');
+      AppLogger.info('  • Status Code: ${response.statusCode}');
+      AppLogger.info('  • Response Data: ${response.data}');
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         final result = response.data as Map<String, dynamic>;
+        AppLogger.info('✅ SUCCESSFUL SUBMISSION:');
+        AppLogger.info('  • Success: ${result['success']}');
+        AppLogger.info('  • Message: ${result['message'] ?? 'No message'}');
+        AppLogger.info('  • Full Response: $result');
+        
         if (result['success'] == true) {
-          AppLogger.success('✅ Profile submitted successfully with photos');
+          AppLogger.success('🎉 Profile submitted successfully with photos!');
           Get.snackbar('Success', 'Profile submitted successfully!',
               snackPosition: SnackPosition.BOTTOM);
           // Navigate to location view after successful submission
@@ -188,25 +301,25 @@ class AccountsController extends GetxController {
         }
         return result;
       } else {
-        final errorMessage = 'Failed to submit profile: ${response.statusCode}';
-        AppLogger.error(errorMessage);
-        Get.snackbar('Error', errorMessage, snackPosition: SnackPosition.BOTTOM);
-        return {
-          'success': false,
-          'message': errorMessage,
-        };
+        AppLogger.error('❌ PROFILE SUBMISSION FAILED:');
+        AppLogger.error('  • Status Code: ${response.statusCode}');
+        AppLogger.error('  • Response Data: ${response.data}');
+        AppLogger.error('  • Status Message: ${response.statusMessage}');
+        Get.snackbar('Error', 'Profile submission failed. Please try again.',
+            snackPosition: SnackPosition.BOTTOM);
+        return {'success': false, 'message': 'Profile submission failed'};
       }
-    } catch (e) {
-      AppLogger.error('❌ Exception during submitCompleteProfileWithPhotos: $e');
-      Get.snackbar('Error', 'Failed to submit profile: $e',
+    } catch (e, stackTrace) {
+      AppLogger.error('❌ EXCEPTION DURING PROFILE SUBMISSION:');
+      AppLogger.error('  • Error: $e');
+      AppLogger.error('  • Stack Trace: $stackTrace');
+      AppLogger.error('  • Error Type: ${e.runtimeType}');
+      Get.snackbar('Error', 'An error occurred. Please try again.',
           snackPosition: SnackPosition.BOTTOM);
-      return {
-        'success': false,
-        'message': 'Failed to submit profile: $e',
-      };
+      return {'success': false, 'message': 'An error occurred'};
     } finally {
       isLoading.value = false;
-      AppLogger.info('🛑 submitCompleteProfileWithPhotos finished');
+      AppLogger.info('🔄 Loading state reset to false');
     }
   }
   

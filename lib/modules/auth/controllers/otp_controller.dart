@@ -38,6 +38,13 @@ class OtpController extends GetxController {
       Get.snackbar('Error', 'Please enter the full OTP.');
       return;
     }
+    
+    // Validate that OTP contains only numeric characters
+    if (!RegExp(r'^\d+$').hasMatch(otpCode)) {
+      Get.snackbar('Error', 'OTP must contain only numbers.');
+      return;
+    }
+    
     isLoading.value = true;
     try {
       final response = await _otpService.verifyOtp(
@@ -56,38 +63,47 @@ class OtpController extends GetxController {
         
         // Save user session/token if provided in response (support multiple possible keys)
         String? token;
-        final data = response['data'];
-        if (data is Map) {
-          token = data['token'] ?? data['accessToken'] ?? data['access_token'] ?? data['jwt'] ?? data['bearer'];
-        }
-        token ??= response['token'];
+        try {
+          final data = response['data'];
+          if (data is Map) {
+            token = data['token'] ?? data['accessToken'] ?? data['access_token'] ?? data['jwt'] ?? data['bearer'];
+          }
+          token ??= response['token'];
 
-        if (token != null && token.isNotEmpty) {
-          await LocalStorage.setString(LocalStorageKeys.token, token);
-          LocalStorage.token = token;
-          await LocalStorage.setBool(LocalStorageKeys.isLogIn, true);
-          LocalStorage.isLogIn = true;
-          AppLogger.info('🔐 User session saved (token len=${token.length})');
+          if (token != null && token.isNotEmpty) {
+            await LocalStorage.setString(LocalStorageKeys.token, token);
+            LocalStorage.token = token;
+            await LocalStorage.setBool(LocalStorageKeys.isLogIn, true);
+            LocalStorage.isLogIn = true;
+            AppLogger.info('🔐 User session saved (token len=${token.length})');
 
-          // Initialize AccountsController service with fresh token if available
-          if (Get.isRegistered<AccountsController>()) {
-            try {
-              final acc = Get.find<AccountsController>();
-              acc.initializeAccountSetupService(LocalStorage.token);
-              AppLogger.info('🔗 AccountsController initialized with bearer token after OTP');
-            } catch (e) {
-              AppLogger.warning('⚠️ Failed to init AccountsController after OTP: $e');
+            // Initialize AccountsController service with fresh token if available
+            if (Get.isRegistered<AccountsController>()) {
+              try {
+                final acc = Get.find<AccountsController>();
+                acc.initializeAccountSetupService(LocalStorage.token);
+                AppLogger.info('🔗 AccountsController initialized with bearer token after OTP');
+              } catch (e) {
+                AppLogger.warning('⚠️ Failed to init AccountsController after OTP: $e');
+              }
             }
           }
+        } catch (e) {
+          AppLogger.error('❌ Error saving user session: $e');
         }
         
         // Navigate based on source
-        if (source.value == 'login') {
-          // From email login view - go to home suggestion view
-          Get.offAllNamed(AppRoutes.locationView);
-        } else {
-          // From create account view - go to intro view
-          Get.offAllNamed(AppRoutes.intro);
+        try {
+          if (source.value == 'login') {
+            // From email login view - go to home suggestion view
+            Get.offAllNamed(AppRoutes.locationView);
+          } else {
+            // From create account view - go to intro view
+            Get.offAllNamed(AppRoutes.intro);
+          }
+        } catch (e) {
+          AppLogger.error('❌ Navigation error after OTP verification: $e');
+          Get.snackbar('Error', 'Failed to navigate to next screen.');
         }
       } else {
         AppLogger.error('❌ Verification failed: ${response['message'] ?? 'Unknown error'}');
@@ -102,6 +118,11 @@ class OtpController extends GetxController {
   }
 
   Future<void> resendOtp() async {
+    if (target.value.isEmpty || type.value.isEmpty) {
+      Get.snackbar('Error', 'Missing required information for resending OTP.');
+      return;
+    }
+    
     isLoading.value = true;
     try {
       final response = await _otpService.resendOtp(
