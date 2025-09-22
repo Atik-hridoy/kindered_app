@@ -14,6 +14,9 @@ class AccountsController extends GetxController {
   // Loading state
   final RxBool isLoading = false.obs;
 
+  // Profile completion percentage
+  final RxInt profileCompletionPercentage = 0.obs;
+
   // =========================================
   // PERSONAL INFO SECTION (from IntroViewController)
   // =========================================
@@ -25,9 +28,20 @@ class AccountsController extends GetxController {
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController ageController = TextEditingController();
 
-  void updateFirstName(String value) => firstName.value = value;
-  void updateLastName(String value) => lastName.value = value;
-  void updateAge(String value) => age.value = value;
+  void updateFirstName(String value) {
+    firstName.value = value;
+    updateProfileCompletion();
+  }
+  
+  void updateLastName(String value) {
+    lastName.value = value;
+    updateProfileCompletion();
+  }
+  
+  void updateAge(String value) {
+    age.value = value;
+    updateProfileCompletion();
+  }
 
   void loadUserData() {
     firstName.value = '';
@@ -565,6 +579,7 @@ class AccountsController extends GetxController {
 
   void selectGender(String gender) {
     selectedGender.value = gender;
+    updateProfileCompletion();
   }
 
   String? validateGender() {
@@ -585,6 +600,7 @@ class AccountsController extends GetxController {
     } else {
       selectedGenders.add(gender);
     }
+    updateProfileCompletion();
   }
 
   bool isGenderSelectedInList(String gender) => selectedGenders.contains(gender);
@@ -609,6 +625,7 @@ class AccountsController extends GetxController {
   void validateHeightWeightInputs() {
     isHeightValid.value = heightController.text.trim().isNotEmpty;
     isWeightValid.value = weightController.text.trim().isNotEmpty;
+    updateProfileCompletion();
   }
 
   bool get areHeightWeightValid => isHeightValid.value && isWeightValid.value;
@@ -625,6 +642,7 @@ class AccountsController extends GetxController {
     isEducationButtonEnabled.value = educationController.text.trim().isNotEmpty &&
                                     jobStatusController.text.trim().isNotEmpty &&
                                     incomeController.text.trim().isNotEmpty;
+    updateProfileCompletion();
   }
 
   Map<String, String> getEducationFormData() {
@@ -653,10 +671,12 @@ class AccountsController extends GetxController {
 
   void toggleReligion(int index) {
     selectedReligionIndex.value = selectedReligionIndex.value == index ? null : index;
+    updateProfileCompletion();
   }
 
   void toggleZodiac(int index) {
     selectedZodiacIndex.value = selectedZodiacIndex.value == index ? null : index;
+    updateProfileCompletion();
   }
 
   bool get isFaithCompleted =>
@@ -684,12 +704,30 @@ class AccountsController extends GetxController {
   final selectedSmokingDrinking = Rxn<int>();
   final selectedTryNewExperiences = Rxn<int>();
 
-  void toggleCommunicationStyle(int index) => selectedCommunicationStyle.value = selectedCommunicationStyle.value == index ? null : index;
-  void toggleExerciseFrequency(int index) => selectedExerciseFrequency.value = selectedExerciseFrequency.value == index ? null : index;
-  void toggleFoodPreference(int index) => selectedFoodPreference.value = selectedFoodPreference.value == index ? null : index;
-  void toggleSocialMediaUsage(int index) => selectedSocialMediaUsage.value = selectedSocialMediaUsage.value == index ? null : index;
-  void toggleSmokingDrinking(int index) => selectedSmokingDrinking.value = selectedSmokingDrinking.value == index ? null : index;
-  void toggleTryNewExperiences(int index) => selectedTryNewExperiences.value = selectedTryNewExperiences.value == index ? null : index;
+  void toggleCommunicationStyle(int index) {
+    selectedCommunicationStyle.value = selectedCommunicationStyle.value == index ? null : index;
+    updateProfileCompletion();
+  }
+  void toggleExerciseFrequency(int index) {
+    selectedExerciseFrequency.value = selectedExerciseFrequency.value == index ? null : index;
+    updateProfileCompletion();
+  }
+  void toggleFoodPreference(int index) {
+    selectedFoodPreference.value = selectedFoodPreference.value == index ? null : index;
+    updateProfileCompletion();
+  }
+  void toggleSocialMediaUsage(int index) {
+    selectedSocialMediaUsage.value = selectedSocialMediaUsage.value == index ? null : index;
+    updateProfileCompletion();
+  }
+  void toggleSmokingDrinking(int index) {
+    selectedSmokingDrinking.value = selectedSmokingDrinking.value == index ? null : index;
+    updateProfileCompletion();
+  }
+  void toggleTryNewExperiences(int index) {
+    selectedTryNewExperiences.value = selectedTryNewExperiences.value == index ? null : index;
+    updateProfileCompletion();
+  }
 
   bool get areHabitsCompleted =>
       selectedCommunicationStyle.value != null &&
@@ -721,6 +759,7 @@ class AccountsController extends GetxController {
     } else {
       selectedTraitIndices.add(index);
     }
+    updateProfileCompletion();
   }
 
   bool get isInspireButtonEnabled => selectedTraitIndices.length >= 3;
@@ -756,6 +795,7 @@ class AccountsController extends GetxController {
     } else {
       selectedInterestIndices.add(index);
     }
+    updateProfileCompletion();
   }
 
   String? validateInterestSelections() {
@@ -780,10 +820,22 @@ class AccountsController extends GetxController {
   final travelPreferences = ['Love traveling', 'Like it occasionally', 'Prefer staying local', 'Depends on the destination'];
   final selectedTravelPreference = Rxn<int>();
 
-  void toggleDayPreference(int index) => selectedDayPreference.value = selectedDayPreference.value == index ? null : index;
-  void toggleLoveLanguage(int index) => selectedLoveLanguage.value = selectedLoveLanguage.value == index ? null : index;
-  void toggleWeekendActivity(int index) => selectedWeekendActivity.value = selectedWeekendActivity.value == index ? null : index;
-  void toggleTravelPreference(int index) => selectedTravelPreference.value = selectedTravelPreference.value == index ? null : index;
+  void toggleDayPreference(int index) {
+    selectedDayPreference.value = selectedDayPreference.value == index ? null : index;
+    updateProfileCompletion();
+  }
+  void toggleLoveLanguage(int index) {
+    selectedLoveLanguage.value = selectedLoveLanguage.value == index ? null : index;
+    updateProfileCompletion();
+  }
+  void toggleWeekendActivity(int index) {
+    selectedWeekendActivity.value = selectedWeekendActivity.value == index ? null : index;
+    updateProfileCompletion();
+  }
+  void toggleTravelPreference(int index) {
+    selectedTravelPreference.value = selectedTravelPreference.value == index ? null : index;
+    updateProfileCompletion();
+  }
 
   bool get isLifestyleCompleted =>
       selectedDayPreference.value != null &&
@@ -822,6 +874,7 @@ class AccountsController extends GetxController {
     } else {
       selectedLikeToDoOptions[category]!.add(index);
     }
+    updateProfileCompletion();
   }
 
   bool get isLikeToDoCompleted => selectedLikeToDoOptions.values.every((s) => s.isNotEmpty);
@@ -1347,6 +1400,109 @@ class AccountsController extends GetxController {
     super.onClose();
   }
 
+  /// Upload the 3 specific images separately: bodyImage, headShotImage, and personalityImage
+  /// This method handles only the image upload part, separate from profile data submission
+  Future<Map<String, dynamic>> uploadThreeSpecificImages({
+    required String bodyImagePath,
+    required String headShotImagePath,
+    required String personalityImagePath,
+  }) async {
+    try {
+      isLoading.value = true;
+      _ensureService();
+      AppLogger.info('🚀 Uploading 3 specific images separately');
+
+      // Convert to File objects
+      final bodyImage = bodyImagePath.isNotEmpty ? File(bodyImagePath) : null;
+      final headShotImage = headShotImagePath.isNotEmpty ? File(headShotImagePath) : null;
+      final personalityImage = personalityImagePath.isNotEmpty ? File(personalityImagePath) : null;
+
+      AppLogger.info('🖼️ PREPARING IMAGES FOR UPLOAD:');
+      AppLogger.info('  • Body Image: ${bodyImage?.path ?? 'Not provided'}');
+      AppLogger.info('  • Head Shot Image: ${headShotImage?.path ?? 'Not provided'}');
+      AppLogger.info('  • Personality Image: ${personalityImage?.path ?? 'Not provided'}');
+
+      // Validate that all 3 images are provided
+      if (bodyImage == null || headShotImage == null || personalityImage == null) {
+        AppLogger.warning('⚠️ Missing required images for upload');
+        return {
+          'success': false,
+          'message': 'All 3 images (body, headshot, personality) are required',
+        };
+      }
+
+      // Validate that files exist
+      if (!await bodyImage.exists() || !await headShotImage.exists() || !await personalityImage.exists()) {
+        AppLogger.warning('⚠️ One or more image files do not exist');
+        return {
+          'success': false,
+          'message': 'One or more image files are missing or invalid',
+        };
+      }
+
+      AppLogger.info('🌐 SENDING IMAGES TO BACKEND...');
+      final response = await _accountSetupService.uploadSpecificImages(
+        bodyImage: bodyImage,
+        headShotImage: headShotImage,
+        personalityImage: personalityImage,
+      );
+
+      AppLogger.info('📡 BACKEND RESPONSE:');
+      AppLogger.info('  • Status Code: ${response.statusCode}');
+      AppLogger.info('  • Response Data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final result = response.data as Map<String, dynamic>;
+        AppLogger.info('✅ SUCCESSFUL IMAGE UPLOAD:');
+        AppLogger.info('  • Success: ${result['success']}');
+        AppLogger.info('  • Message: ${result['message'] ?? 'No message'}');
+        AppLogger.info('  • Full Response: $result');
+
+        if (result['success'] == true) {
+          AppLogger.success('🎉 3 specific images uploaded successfully!');
+          Get.snackbar(
+            'Success',
+            'Images uploaded successfully!',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        } else {
+          AppLogger.warning('⚠️ Image upload response not successful: ${result['message']}');
+          Get.snackbar(
+            'Error',
+            result['message'] ?? 'Image upload failed',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        }
+        return result;
+      } else {
+        AppLogger.error('❌ IMAGE UPLOAD FAILED:');
+        AppLogger.error('  • Status Code: ${response.statusCode}');
+        AppLogger.error('  • Response Data: ${response.data}');
+        AppLogger.error('  • Status Message: ${response.statusMessage}');
+        Get.snackbar(
+          'Error',
+          'Image upload failed. Please try again.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return {'success': false, 'message': 'Image upload failed'};
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('❌ EXCEPTION DURING IMAGE UPLOAD:');
+      AppLogger.error('  • Error: $e');
+      AppLogger.error('  • Stack Trace: $stackTrace');
+      AppLogger.error('  • Error Type: ${e.runtimeType}');
+      Get.snackbar(
+        'Error',
+        'An error occurred during image upload. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return {'success': false, 'message': 'An error occurred during image upload'};
+    } finally {
+      isLoading.value = false;
+      AppLogger.info('🔄 Loading state reset to false');
+    }
+  }
+
   void clearAllData() {
     firstName.value = '';
     lastName.value = '';
@@ -1377,10 +1533,11 @@ class AccountsController extends GetxController {
     });
   }
 
-  int getCompletionPercentage() {
+  void updateProfileCompletion() {
     int completedSections = 0;
-    int totalSections = 10; // Total number of sections to complete
+    int totalSections = 12; // Total number of sections to complete
 
+    // Check each section for completion
     if (firstName.value.isNotEmpty && lastName.value.isNotEmpty && age.value.isNotEmpty) completedSections++;
     if (isGenderSelected) completedSections++;
     if (selectedGenders.isNotEmpty) completedSections++;
@@ -1391,7 +1548,12 @@ class AccountsController extends GetxController {
     if (isInspireButtonEnabled) completedSections++;
     if (selectedInterestIndices.isNotEmpty) completedSections++;
     if (isLifestyleCompleted) completedSections++;
+    if (isLikeToDoCompleted) completedSections++;
 
-    return (completedSections / totalSections * 100).round();
+    profileCompletionPercentage.value = (completedSections / totalSections * 100).round();
+  }
+  
+  int getCompletionPercentage() {
+    return profileCompletionPercentage.value;
   }
 }

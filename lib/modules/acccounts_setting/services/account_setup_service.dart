@@ -158,4 +158,50 @@ class AccountSetupService {
       throw Exception(message);
     }
   }
+
+  /// Upload only the 3 specific images: bodyImage, headShotImage, and personalityImage
+  /// This method handles only image upload, separate from profile data
+  Future<Response> uploadSpecificImages({
+    required File bodyImage,
+    required File headShotImage,
+    required File personalityImage,
+  }) async {
+    try {
+      final formData = FormData();
+
+      // Add the 3 specific image fields
+      final bodyImageName = bodyImage.path.split(Platform.pathSeparator).last;
+      final headShotImageName = headShotImage.path.split(Platform.pathSeparator).last;
+      final personalityImageName = personalityImage.path.split(Platform.pathSeparator).last;
+
+      formData.files.add(MapEntry(
+        'bodyImage',
+        await MultipartFile.fromFile(bodyImage.path, filename: bodyImageName),
+      ));
+      formData.files.add(MapEntry(
+        'headShotImage',
+        await MultipartFile.fromFile(headShotImage.path, filename: headShotImageName),
+      ));
+      formData.files.add(MapEntry(
+        'personalityImage',
+        await MultipartFile.fromFile(personalityImage.path, filename: personalityImageName),
+      ));
+
+      AppLogger.api('POST', AppUrls.completeProfile, data: '[multipart: bodyImage + headShotImage + personalityImage]');
+      final response = await _dio.post(AppUrls.completeProfile, data: formData);
+
+      AppLogger.api(
+        'POST',
+        AppUrls.completeProfile,
+        data: response.data,
+        statusCode: response.statusCode,
+      );
+      AppLogger.success('✅ 3 specific images uploaded successfully');
+      return response;
+    } on DioException catch (e) {
+      AppLogger.error('❌ 3 specific images upload failed: ${e.message}', e, e.stackTrace);
+      final message = e.response?.data ?? e.message ?? 'Request failed';
+      throw Exception(message);
+    }
+  }
 }

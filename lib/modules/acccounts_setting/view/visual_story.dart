@@ -606,25 +606,64 @@ class _VisualStoryState extends State<VisualStory> {
           bottom: 50.0,
         ),
         color: Theme.of(context).scaffoldBackgroundColor,
-        child: CustomGradientButton(
-          text: 'Submit',
-          onPressed: canProceed
-              ? () async {
-                  final paths = selectedImages
-                      .where((img) => img != null)
-                      .map((img) => img!.path)
-                      .toList();
-                  await _accountsController.submitCompleteProfileWithPhotos(paths);
-                }
-              : null,
-          width: double.infinity,
-          height: 48,
-          borderRadius: 12,
-          gradientColors: const [Color(0xFFD4A373), Color(0xFFB56E29)],
-          textStyle: GoogleFonts.playfairDisplay(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Main submit button (existing functionality)
+            CustomGradientButton(
+              text: 'Submit Complete Profile',
+              onPressed: canProceed
+                  ? () async {
+                      final paths = selectedImages
+                          .where((img) => img != null)
+                          .map((img) => img!.path)
+                          .toList();
+                      await _accountsController.submitCompleteProfileWithPhotos(paths);
+                    }
+                  : null,
+              width: double.infinity,
+              height: 48,
+              borderRadius: 12,
+              gradientColors: const [Color(0xFFD4A373), Color(0xFFB56E29)],
+              textStyle: GoogleFonts.playfairDisplay(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            // New button for uploading only the 3 specific images
+            CustomGradientButton(
+              text: 'Upload 3 Specific Images',
+              onPressed: canProceed
+                  ? () async {
+                      // Get the first 3 images (body, headshot, personality)
+                      final firstThreeImages = selectedImages.take(3).where((img) => img != null).toList();
+                      
+                      if (firstThreeImages.length == 3) {
+                        await _accountsController.uploadThreeSpecificImages(
+                          bodyImagePath: firstThreeImages[0]!.path,
+                          headShotImagePath: firstThreeImages[1]!.path,
+                          personalityImagePath: firstThreeImages[2]!.path,
+                        );
+                      } else {
+                        _showSnackBar(
+                          'Images Required',
+                          'Please select all 3 specific images (Full Body, Headshot, Personality) before uploading.',
+                          Colors.orange,
+                        );
+                      }
+                    }
+                  : null,
+              width: double.infinity,
+              height: 48,
+              borderRadius: 12,
+              gradientColors: const [Color(0xFF6C5CE7), Color(0xFF5F3DC4)],
+              textStyle: GoogleFonts.playfairDisplay(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
