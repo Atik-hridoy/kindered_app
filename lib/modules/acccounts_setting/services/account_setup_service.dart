@@ -31,6 +31,14 @@ class AccountSetupService {
     try {
       // Build payload
       Response response;
+      
+      // Log request details similar to Postman
+      AppLogger.info('🌐 [POSTMAN-STYLE REQUEST] ====================================');
+      AppLogger.info('📡 Method: POST');
+      AppLogger.info('🔗 URL: ${AppUrls.baseUrl}${AppUrls.completeProfile}');
+      AppLogger.info('📋 Headers:');
+      _dio.options.headers.forEach((key, value) => AppLogger.info('  • $key: $value'));
+      
       if (images != null && images.isNotEmpty) {
         // Prepare multipart form data
         final payload = Map<String, dynamic>.from(data);
@@ -48,7 +56,21 @@ class AccountSetupService {
         payload['image'] = files;
 
         final formData = FormData.fromMap(payload);
-        AppLogger.api('POST', AppUrls.completeProfile, data: '[multipart form with ${files.length} photos]');
+        
+        // Log multipart form data
+        AppLogger.info('📤 Body (MULTIPART FORM DATA):');
+        AppLogger.info('  • Content-Type: multipart/form-data');
+        AppLogger.info('  • Fields:');
+        payload.forEach((key, value) {
+          if (key != 'image') {
+            AppLogger.info('    - $key: $value');
+          }
+        });
+        AppLogger.info('  • Files:');
+        for (int i = 0; i < files.length; i++) {
+          AppLogger.info('    - image[$i]: ${files[i].filename} (${(files[i].length / 1024).toStringAsFixed(2)} KB)');
+        }
+        
         response = await _dio.post(
           AppUrls.completeProfile,
           data: formData,
@@ -59,7 +81,13 @@ class AccountSetupService {
           ...data,
           'image': data.containsKey('image') ? data['image'] : <dynamic>[],
         };
-        AppLogger.api('POST', AppUrls.completeProfile, data: json);
+        
+        // Log JSON payload
+        AppLogger.info('📤 Body (JSON):');
+        AppLogger.info('  • Content-Type: application/json');
+        AppLogger.info('  • Payload:');
+        AppLogger.info('    ${const JsonEncoder.withIndent('    ').convert(json)}');
+        
         response = await _dio.post(
           AppUrls.completeProfile,
           data: json,
@@ -68,18 +96,33 @@ class AccountSetupService {
       }
 
       // Log the API response
-      AppLogger.api(
-        'POST',
-        AppUrls.completeProfile,
-        data: response.data,
-        statusCode: response.statusCode,
-      );
-
+      AppLogger.info('📡 [RESPONSE] ====================================');
+      AppLogger.info('🔢 Status Code: ${response.statusCode}');
+      AppLogger.info('📋 Status Message: ${response.statusMessage}');
+      AppLogger.info('📤 Response Headers:');
+      response.headers.forEach((name, values) => AppLogger.info('  • $name: ${values.join(', ')}'));
+      AppLogger.info('📦 Response Body:');
+      AppLogger.info('    ${const JsonEncoder.withIndent('    ').convert(response.data)}');
+      
       AppLogger.success('✅ Complete profile successful');
       return response;
     } on DioException catch (e) {
       // Log Dio error with details
-      AppLogger.error('❌ Complete profile failed: ${e.message}', e, e.stackTrace);
+      AppLogger.error('❌ [ERROR] ====================================');
+      AppLogger.error('🔢 Error Type: ${e.type}');
+      AppLogger.error('📡 Error Message: ${e.message}');
+      AppLogger.error('🔗 URL: ${e.requestOptions.uri}');
+      AppLogger.error('📋 Request Headers:');
+      e.requestOptions.headers.forEach((key, value) => AppLogger.error('  • $key: $value'));
+      if (e.requestOptions.data != null) {
+        AppLogger.error('📤 Request Data: ${e.requestOptions.data}');
+      }
+      if (e.response != null) {
+        AppLogger.error('🔢 Response Status: ${e.response?.statusCode}');
+        AppLogger.error('📦 Response Data: ${e.response?.data}');
+      }
+      AppLogger.error('📚 Stack Trace: ${e.stackTrace}');
+      
       final message = e.response?.data ?? e.message ?? 'Request failed';
       throw Exception(message);
     }
@@ -99,10 +142,18 @@ class AccountSetupService {
     List<File>? extraImages,
   }) async {
     try {
+      // Log request details similar to Postman
+      AppLogger.info('🌐 [POSTMAN-STYLE REQUEST] ====================================');
+      AppLogger.info('📡 Method: POST');
+      AppLogger.info('🔗 URL: ${AppUrls.baseUrl}${AppUrls.completeProfile}');
+      AppLogger.info('📋 Headers:');
+      _dio.options.headers.forEach((key, value) => AppLogger.info('  • $key: $value'));
+      
       final formData = FormData();
 
       // Add JSON text field 'data'
-      formData.fields.add(MapEntry('data', jsonEncode(data)));
+      final jsonData = jsonEncode(data);
+      formData.fields.add(MapEntry('data', jsonData));
 
       // Add named single-image fields if present
       if (bodyImage != null) {
@@ -141,19 +192,62 @@ class AccountSetupService {
         // (the server should parse 'data' JSON and see image: [])
       }
 
-      AppLogger.api('POST', AppUrls.completeProfile, data: '[multipart: data(json) + named images + image[](${extraImages?.length ?? 0})]');
+      // Log multipart form data details
+      AppLogger.info('📤 Body (MULTIPART FORM DATA):');
+      AppLogger.info('  • Content-Type: multipart/form-data');
+      AppLogger.info('  • Fields:');
+      AppLogger.info('    - data: (JSON string)');
+      AppLogger.info('    ${const JsonEncoder.withIndent('    ').convert(data)}');
+      AppLogger.info('  • Files:');
+      if (bodyImage != null) {
+        final fileSize = await bodyImage.length();
+        AppLogger.info('    - bodyImage: ${bodyImage.path.split(Platform.pathSeparator).last} (${(fileSize / 1024).toStringAsFixed(2)} KB)');
+      }
+      if (headShotImage != null) {
+        final fileSize = await headShotImage.length();
+        AppLogger.info('    - headShotImage: ${headShotImage.path.split(Platform.pathSeparator).last} (${(fileSize / 1024).toStringAsFixed(2)} KB)');
+      }
+      if (personalityImage != null) {
+        final fileSize = await personalityImage.length();
+        AppLogger.info('    - personalityImage: ${personalityImage.path.split(Platform.pathSeparator).last} (${(fileSize / 1024).toStringAsFixed(2)} KB)');
+      }
+      if (extraImages != null && extraImages.isNotEmpty) {
+        for (int i = 0; i < extraImages.length; i++) {
+          final fileSize = await extraImages[i].length();
+          AppLogger.info('    - image[$i]: ${extraImages[i].path.split(Platform.pathSeparator).last} (${(fileSize / 1024).toStringAsFixed(2)} KB)');
+        }
+      }
+
       final response = await _dio.post(AppUrls.completeProfile, data: formData);
 
-      AppLogger.api(
-        'POST',
-        AppUrls.completeProfile,
-        data: response.data,
-        statusCode: response.statusCode,
-      );
+      // Log the API response
+      AppLogger.info('📡 [RESPONSE] ====================================');
+      AppLogger.info('🔢 Status Code: ${response.statusCode}');
+      AppLogger.info('📋 Status Message: ${response.statusMessage}');
+      AppLogger.info('📤 Response Headers:');
+      response.headers.forEach((name, values) => AppLogger.info('  • $name: ${values.join(', ')}'));
+      AppLogger.info('📦 Response Body:');
+      AppLogger.info('    ${const JsonEncoder.withIndent('    ').convert(response.data)}');
+      
       AppLogger.success('✅ Complete profile (multipart) successful');
       return response;
     } on DioException catch (e) {
-      AppLogger.error('❌ Complete profile (multipart) failed: ${e.message}', e, e.stackTrace);
+      // Log Dio error with details
+      AppLogger.error('❌ [ERROR] ====================================');
+      AppLogger.error('🔢 Error Type: ${e.type}');
+      AppLogger.error('📡 Error Message: ${e.message}');
+      AppLogger.error('🔗 URL: ${e.requestOptions.uri}');
+      AppLogger.error('📋 Request Headers:');
+      e.requestOptions.headers.forEach((key, value) => AppLogger.error('  • $key: $value'));
+      if (e.requestOptions.data != null) {
+        AppLogger.error('📤 Request Data: ${e.requestOptions.data}');
+      }
+      if (e.response != null) {
+        AppLogger.error('🔢 Response Status: ${e.response?.statusCode}');
+        AppLogger.error('📦 Response Data: ${e.response?.data}');
+      }
+      AppLogger.error('📚 Stack Trace: ${e.stackTrace}');
+      
       final message = e.response?.data ?? e.message ?? 'Request failed';
       throw Exception(message);
     }
@@ -167,6 +261,13 @@ class AccountSetupService {
     required File personalityImage,
   }) async {
     try {
+      // Log request details similar to Postman
+      AppLogger.info('🌐 [POSTMAN-STYLE REQUEST] ====================================');
+      AppLogger.info('📡 Method: POST');
+      AppLogger.info('🔗 URL: ${AppUrls.baseUrl}${AppUrls.completeProfile}');
+      AppLogger.info('📋 Headers:');
+      _dio.options.headers.forEach((key, value) => AppLogger.info('  • $key: $value'));
+      
       final formData = FormData();
 
       // Add the 3 specific image fields
@@ -187,19 +288,48 @@ class AccountSetupService {
         await MultipartFile.fromFile(personalityImage.path, filename: personalityImageName),
       ));
 
-      AppLogger.api('POST', AppUrls.completeProfile, data: '[multipart: bodyImage + headShotImage + personalityImage]');
+      // Log multipart form data details
+      AppLogger.info('📤 Body (MULTIPART FORM DATA):');
+      AppLogger.info('  • Content-Type: multipart/form-data');
+      AppLogger.info('  • Files:');
+      final bodyFileSize = await bodyImage.length();
+      final headShotFileSize = await headShotImage.length();
+      final personalityFileSize = await personalityImage.length();
+      
+      AppLogger.info('    - bodyImage: $bodyImageName (${(bodyFileSize / 1024).toStringAsFixed(2)} KB)');
+      AppLogger.info('    - headShotImage: $headShotImageName (${(headShotFileSize / 1024).toStringAsFixed(2)} KB)');
+      AppLogger.info('    - personalityImage: $personalityImageName (${(personalityFileSize / 1024).toStringAsFixed(2)} KB)');
+
       final response = await _dio.post(AppUrls.completeProfile, data: formData);
 
-      AppLogger.api(
-        'POST',
-        AppUrls.completeProfile,
-        data: response.data,
-        statusCode: response.statusCode,
-      );
+      // Log the API response
+      AppLogger.info('📡 [RESPONSE] ====================================');
+      AppLogger.info('🔢 Status Code: ${response.statusCode}');
+      AppLogger.info('📋 Status Message: ${response.statusMessage}');
+      AppLogger.info('📤 Response Headers:');
+      response.headers.forEach((name, values) => AppLogger.info('  • $name: ${values.join(', ')}'));
+      AppLogger.info('📦 Response Body:');
+      AppLogger.info('    ${const JsonEncoder.withIndent('    ').convert(response.data)}');
+      
       AppLogger.success('✅ 3 specific images uploaded successfully');
       return response;
     } on DioException catch (e) {
-      AppLogger.error('❌ 3 specific images upload failed: ${e.message}', e, e.stackTrace);
+      // Log Dio error with details
+      AppLogger.error('❌ [ERROR] ====================================');
+      AppLogger.error('🔢 Error Type: ${e.type}');
+      AppLogger.error('📡 Error Message: ${e.message}');
+      AppLogger.error('🔗 URL: ${e.requestOptions.uri}');
+      AppLogger.error('📋 Request Headers:');
+      e.requestOptions.headers.forEach((key, value) => AppLogger.error('  • $key: $value'));
+      if (e.requestOptions.data != null) {
+        AppLogger.error('📤 Request Data: ${e.requestOptions.data}');
+      }
+      if (e.response != null) {
+        AppLogger.error('🔢 Response Status: ${e.response?.statusCode}');
+        AppLogger.error('📦 Response Data: ${e.response?.data}');
+      }
+      AppLogger.error('📚 Stack Trace: ${e.stackTrace}');
+      
       final message = e.response?.data ?? e.message ?? 'Request failed';
       throw Exception(message);
     }

@@ -186,7 +186,7 @@ class AccountsController extends GetxController {
   }
 
   /// Build complete profile payload using structured data according to CompleteProfile model
-  Map<String, dynamic> _prepareCompleteProfileData() {
+  Map<String, dynamic> _prepareCompleteProfileData({bool includeImageFields = false}) {
     // Basic personal info
     final String relationType = selectedInterestIndices.isNotEmpty
         ? interestOptions[selectedInterestIndices.first]['title'] ?? ''
@@ -221,12 +221,6 @@ class AccountsController extends GetxController {
       'relationType': relationType,
       'religion': _str(selectedReligion),
       'zodiacSign': _str(selectedZodiac),
-      // three named images will be sent via multipart; here we keep placeholders if server also parses JSON
-      'bodyImage': '',
-      'headShotImage': '',
-      'personalityImage': '',
-      // extra images array required by server schema
-      'image': <String>[],
       'likeToMeet': likeToMeet,
       'personalTraitsInspire': personalTraitsInspire,
       'body': body,
@@ -248,6 +242,16 @@ class AccountsController extends GetxController {
       'profileCompletionPercentage': getCompletionPercentage(),
       'isDeleted': false, // Default deletion status
     };
+
+    // Only include image fields when explicitly requested (for non-multipart requests)
+    if (includeImageFields) {
+      payload.addAll({
+        'bodyImage': '',
+        'headShotImage': '',
+        'personalityImage': '',
+        'image': <String>[],
+      });
+    }
 
     return payload;
   }
@@ -321,7 +325,7 @@ class AccountsController extends GetxController {
       _ensureService();
       AppLogger.info('🚀 Submitting complete profile WITH photos: count=${photoPaths.length}');
 
-      final profileData = _prepareCompleteProfileData();
+      final profileData = _prepareCompleteProfileData(includeImageFields: false);
 
       // Convert to File list for the service
       final files = photoPaths.where((p) => p.isNotEmpty).map((p) => File(p)).toList();
@@ -942,7 +946,7 @@ class AccountsController extends GetxController {
       AppLogger.info('🚀 Submitting complete profile (without photos)');
 
       // Prepare complete profile data
-      final profileData = _prepareCompleteProfileData();
+      final profileData = _prepareCompleteProfileData(includeImageFields: true);
       AppLogger.debug('🧾 Payload keys: ${profileData.keys.toList()}');
 
       final response = await _accountSetupService.completeProfile(data: profileData);

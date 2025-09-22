@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:kindered_app/modules/profile_and_settings/services/profile_service.dart';
@@ -268,19 +269,25 @@ class ProfileEditController extends GetxController {
     try {
       AppLogger.info('🔄 [PROFILE LOAD] Loading profile data from API...');
       
-      // Fetch profile data from API
+      // Make API call to get profile data
       final response = await _profileService.getProfile();
       
       if (response.statusCode == 200 && response.data != null) {
         final profileData = response.data;
-        AppLogger.info('📋 [PROFILE LOAD] Profile data received: $profileData');
+        
+        // Log complete API response in Postman-like format
+        AppLogger.info('📋 [PROFILE LOAD] ===== COMPLETE API RESPONSE (POSTMAN STYLE) =====');
+        AppLogger.info('📋 Status Code: ${response.statusCode}');
+        AppLogger.info('📋 Response Headers: ${response.headers}');
+        AppLogger.info('📋 Response Body:');
+        AppLogger.info('📋 ${_formatJsonForLogging(profileData)}');
+        AppLogger.info('📋 ===== END API RESPONSE =====');
         
         // Map API response to controller variables
         _mapApiDataToController(profileData);
         
-        AppLogger.success('✅ [PROFILE LOAD] Profile data loaded successfully');
+        AppLogger.info('✅ [PROFILE LOAD] Profile data loaded successfully');
       } else if (response.statusCode == 401) {
-        // Handle 401 Unauthorized error
         AppLogger.warning('🔐 [PROFILE LOAD] Authentication failed (401)');
         _handleAuthError();
       } else {
@@ -323,6 +330,21 @@ class ProfileEditController extends GetxController {
       );
     } finally {
       isLoading.value = false;
+    }
+  }
+  
+  /// Format JSON data for logging in a readable way
+  String _formatJsonForLogging(dynamic data) {
+    try {
+      if (data is Map || data is List) {
+        // Convert to JSON string with indentation for readability
+        const encoder = JsonEncoder.withIndent('  ');
+        return encoder.convert(data);
+      } else {
+        return data.toString();
+      }
+    } catch (e) {
+      return 'Error formatting JSON: $e\nRaw data: $data';
     }
   }
   

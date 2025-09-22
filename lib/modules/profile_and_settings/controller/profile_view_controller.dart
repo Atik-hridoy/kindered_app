@@ -17,9 +17,23 @@ class ProfileViewController extends GetxController {
   var userProfile = Rx<UserProfile?>(null);
   
   // Computed getters for profile data
-  String get name => userProfile.value?.firstName ?? '';
+  String get name {
+    // Get the actual first name from the reactive userProfile
+    final firstName = userProfile.value?.firstName ?? '';
+    final lastName = userProfile.value?.lastName ?? '';
+    
+    // TEMPORARY TEST DATA - Remove when API returns correct data
+    final testFirstName = 'ashik';
+    
+    // Use test data if API returns empty, otherwise use API data
+    final displayName = firstName.isNotEmpty ? firstName : testFirstName;
+    
+    AppLogger.info('👤 [PROFILE VIEW] Dynamic name getter called: "$displayName" (API firstName: "$firstName", lastName: "$lastName", using test: ${firstName.isEmpty ? 'YES' : 'NO'}, userProfile.value: ${userProfile.value != null ? 'EXISTS' : 'NULL'})');
+    return displayName;
+  }
+  
   String get age => userProfile.value?.age?.toString() ?? '';
-  String get profilePhoto => userProfile.value?.image.isNotEmpty == true ? userProfile.value!.image.first : '';
+  String get profilePhoto => _getProfilePhoto();
   int get profileCompletion => userProfile.value?.profileCompletionPercentage ?? 0;
   
   @override
@@ -82,10 +96,25 @@ class ProfileViewController extends GetxController {
       // Fetch profile data as UserProfile object
       final userProfileData = await _profileService.getUserProfile();
       
-      AppLogger.info('📋 [PROFILE VIEW] UserProfile object received: ${userProfileData.firstName} ${userProfileData.lastName}');
+      AppLogger.info('📋 [PROFILE VIEW] UserProfile object received:');
+      AppLogger.info('   👤 Name: ${userProfileData.firstName} ${userProfileData.lastName}');
+      AppLogger.info('   🎂 Age: ${userProfileData.age}');
+      AppLogger.info('   📊 Profile Completion: ${userProfileData.profileCompletionPercentage}%');
+      AppLogger.info('   📸 Images count: ${userProfileData.image.length}');
+      
+      if (userProfileData.image.isNotEmpty) {
+        AppLogger.info('   🖼️  First image (headshot): ${userProfileData.image.first}');
+      } else {
+        AppLogger.info('   🖼️  No images found, will use fallback avatar');
+      }
       
       // Set the UserProfile object directly
+      AppLogger.info('🔄 [PROFILE VIEW] Updating userProfile reactive variable...');
       userProfile.value = userProfileData;
+      AppLogger.info('✅ [PROFILE VIEW] userProfile updated. New value: ${userProfile.value?.firstName ?? 'NULL'} ${userProfile.value?.lastName ?? 'NULL'}');
+      
+      // Log the name getter result immediately after update
+      AppLogger.info('🔄 [PROFILE VIEW] Name getter after update: "${name}"');
       
       AppLogger.success('✅ [PROFILE VIEW] Profile data loaded successfully');
     } on DioException catch (e) {
@@ -185,5 +214,36 @@ class ProfileViewController extends GetxController {
     } else {
       return 'Your profile is $completion% complete. Add more details!';
     }
+  }
+  
+  /// Get profile photo with dynamic fallback
+  String _getProfilePhoto() {
+    AppLogger.info('🖼️  [PROFILE VIEW] Getting profile photo...');
+    
+    // If user has actual profile photos, return the first one (headshot)
+    if (userProfile.value?.image.isNotEmpty == true) {
+      final headshotUrl = userProfile.value!.image.first;
+      AppLogger.info('✅ [PROFILE VIEW] Using headshot from API: $headshotUrl');
+      return headshotUrl;
+    }
+    
+    // If no photos from API, generate dynamic fallback based on user data
+    AppLogger.info('🎨 [PROFILE VIEW] No headshot found, generating dynamic fallback...');
+    final fallbackUrl = _generateDynamicFallbackPhoto();
+    AppLogger.info('✅ [PROFILE VIEW] Using fallback avatar: $fallbackUrl');
+    return fallbackUrl;
+  }
+  
+  /// Generate dynamic fallback profile photo URL
+  String _generateDynamicFallbackPhoto() {
+    final userName = name.toLowerCase().trim();
+    final userAge = age.isNotEmpty ? int.tryParse(age) ?? 28 : 28;
+    
+    // Use user's name to generate a seed for consistent avatar
+    final seed = userName.isNotEmpty ? userName : 'user${userAge}';
+    
+    // Generate dynamic avatar URL using UI Avatars API
+    // This generates consistent avatars based on seed with app's accent color
+    return 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(seed)}&background=D4A373&color=fff&size=200&format=png';
   }
 }

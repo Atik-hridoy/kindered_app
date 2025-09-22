@@ -22,6 +22,7 @@ class UserProfile {
   final List<String> likeToMeet;
   final List<String> personalTraitsInspire;
   final List<String> image;
+  final String? bodyImage;
   final String? phone;
   final String? relationType;
   final Location? location;
@@ -49,6 +50,7 @@ class UserProfile {
     this.likeToMeet = const [],
     this.personalTraitsInspire = const [],
     this.image = const [],
+    this.bodyImage,
     this.phone,
     this.relationType,
     this.location,
@@ -81,22 +83,13 @@ class UserProfile {
       likeToMeet: List<String>.from(json['likeToMeet'] ?? []),
       personalTraitsInspire: List<String>.from(json['personalTraitsInspire'] ?? []),
       image: List<String>.from(json['image'] ?? []),
+      bodyImage: json['bodyImage'],
       phone: json['phone'] ?? '',
       relationType: json['relationType'],
       location: json['location'] != null ? Location.fromJson(json['location']) : null,
     );
     
-    print('DEBUG: UserProfile object created:');
-    print('DEBUG:   firstName: ${userProfile.firstName}');
-    print('DEBUG:   lastName: ${userProfile.lastName}');
-    print('DEBUG:   profileCompletionPercentage: ${userProfile.profileCompletionPercentage}');
-    print('DEBUG:   habits: ${userProfile.habits}');
-    print('DEBUG:   habits.workout: ${userProfile.habits?.workout}');
-    print('DEBUG:   habits.socialMedia: ${userProfile.habits?.socialMedia}');
-    print('DEBUG:   habits.newExercise: ${userProfile.habits?.newExercise}');
-    print('DEBUG:   interests: ${userProfile.interests}');
-    print('DEBUG:   lifestyle: ${userProfile.lifestyle}');
-    
+
     return userProfile;
   }
 

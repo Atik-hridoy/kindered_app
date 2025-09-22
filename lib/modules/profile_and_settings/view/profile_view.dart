@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/modules/home/widget/nav_card.dart';
+import 'package:kindered_app/modules/profile_and_settings/controller/profile_view_controller.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -12,6 +13,7 @@ class ProfileView extends StatefulWidget {
 }
 
 class _ProfileViewState extends State<ProfileView> {
+  final ProfileViewController controller = Get.put(ProfileViewController());
   int _currentIndex = 3; // Profile tab index
 
   void _onNavItemTapped(int index) {
@@ -33,6 +35,15 @@ class _ProfileViewState extends State<ProfileView> {
       // Already on profile view
     }
 
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh profile data when the view becomes active
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.refreshProfileData();
+    });
   }
 
   @override
@@ -97,6 +108,21 @@ class _ProfileViewState extends State<ProfileView> {
                 labels: const ['', '', '', ''],
               ),
             ),
+            
+            // Loading overlay
+            Obx(() {
+              if (controller.isLoading.value) {
+                return Container(
+                  color: Colors.black.withOpacity(0.5),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFD4A373)),
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            }),
           ],
         ),
       ),
@@ -104,94 +130,105 @@ class _ProfileViewState extends State<ProfileView> {
   }
 
   Widget _buildProfilePicture() {
-    return Center(
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.bottomCenter,
-        children: [
-          Container(
-            width: 120,
-            height: 120,
-            margin: const EdgeInsets.only(bottom: 20),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: const Color(0xFFD4A373),
-                width: 2,
-              ),
-              image: const DecorationImage(
-                image: NetworkImage('https://randomuser.me/api/portraits/men/1.jpg'),
-                fit: BoxFit.cover,
+    return Obx(() {
+      final profilePhoto = controller.profilePhoto;
+      final age = controller.age;
+      
+      return Center(
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFFD4A373),
+                  width: 2,
+                ),
+                image: DecorationImage(
+                  image: NetworkImage(profilePhoto),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
+            if (age.isNotEmpty)
+              Positioned(
+                bottom: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD4A373),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    age,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildProfileDetails() {
+    return Obx(() {
+      final name = controller.name;
+      final profileCompletionText = controller.profileCompletionText;
+      
+      return Column(
+        children: [
+          const SizedBox(height: 8),
+          Text(
+            name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'PlayfairDisplay',
+            ),
           ),
-          Positioned(
-            bottom: 10,
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () => Get.toNamed(AppRoutes.editProfile),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFD4A373),
-                borderRadius: BorderRadius.circular(12),
+                color: const Color(0xFF21293F), // #21293F
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFD4A373)),
               ),
               child: const Text(
-                '28',
+                'Profile Details',
                 style: TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            profileCompletionText,
+            style: const TextStyle(
+              color: Color(0xFFD4A373),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
-      ),
-    );
-  }
-
-  Widget _buildProfileDetails() {
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        const Text(
-          'John Doe',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'PlayfairDisplay',
-          ),
-        ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: () => Get.toNamed(AppRoutes.editProfile),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF21293F), // #21293F
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFD4A373)),
-            ),
-            child: const Text(
-              'Profile Details',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Your profile is 95% complete!',
-          style: TextStyle(
-            color: Color(0xFFD4A373),
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 24),
-      ],
-    );
+      );
+    });
   }
 
   List<Widget> _buildListTileOptions() {
