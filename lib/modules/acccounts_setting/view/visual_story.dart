@@ -236,12 +236,6 @@ class _VisualStoryState extends State<VisualStory> {
         selectedImages[index] = image;
       });
       
-      _showSnackBar(
-        'Success',
-        'Image selected successfully',
-        Colors.green,
-      );
-      
       AppLogger.info('✅ Image stored at index $index');
     } catch (e) {
       AppLogger.warning('❌ Error processing selected image: $e');

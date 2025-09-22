@@ -5,14 +5,15 @@ import 'package:kindered_app/config/app_routes.dart';
 import '../services/account_setup_service.dart';
 import 'package:kindered_app/local/storage_service.dart';
 import 'package:kindered_app/core/logger/app_logger.dart';
+import '../model/complete_profile.dart';
 
 class AccountsController extends GetxController {
   // Service instance
   late AccountSetupService _accountSetupService;
-  
+
   // Loading state
   final RxBool isLoading = false.obs;
-  
+
   // =========================================
   // PERSONAL INFO SECTION (from IntroViewController)
   // =========================================
@@ -23,11 +24,11 @@ class AccountsController extends GetxController {
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController ageController = TextEditingController();
-  
+
   void updateFirstName(String value) => firstName.value = value;
   void updateLastName(String value) => lastName.value = value;
   void updateAge(String value) => age.value = value;
-  
+
   void loadUserData() {
     firstName.value = '';
     lastName.value = '';
@@ -38,39 +39,49 @@ class AccountsController extends GetxController {
     ageController.text = age.value;
   }
 
-  /// Build payload that matches backend keys based on Postman screenshot
-  Map<String, dynamic> _prepareBackendCompleteProfileData() {
-    // Helpers to extract safe values
-    String _str(String? v) => (v ?? '').trim();
-    int _int(String? v) => int.tryParse((v ?? '').trim()) ?? 0;
+  // =========================================
+  // PROFILE DATA BUILDING METHODS
+  // =========================================
 
-    // Like-to-meet: Get selected genders from choice view
-    final List<String> likeToMeet = selectedGenders.isNotEmpty ? selectedGenders : <String>[];
+  /// Build body data according to CompleteProfile model
+  Map<String, dynamic> _buildBodyData() {
+    int height = int.tryParse(heightController.text.trim()) ?? 0;
+    // Ensure height doesn't exceed maximum allowed value (300cm)
+    if (height > 300) {
+      height = 300;
+    }
     
-    // Relation type - map from selected interests or default to empty
-    final String relationType = selectedInterestIndices.isNotEmpty 
-        ? (selectedInterestIndices.contains(0) ? 'Long-term' : 
-           selectedInterestIndices.contains(1) ? 'Casual' : 
-           selectedInterestIndices.contains(2) ? 'Friendship' : '')
-        : '';
-
-    final Map<String, dynamic> body = {
-      'height': _str(heightController.text),
-      'weight': _str(weightController.text),
+    return {
+      'heightCm': height,
+      'weightKg': int.tryParse(weightController.text.trim()) ?? 0,
     };
+  }
 
-    final Map<String, dynamic> eduJob = getEducationFormData();
+  /// Build education/job data according to CompleteProfile model
+  Map<String, dynamic> _buildEduJobData() {
+    final educationData = getEducationFormData();
+    return {
+      'educationLevel': _mapEducationLevel(educationData['education'] ?? ''),
+      'jobTitle': educationData['jobStatus'] ?? '',
+      'annualIncome': int.tryParse(incomeController.text.trim()) ?? 0,
+    };
+  }
 
-    final Map<String, dynamic> lifestyle = {
+  /// Build lifestyle data according to CompleteProfile model
+  Map<String, dynamic> _buildLifestyleData() {
+    return {
       'sleepingStyle': selectedDayPreference.value != null ? dayPreferences[selectedDayPreference.value!] : '',
       'loveStyle': selectedLoveLanguage.value != null ? loveLanguages[selectedLoveLanguage.value!] : '',
       'weekends': selectedWeekendActivity.value != null ? weekendActivities[selectedWeekendActivity.value!] : '',
       'traveling': selectedTravelPreference.value != null ? travelPreferences[selectedTravelPreference.value!] : '',
-      'homeEnvironment': '',
-      'livingSpace': '',
+      'homeEnvironment': '', // Not collected in current flow
+      'livingSpace': '', // Not collected in current flow
     };
+  }
 
-    final Map<String, dynamic> habitsPayload = {
+  /// Build habits data according to CompleteProfile model
+  Map<String, dynamic> _buildHabitsData() {
+    return {
       'communicationStyle': selectedCommunicationStyle.value != null ? [communicationStyles[selectedCommunicationStyle.value!]] : <String>[],
       'workout': selectedExerciseFrequency.value != null ? exerciseFrequencies[selectedExerciseFrequency.value!] : '',
       'eatingStyle': selectedFoodPreference.value != null ? [foodPreferences[selectedFoodPreference.value!]] : <String>[],
@@ -78,9 +89,11 @@ class AccountsController extends GetxController {
       'smokeOrDrink': selectedSmokingDrinking.value != null ? smokingDrinking[selectedSmokingDrinking.value!] : '',
       'newExercise': selectedTryNewExperiences.value != null ? tryNewExperiences[selectedTryNewExperiences.value!] : '',
     };
+  }
 
-    // Interests: Populate with selected interest options
-    final Map<String, List<String>> interestsPayload = {
+  /// Build interests data according to CompleteProfile model
+  Map<String, List<String>> _buildInterestsData() {
+    final Map<String, List<String>> interestsData = {
       'hobbies': <String>[],
       'creativeOutlets': <String>[],
       'fitnessAndSports': <String>[],
@@ -90,21 +103,96 @@ class AccountsController extends GetxController {
       'healthAndWellness': <String>[],
       'readingAndContent': <String>[],
     };
-    
+
     // Add selected interests to appropriate categories based on selection
     if (selectedInterestIndices.isNotEmpty) {
       for (final index in selectedInterestIndices) {
         final interestTitle = interestOptions[index]['title'] ?? '';
         // Categorize interests based on their titles
         if (interestTitle.toLowerCase().contains('long-term')) {
-          interestsPayload['leisureActivities']?.add(interestTitle);
+          interestsData['leisureActivities']?.add(interestTitle);
         } else if (interestTitle.toLowerCase().contains('casual')) {
-          interestsPayload['entertainment']?.add(interestTitle);
+          interestsData['entertainment']?.add(interestTitle);
         } else if (interestTitle.toLowerCase().contains('bff') || interestTitle.toLowerCase().contains('friend')) {
-          interestsPayload['hobbies']?.add(interestTitle);
+          interestsData['hobbies']?.add(interestTitle);
         }
       }
     }
+
+    return interestsData;
+  }
+
+  /// Build like-to-do data according to CompleteProfile model structure
+  Map<String, List<String>> _buildLikeToDoData() {
+    final Map<String, List<String>> likeToDoData = {
+      'hobbies': <String>[],
+      'creativeOutlets': <String>[],
+      'fitnessAndSports': <String>[],
+      'entertainment': <String>[],
+      'leisureActivities': <String>[],
+      'musicGenres': <String>[],
+      'healthAndWellness': <String>[],
+      'readingAndContent': <String>[],
+    };
+
+    selectedLikeToDoOptions.forEach((category, indices) {
+      if (indices.isNotEmpty) {
+        final activities = indices.map((i) => likeToDoOptions[category]![i]).toList();
+        // Map categories to the model structure
+        switch (category) {
+          case 'creativity':
+            likeToDoData['creativeOutlets'] = activities;
+            break;
+          case 'activities':
+            likeToDoData['hobbies'] = activities;
+            break;
+          case 'sportsFitness':
+            likeToDoData['fitnessAndSports'] = activities;
+            break;
+          case 'tvMovies':
+            likeToDoData['entertainment'] = activities;
+            break;
+          case 'freeTime':
+            likeToDoData['leisureActivities'] = activities;
+            break;
+          case 'music':
+            likeToDoData['musicGenres'] = activities;
+            break;
+          case 'wellnessLifestyle':
+            likeToDoData['healthAndWellness'] = activities;
+            break;
+          case 'booksContent':
+            likeToDoData['readingAndContent'] = activities;
+            break;
+        }
+      }
+    });
+
+    return likeToDoData;
+  }
+
+  /// Build complete profile payload using structured data according to CompleteProfile model
+  Map<String, dynamic> _prepareCompleteProfileData() {
+    // Basic personal info
+    final String relationType = selectedInterestIndices.isNotEmpty
+        ? interestOptions[selectedInterestIndices.first]['title'] ?? ''
+        : '';
+
+    final List<String> likeToMeet = selectedGenders.isNotEmpty ? selectedGenders.toList() : <String>[];
+
+    // Build structured data sections
+    final Map<String, dynamic> body = _buildBodyData();
+    final Map<String, dynamic> eduJob = _buildEduJobData();
+    final Map<String, dynamic> lifestyle = _buildLifestyleData();
+    final Map<String, dynamic> habitsPayload = _buildHabitsData();
+    final Map<String, List<String>> interestsPayload = _buildInterestsData();
+    final Map<String, List<String>> likeToDoPayload = _buildLikeToDoData();
+
+    // Combine interests and like-to-do into a single interests structure
+    final Map<String, dynamic> combinedInterests = {
+      ...interestsPayload,
+      ...likeToDoPayload,
+    };
 
     // Traits/inspire
     final List<String> personalTraitsInspire = selectedTraitIndices.map((i) => traits[i]).toList();
@@ -131,109 +219,73 @@ class AccountsController extends GetxController {
       'eduJob': eduJob,
       'lifestyle': lifestyle,
       'habits': habitsPayload,
-      'interests': interestsPayload,
+      'interests': combinedInterests,
       'beliefsOtherText': '',
       'address': _str(LocalStorage.myAddress),
       'traitsOtherText': '',
       'aboutMe': '',
+      'location': {
+        'coordinates': [0.0, 0.0], // Default coordinates, should be updated with actual location
+        'type': 'Point',
+      },
+      'role': 'USER', // Default role
+      'status': 'active', // Default status
+      'isVerified': false, // Default verification status
+      'profileCompletionPercentage': getCompletionPercentage(),
+      'isDeleted': false, // Default deletion status
     };
 
-    // =========================================
-    // COMPREHENSIVE DATA LOGGING - VERIFY ALL DATA IS SENT
-    // =========================================
-    AppLogger.info('📊 === COMPREHENSIVE PROFILE DATA SUBMISSION ===');
-    
-    // 1. PERSONAL INFO (from intro_view.dart)
-    AppLogger.info('👤 PERSONAL INFO:');
-    AppLogger.info('  • First Name: "${firstName.value}"');
-    AppLogger.info('  • Last Name: "${lastName.value}"');
-    AppLogger.info('  • Age: ${age.value}');
-    AppLogger.info('  • Email: "${_str(LocalStorage.myEmail)}"');
-    AppLogger.info('  • Phone: "${_str(LocalStorage.phone)}"');
-    
-    // 2. GENDER SELECTION (from gender_view.dart)
-    AppLogger.info('🚻 GENDER SELECTION:');
-    AppLogger.info('  • Selected Gender: "${_str(selectedGender.value)}"');
-    
-    // 3. CHOICE SELECTION (from choice_view.dart)
-    AppLogger.info('🎯 CHOICE SELECTION (Whom to meet):');
-    AppLogger.info('  • Selected Genders: $likeToMeet');
-    
-    // 4. HEIGHT & WEIGHT (from height_weight_view.dart)
-    AppLogger.info('📏 HEIGHT & WEIGHT:');
-    AppLogger.info('  • Height: "${_str(heightController.text)}"');
-    AppLogger.info('  • Weight: "${_str(weightController.text)}"');
-    
-    // 5. EDUCATION & CAREER (from education_view.dart)
-    AppLogger.info('🎓 EDUCATION & CAREER:');
-    AppLogger.info('  • Education Level: "${eduJob['educationLevel'] ?? ''}"');
-    AppLogger.info('  • Job Status: "${eduJob['jobStatus'] ?? ''}"');
-    AppLogger.info('  • Income: "${eduJob['income'] ?? ''}"');
-    
-    // 6. FAITH & BELIEF (from faith_belief_view.dart)
-    AppLogger.info('🙏 FAITH & BELIEF:');
-    AppLogger.info('  • Religion: "${_str(selectedReligion)}"');
-    AppLogger.info('  • Zodiac Sign: "${_str(selectedZodiac)}"');
-    
-    // 7. HABITS (from habit_view.dart)
-    AppLogger.info('🔄 HABITS:');
-    AppLogger.info('  • Communication Style: ${habitsPayload['communicationStyle']}');
-    AppLogger.info('  • Workout Frequency: "${habitsPayload['workout']}"');
-    AppLogger.info('  • Eating Style: ${habitsPayload['eatingStyle']}');
-    AppLogger.info('  • Social Media Usage: "${habitsPayload['socialMedia']}"');
-    AppLogger.info('  • Smoke/Drink: "${habitsPayload['smokeOrDrink']}"');
-    AppLogger.info('  • Try New Experiences: "${habitsPayload['newExercise']}"');
-    
-    // 8. INSPIRE/TRAITS (from inspire_view.dart)
-    AppLogger.info('✨ INSPIRE/TRAITS:');
-    AppLogger.info('  • Selected Traits: $personalTraitsInspire');
-    AppLogger.info('  • Traits Count: ${personalTraitsInspire.length}');
-    
-    // 9. INTERESTS (from like_to_do_view.dart)
-    AppLogger.info('🎯 INTERESTS:');
-    AppLogger.info('  • Relation Type: "${relationType}"');
-    AppLogger.info('  • Selected Interest Indices: $selectedInterestIndices');
-    interestsPayload.forEach((category, interests) {
-      if (interests.isNotEmpty) {
-        AppLogger.info('  • $category: $interests');
-      }
-    });
-    
-    // 10. LIFESTYLE (from lifestyle_view.dart)
-    AppLogger.info('🌅 LIFESTYLE:');
-    AppLogger.info('  • Sleeping Style: "${lifestyle['sleepingStyle']}"');
-    AppLogger.info('  • Love Style: "${lifestyle['loveStyle']}"');
-    AppLogger.info('  • Weekends: "${lifestyle['weekends']}"');
-    AppLogger.info('  • Traveling: "${lifestyle['traveling']}"');
-    
-    // 11. LIKE TO DO ACTIVITIES (from like_to_do_view.dart)
-    AppLogger.info('🎨 LIKE TO DO ACTIVITIES:');
-    selectedLikeToDoOptions.forEach((category, indices) {
-      if (indices.isNotEmpty) {
-        final activities = indices.map((i) => likeToDoOptions[category]![i]).toList();
-        AppLogger.info('  • $category: $activities');
-      }
-    });
-    
-    // 12. LOCATION (from LocalStorage)
-    AppLogger.info('📍 LOCATION:');
-    AppLogger.info('  • Address: "${_str(LocalStorage.myAddress)}"');
-    
-    // 13. IMAGES
-    AppLogger.info('🖼️ IMAGES:');
-    AppLogger.info('  • Body Image: "${payload['bodyImage']}"');
-    AppLogger.info('  • Head Shot Image: "${payload['headShotImage']}"');
-    AppLogger.info('  • Personality Image: "${payload['personalityImage']}"');
-    AppLogger.info('  • Extra Images Count: ${(payload['image'] as List).length}');
-    
-    // FINAL PAYLOAD SUMMARY
-    AppLogger.info('📋 FINAL PAYLOAD SUMMARY:');
-    AppLogger.info('  • Total Fields: ${payload.length}');
-    AppLogger.info('  • Payload Keys: ${payload.keys.toList()}');
-    AppLogger.info('🚀 === END PROFILE DATA SUBMISSION ===\n');
-    
     return payload;
   }
+
+  // Helper methods
+  
+  /// Map education level text to valid enum values
+  String _mapEducationLevel(String educationText) {
+    final normalizedText = educationText.toLowerCase().trim();
+    
+    // Map common education level inputs to valid enum values
+    // Based on Postman data, backend expects values like "Bachelors", "High School", etc.
+    switch (normalizedText) {
+      case 'high school':
+      case 'highschool':
+      case 'secondary':
+      case 'secondary school':
+        return 'High School';
+      case 'college':
+      case 'associate':
+      case 'associate degree':
+      case 'associates':
+        return 'Associate';
+      case 'bachelor':
+      case 'bachelor\'s':
+      case 'bachelor\'s degree':
+      case 'undergraduate':
+      case 'bachelors':
+        return 'Bachelors';
+      case 'master':
+      case 'master\'s':
+      case 'master\'s degree':
+      case 'graduate':
+      case 'masters':
+        return 'Masters';
+      case 'phd':
+      case 'doctorate':
+      case 'doctoral':
+      case 'doctor\'s':
+      case 'doctor\'s degree':
+        return 'PhD';
+      case 'diploma':
+      case 'certificate':
+      case 'certification':
+        return 'Diploma';
+      default:
+        // If no match found, return the original text with proper capitalization
+        return educationText.trim();
+    }
+  }
+  String _str(String? v) => (v ?? '').trim();
+  int _int(String? v) => int.tryParse((v ?? '').trim()) ?? 0;
 
   /// Submit complete profile with optional photos
   Future<Map<String, dynamic>> submitCompleteProfileWithPhotos(List<String> photoPaths) async {
@@ -242,13 +294,13 @@ class AccountsController extends GetxController {
       _ensureService();
       AppLogger.info('🚀 Submitting complete profile WITH photos: count=${photoPaths.length}');
 
-      final profileData = _prepareBackendCompleteProfileData();
+      final profileData = _prepareCompleteProfileData();
 
       // Convert to File list for the service
       final files = photoPaths.where((p) => p.isNotEmpty).map((p) => File(p)).toList();
       AppLogger.info('🖼️ PHOTO PROCESSING:');
       AppLogger.info('  • Valid Photo Paths: ${files.length}');
-      for (int i = 0; i < files.length; i++) {
+      for (int i = 0; i <files.length; i++) {
         AppLogger.info('  • Photo ${i + 1}: ${files[i].path}');
       }
 
@@ -287,7 +339,7 @@ class AccountsController extends GetxController {
         AppLogger.info('  • Success: ${result['success']}');
         AppLogger.info('  • Message: ${result['message'] ?? 'No message'}');
         AppLogger.info('  • Full Response: $result');
-        
+
         if (result['success'] == true) {
           AppLogger.success('🎉 Profile submitted successfully with photos!');
           Get.snackbar('Success', 'Profile submitted successfully!',
@@ -322,42 +374,198 @@ class AccountsController extends GetxController {
       AppLogger.info('🔄 Loading state reset to false');
     }
   }
-  
-  void onNextPressed() {
-    if (firstName.value.isEmpty || lastName.value.isEmpty || age.value.isEmpty) {
-      AppLogger.warning('⚠️ Personal info incomplete: firstName=${firstName.value.isNotEmpty}, lastName=${lastName.value.isNotEmpty}, age=${age.value.isNotEmpty}');
-      Get.snackbar('Validation Error', 'Please complete the form before proceeding.',
+
+  /// Submit complete profile data using CompleteProfile model
+  Future<Map<String, dynamic>> submitCompleteProfileUsingModel() async {
+    try {
+      isLoading.value = true;
+      _ensureService();
+      AppLogger.info('🚀 Submitting complete profile data using CompleteProfile model');
+
+      // Create CompleteProfile instance using current controller data
+      final completeProfile = _createCompleteProfileInstance();
+      
+      // Use the model's toJson() method to get properly structured data
+      final profileData = completeProfile.toJson();
+      
+      AppLogger.info('📋 PROFILE DATA PREPARED:');
+      AppLogger.info('  • First Name: ${completeProfile.firstName}');
+      AppLogger.info('  • Last Name: ${completeProfile.lastName}');
+      AppLogger.info('  • Age: ${completeProfile.age}');
+      AppLogger.info('  • Gender: ${completeProfile.gender}');
+      AppLogger.info('  • Email: ${completeProfile.email}');
+      AppLogger.info('  • Profile Completion: ${completeProfile.profileCompletionPercentage}%');
+
+      AppLogger.info('🌐 SENDING TO BACKEND...');
+      final response = await _accountSetupService.completeProfile(
+        data: profileData,
+      );
+      AppLogger.info('📡 BACKEND RESPONSE:');
+      AppLogger.info('  • Status Code: ${response.statusCode}');
+      AppLogger.info('  • Response Data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final result = response.data as Map<String, dynamic>;
+        AppLogger.info('✅ SUCCESSFUL SUBMISSION:');
+        AppLogger.info('  • Success: ${result['success']}');
+        AppLogger.info('  • Message: ${result['message'] ?? 'No message'}');
+        AppLogger.info('  • Full Response: $result');
+
+        if (result['success'] == true) {
+          AppLogger.success('🎉 Profile submitted successfully using CompleteProfile model!');
+          Get.snackbar('Success', 'Profile submitted successfully!',
+              snackPosition: SnackPosition.BOTTOM);
+          // Navigate to location view after successful submission
+          Get.offAllNamed(AppRoutes.locationView);
+        } else {
+          AppLogger.warning('⚠️ Profile submit response not successful: ${result['message']}');
+          Get.snackbar('Error', result['message'] ?? 'Profile submission failed',
+              snackPosition: SnackPosition.BOTTOM);
+        }
+        return result;
+      } else {
+        AppLogger.error('❌ PROFILE SUBMISSION FAILED:');
+        AppLogger.error('  • Status Code: ${response.statusCode}');
+        AppLogger.error('  • Response Data: ${response.data}');
+        AppLogger.error('  • Status Message: ${response.statusMessage}');
+        Get.snackbar('Error', 'Profile submission failed. Please try again.',
+            snackPosition: SnackPosition.BOTTOM);
+        return {'success': false, 'message': 'Profile submission failed'};
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('❌ EXCEPTION DURING PROFILE SUBMISSION:');
+      AppLogger.error('  • Error: $e');
+      AppLogger.error('  • Stack Trace: $stackTrace');
+      AppLogger.error('  • Error Type: ${e.runtimeType}');
+      Get.snackbar('Error', 'An error occurred. Please try again.',
           snackPosition: SnackPosition.BOTTOM);
-      return;
+      return {'success': false, 'message': 'An error occurred'};
+    } finally {
+      isLoading.value = false;
+      AppLogger.info('🔄 Loading state reset to false');
     }
-    AppLogger.info('➡️ Personal info valid. Proceeding to Gender view');
-    updateProfile();
-    Get.offAllNamed(AppRoutes.gender);
   }
-  
+
+  /// Create a CompleteProfile instance from current controller data
+  CompleteProfile _createCompleteProfileInstance() {
+    // Build structured data sections
+    final Map<String, dynamic> bodyData = _buildBodyData();
+    final Map<String, dynamic> eduJobData = _buildEduJobData();
+    final Map<String, dynamic> lifestyleData = _buildLifestyleData();
+    final Map<String, dynamic> habitsData = _buildHabitsData();
+    final Map<String, List<String>> interestsData = _buildInterestsData();
+    final Map<String, List<String>> likeToDoData = _buildLikeToDoData();
+
+    // Combine interests and like-to-do into a single interests structure
+    final Map<String, List<String>> combinedInterests = {
+      ...interestsData,
+      ...likeToDoData,
+    };
+
+    // Remove freeTime field as it doesn't exist in Interests model
+    combinedInterests.remove('freeTime');
+
+    // Basic personal info
+    final String relationType = selectedInterestIndices.isNotEmpty
+        ? interestOptions[selectedInterestIndices.first]['title'] ?? ''
+        : '';
+
+    final List<String> likeToMeet = selectedGenders.isNotEmpty ? selectedGenders.toList() : <String>[];
+    final List<String> personalTraitsInspire = selectedTraitIndices.map((i) => traits[i]).toList();
+
+    return CompleteProfile(
+      id: '', // Will be generated by backend
+      role: 'user',
+      email: _str(LocalStorage.myEmail),
+      age: _int(age.value),
+      gender: _str(selectedGender.value),
+      bodyImage: '', // Will be uploaded separately
+      headShotImage: '', // Will be uploaded separately
+      personalityImage: '', // Will be uploaded separately
+      image: null, // Nullable field, will be uploaded separately
+      likeToMeet: likeToMeet,
+      personalTraitsInspire: personalTraitsInspire,
+      address: _str(LocalStorage.myAddress),
+      status: 'active',
+      isVerified: false,
+      profileCompletionPercentage: getCompletionPercentage(),
+      isDeleted: false,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      aboutMe: '',
+      beliefsOtherText: '',
+      body: Body(
+        heightCm: bodyData['heightCm'] ?? 0,
+        weightKg: bodyData['weightKg'] ?? 0,
+      ),
+      eduJob: EduJob(
+        educationLevel: eduJobData['educationLevel'] ?? '',
+        jobTitle: eduJobData['jobTitle'] ?? '',
+        annualIncome: eduJobData['annualIncome'] ?? 0,
+      ),
+      firstName: _str(firstName.value),
+      habits: Habits(
+        communicationStyle: habitsData['communicationStyle'] ?? <String>[],
+        workout: habitsData['workout'] ?? '',
+        eatingStyle: habitsData['eatingStyle'] ?? <String>[],
+        socialMedia: habitsData['socialMedia'] ?? '',
+        smokeOrDrink: habitsData['smokeOrDrink'] ?? '',
+        newExercise: habitsData['newExercise'] ?? '',
+      ),
+      interests: Interests(
+        hobbies: combinedInterests['hobbies'] ?? <String>[],
+        creativeOutlets: combinedInterests['creativeOutlets'] ?? <String>[],
+        fitnessAndSports: combinedInterests['fitnessAndSports'] ?? <String>[],
+        entertainment: combinedInterests['entertainment'] ?? <String>[],
+        leisureActivities: combinedInterests['leisureActivities'] ?? <String>[],
+        musicGenres: combinedInterests['musicGenres'] ?? <String>[],
+        healthAndWellness: combinedInterests['healthAndWellness'] ?? <String>[],
+        readingAndContent: combinedInterests['readingAndContent'] ?? <String>[],
+      ),
+      lastName: _str(lastName.value),
+      lifestyle: Lifestyle(
+        sleepingStyle: lifestyleData['sleepingStyle'] ?? '',
+        loveStyle: lifestyleData['loveStyle'] ?? '',
+        weekends: lifestyleData['weekends'] ?? '',
+        traveling: lifestyleData['traveling'] ?? '',
+        homeEnvironment: lifestyleData['homeEnvironment'] ?? '',
+        livingSpace: lifestyleData['livingSpace'] ?? '',
+      ),
+      phone: _str(LocalStorage.phone),
+      relationType: relationType,
+      religion: _str(selectedReligion),
+      traitsOtherText: '',
+      zodiacSign: _str(selectedZodiac),
+      location: Location(
+        coordinates: [0.0, 0.0], // Default coordinates, should be updated with actual location
+        type: 'Point',
+      ),
+    );
+  }
+
   // =========================================
   // GENDER SELECTION SECTION (from GenderViewController)
   // =========================================
   final RxString selectedGender = ''.obs;
-  
+
   bool get isGenderSelected => selectedGender.value.isNotEmpty;
-  
+
   void selectGender(String gender) {
     selectedGender.value = gender;
   }
-  
+
   String? validateGender() {
     if (selectedGender.value.isEmpty) {
       return 'Please select your gender';
     }
     return null;
   }
-  
+
   // =========================================
   // CHOICE SELECTION SECTION (from ChoiceViewController)
   // =========================================
   final RxList<String> selectedGenders = <String>[].obs;
-  
+
   void toggleGender(String gender) {
     if (selectedGenders.contains(gender)) {
       selectedGenders.remove(gender);
@@ -365,18 +573,18 @@ class AccountsController extends GetxController {
       selectedGenders.add(gender);
     }
   }
-  
+
   bool isGenderSelectedInList(String gender) => selectedGenders.contains(gender);
-  
+
   void clearGenderSelections() => selectedGenders.clear();
-  
+
   String? validateGenderSelections() {
     if (selectedGenders.isEmpty) {
       return 'Please select at least one option.';
     }
     return null;
   }
-  
+
   // =========================================
   // HEIGHT & WEIGHT SECTION (from HeightWeightController)
   // =========================================
@@ -384,14 +592,14 @@ class AccountsController extends GetxController {
   final weightController = TextEditingController();
   final isHeightValid = false.obs;
   final isWeightValid = false.obs;
-  
+
   void validateHeightWeightInputs() {
     isHeightValid.value = heightController.text.trim().isNotEmpty;
     isWeightValid.value = weightController.text.trim().isNotEmpty;
   }
-  
+
   bool get areHeightWeightValid => isHeightValid.value && isWeightValid.value;
-  
+
   // =========================================
   // EDUCATION & CAREER SECTION (from EducationController)
   // =========================================
@@ -399,13 +607,13 @@ class AccountsController extends GetxController {
   final jobStatusController = TextEditingController();
   final incomeController = TextEditingController();
   final RxBool isEducationButtonEnabled = false.obs;
-  
+
   void validateEducationInputs() {
     isEducationButtonEnabled.value = educationController.text.trim().isNotEmpty &&
                                     jobStatusController.text.trim().isNotEmpty &&
                                     incomeController.text.trim().isNotEmpty;
   }
-  
+
   Map<String, String> getEducationFormData() {
     return {
       'education': educationController.text.trim(),
@@ -413,7 +621,7 @@ class AccountsController extends GetxController {
       'income': incomeController.text.trim(),
     };
   }
-  
+
   // =========================================
   // FAITH & BELIEFS SECTION (from FaithBeliefController)
   // =========================================
@@ -422,30 +630,30 @@ class AccountsController extends GetxController {
     'Jewish', 'Muslim', 'Sikh', 'Spiritual', 'Prefer not to say',
   ];
   final selectedReligionIndex = Rxn<int>();
-  
+
   final zodiacSigns = [
-    'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 
-    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 
+    'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius',
     'Pisces', 'Not sure', 'Prefer not to say',
   ];
   final selectedZodiacIndex = Rxn<int>();
-  
+
   void toggleReligion(int index) {
     selectedReligionIndex.value = selectedReligionIndex.value == index ? null : index;
   }
-  
+
   void toggleZodiac(int index) {
     selectedZodiacIndex.value = selectedZodiacIndex.value == index ? null : index;
   }
-  
+
   bool get isFaithCompleted =>
       selectedReligionIndex.value != null && selectedZodiacIndex.value != null;
-  
+
   String? get selectedReligion =>
       selectedReligionIndex.value != null ? religions[selectedReligionIndex.value!] : null;
   String? get selectedZodiac =>
       selectedZodiacIndex.value != null ? zodiacSigns[selectedZodiacIndex.value!] : null;
-  
+
   // =========================================
   // HABITS SECTION (from HabitController)
   // =========================================
@@ -455,21 +663,21 @@ class AccountsController extends GetxController {
   final socialMediaUsage = ['Yes', 'Occasionally', 'Frequently', 'Rarely', 'Never'];
   final smokingDrinking = ['Yes', 'Occasionally', 'No'];
   final tryNewExperiences = ['Absolutely', 'Sometimes', 'Rarely', 'Never'];
-  
+
   final selectedCommunicationStyle = Rxn<int>();
   final selectedExerciseFrequency = Rxn<int>();
   final selectedFoodPreference = Rxn<int>();
   final selectedSocialMediaUsage = Rxn<int>();
   final selectedSmokingDrinking = Rxn<int>();
   final selectedTryNewExperiences = Rxn<int>();
-  
+
   void toggleCommunicationStyle(int index) => selectedCommunicationStyle.value = selectedCommunicationStyle.value == index ? null : index;
   void toggleExerciseFrequency(int index) => selectedExerciseFrequency.value = selectedExerciseFrequency.value == index ? null : index;
   void toggleFoodPreference(int index) => selectedFoodPreference.value = selectedFoodPreference.value == index ? null : index;
   void toggleSocialMediaUsage(int index) => selectedSocialMediaUsage.value = selectedSocialMediaUsage.value == index ? null : index;
   void toggleSmokingDrinking(int index) => selectedSmokingDrinking.value = selectedSmokingDrinking.value == index ? null : index;
   void toggleTryNewExperiences(int index) => selectedTryNewExperiences.value = selectedTryNewExperiences.value == index ? null : index;
-  
+
   bool get areHabitsCompleted =>
       selectedCommunicationStyle.value != null &&
       selectedExerciseFrequency.value != null &&
@@ -477,7 +685,7 @@ class AccountsController extends GetxController {
       selectedSocialMediaUsage.value != null &&
       selectedSmokingDrinking.value != null &&
       selectedTryNewExperiences.value != null;
-  
+
   // =========================================
   // INSPIRE SECTION (from InspireController)
   // =========================================
@@ -491,9 +699,9 @@ class AccountsController extends GetxController {
     'Kind',
     'Humour',
   ];
-  
+
   final RxSet<int> selectedTraitIndices = <int>{}.obs;
-  
+
   void toggleTrait(int index) {
     if (selectedTraitIndices.contains(index)) {
       selectedTraitIndices.remove(index);
@@ -501,11 +709,11 @@ class AccountsController extends GetxController {
       selectedTraitIndices.add(index);
     }
   }
-  
+
   bool get isInspireButtonEnabled => selectedTraitIndices.length >= 3;
-  
+
   int get remainingTraitSelections => selectedTraitIndices.length < 3 ? 3 - selectedTraitIndices.length : 0;
-  
+
   // =========================================
   // INTEREST SECTION (from InterestViewController)
   // =========================================
@@ -526,9 +734,9 @@ class AccountsController extends GetxController {
           'Creating a supportive and joyful bond based on trust, laughter, and shared interests'
     },
   ];
-  
+
   final RxList<int> selectedInterestIndices = <int>[].obs;
-  
+
   void toggleInterestSelection(int index) {
     if (selectedInterestIndices.contains(index)) {
       selectedInterestIndices.remove(index);
@@ -536,40 +744,40 @@ class AccountsController extends GetxController {
       selectedInterestIndices.add(index);
     }
   }
-  
+
   String? validateInterestSelections() {
     if (selectedInterestIndices.isEmpty) {
       return 'Please select at least one interest.';
     }
     return null;
   }
-  
+
   // =========================================
   // LIFESTYLE SECTION (from LifestyleController)
   // =========================================
   final dayPreferences = ['Morning Person', 'Night Owl', 'In Between', 'Depends on the day'];
   final selectedDayPreference = Rxn<int>();
-  
+
   final loveLanguages = ['Words of Affirmation', 'Quality Time', 'Receiving Gifts', 'Acts of Service', 'Physical Touch'];
   final selectedLoveLanguage = Rxn<int>();
-  
+
   final weekendActivities = ['Relaxing at home', 'Going out with friends', 'Exploring new places', 'Pursuing hobbies', 'Catching up on work/errands'];
   final selectedWeekendActivity = Rxn<int>();
-  
+
   final travelPreferences = ['Love traveling', 'Like it occasionally', 'Prefer staying local', 'Depends on the destination'];
   final selectedTravelPreference = Rxn<int>();
-  
+
   void toggleDayPreference(int index) => selectedDayPreference.value = selectedDayPreference.value == index ? null : index;
   void toggleLoveLanguage(int index) => selectedLoveLanguage.value = selectedLoveLanguage.value == index ? null : index;
   void toggleWeekendActivity(int index) => selectedWeekendActivity.value = selectedWeekendActivity.value == index ? null : index;
   void toggleTravelPreference(int index) => selectedTravelPreference.value = selectedTravelPreference.value == index ? null : index;
-  
+
   bool get isLifestyleCompleted =>
       selectedDayPreference.value != null &&
       selectedLoveLanguage.value != null &&
       selectedWeekendActivity.value != null &&
       selectedTravelPreference.value != null;
-  
+
   // =========================================
   // LIKE TO DO SECTION (from LikeToDoController)
   // =========================================
@@ -583,7 +791,7 @@ class AccountsController extends GetxController {
     'wellnessLifestyle': ['Meditation','Healthy Eating','Fitness','Mindfulness','Self-care','Yoga','Veganism','Minimalism','Sustainable Living','Mental Health','Other'],
     'booksContent': ['Fiction','Non-fiction','Biography','Science','History','Fantasy','Mystery','Self-help','Science Fiction','Poetry','Other'],
   };
-  
+
   final Map<String, RxSet<int>> selectedLikeToDoOptions = {
     'creativity': <int>{}.obs,
     'activities': <int>{}.obs,
@@ -594,7 +802,7 @@ class AccountsController extends GetxController {
     'wellnessLifestyle': <int>{}.obs,
     'booksContent': <int>{}.obs,
   };
-  
+
   void toggleLikeToDoOption(String category, int index) {
     if (selectedLikeToDoOptions[category]!.contains(index)) {
       selectedLikeToDoOptions[category]!.remove(index);
@@ -602,14 +810,14 @@ class AccountsController extends GetxController {
       selectedLikeToDoOptions[category]!.add(index);
     }
   }
-  
+
   bool get isLikeToDoCompleted => selectedLikeToDoOptions.values.every((s) => s.isNotEmpty);
-  
+
   // =========================================
   // VISUAL STORY SECTION (from VisualStoryController)
   // =========================================
   // Note: Logic is kept in the view as per original design
-  
+
   // =========================================
   // PROFILE MANAGEMENT
   // =========================================
@@ -625,19 +833,20 @@ class AccountsController extends GetxController {
       isLoading.value = false;
     }
   }
-  
+
   // =========================================
-  // ACCOUNT SETUP SERVICE INTEGRATION
+  // API SERVICE INTEGRATION
   // =========================================
+
+  /// Initialize the account setup service with authentication token
   void initializeAccountSetupService(String token) {
     AppLogger.info('🔗 Setting up AccountSetupService with bearer token (len=${token.length})');
     _accountSetupService = AccountSetupService(token);
   }
 
-  // Ensure service is initialized with a bearer token before any API call
+  /// Ensure service is initialized before making API calls
   void _ensureService() {
     try {
-      // If _accountSetupService was never set, this will throw
       // Accessing a member forces initialization check
       // ignore: unnecessary_statements
       _accountSetupService;
@@ -658,23 +867,24 @@ class AccountsController extends GetxController {
       }
     }
   }
-  
-  Future<Map<String, dynamic>> completeProfile() async {
+
+  /// Submit complete profile data without photos
+  Future<Map<String, dynamic>> submitCompleteProfile() async {
     try {
       isLoading.value = true;
       _ensureService();
       AppLogger.info('🚀 Submitting complete profile (without photos)');
-      
+
       // Prepare complete profile data
       final profileData = _prepareCompleteProfileData();
       AppLogger.debug('🧾 Payload keys: ${profileData.keys.toList()}');
-      
+
       final response = await _accountSetupService.completeProfile(data: profileData);
-      
+
       // Check if the response is successful
       if (response.statusCode == 200 || response.statusCode == 201) {
         final result = response.data as Map<String, dynamic>;
-        
+
         if (result['success'] == true) {
           AppLogger.success('✅ Profile completed successfully');
           Get.snackbar('Success', 'Profile completed successfully!',
@@ -684,7 +894,7 @@ class AccountsController extends GetxController {
           Get.snackbar('Error', result['message'] ?? 'Profile completion failed',
               snackPosition: SnackPosition.BOTTOM);
         }
-        
+
         return result;
       } else {
         final errorMessage = 'Failed to complete profile: ${response.statusCode}';
@@ -697,7 +907,7 @@ class AccountsController extends GetxController {
         };
       }
     } catch (e) {
-      AppLogger.error('❌ Exception during completeProfile: $e');
+      AppLogger.error('❌ Exception during submitCompleteProfile: $e');
       Get.snackbar('Error', 'Failed to complete profile: $e',
           snackPosition: SnackPosition.BOTTOM);
       return {
@@ -706,58 +916,319 @@ class AccountsController extends GetxController {
       };
     } finally {
       isLoading.value = false;
-      AppLogger.info('🛑 completeProfile finished');
+      AppLogger.info('🛑 submitCompleteProfile finished');
     }
   }
-  
-  Map<String, dynamic> _prepareCompleteProfileData() {
-    final payload = {
-      'email': LocalStorage.myEmail,
-      'personal_info': {
+
+  // =========================================
+  // API METHODS FOR INDIVIDUAL VIEWS
+  // =========================================
+
+  /// Submit personal info (intro view)
+  Future<Map<String, dynamic>> submitPersonalInfo() async {
+    try {
+      isLoading.value = true;
+      _ensureService();
+      AppLogger.info('🚀 Submitting personal info');
+
+      final personalInfoData = {
         'first_name': firstName.value,
         'last_name': lastName.value,
         'age': age.value,
+      };
+
+      final response = await _accountSetupService.completeProfile(data: personalInfoData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.success('✅ Personal info submitted successfully');
+        return response.data as Map<String, dynamic>;
+      } else {
+        final errorMessage = 'Failed to submit personal info: ${response.statusCode}';
+        AppLogger.error(errorMessage);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      AppLogger.error('❌ Exception during submitPersonalInfo: $e');
+      return {'success': false, 'message': 'Failed to submit personal info: $e'};
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Submit gender selection
+  Future<Map<String, dynamic>> submitGenderSelection() async {
+    try {
+      isLoading.value = true;
+      _ensureService();
+      AppLogger.info('🚀 Submitting gender selection');
+
+      final genderData = {
         'gender': selectedGender.value,
-      },
-      'physical_attributes': {
+        'like_to_meet': selectedGenders,
+      };
+
+      final response = await _accountSetupService.completeProfile(data: genderData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.success('✅ Gender selection submitted successfully');
+        return response.data as Map<String, dynamic>;
+      } else {
+        final errorMessage = 'Failed to submit gender selection: ${response.statusCode}';
+        AppLogger.error(errorMessage);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      AppLogger.error('❌ Exception during submitGenderSelection: $e');
+      return {'success': false, 'message': 'Failed to submit gender selection: $e'};
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Submit height and weight
+  Future<Map<String, dynamic>> submitHeightWeight() async {
+    try {
+      isLoading.value = true;
+      _ensureService();
+      AppLogger.info('🚀 Submitting height and weight');
+
+      final heightWeightData = {
         'height': heightController.text,
         'weight': weightController.text,
-      },
-      'education_career': getEducationFormData(),
-      'faith_beliefs': {
-        'religion': selectedReligion,
-        'zodiac': selectedZodiac,
-      },
-      'habits': {
-        'communication_style': selectedCommunicationStyle.value != null ? communicationStyles[selectedCommunicationStyle.value!] : null,
-        'exercise_frequency': selectedExerciseFrequency.value != null ? exerciseFrequencies[selectedExerciseFrequency.value!] : null,
-        'food_preference': selectedFoodPreference.value != null ? foodPreferences[selectedFoodPreference.value!] : null,
-        'social_media_usage': selectedSocialMediaUsage.value != null ? socialMediaUsage[selectedSocialMediaUsage.value!] : null,
-        'smoking_drinking': selectedSmokingDrinking.value != null ? smokingDrinking[selectedSmokingDrinking.value!] : null,
-        'try_new_experiences': selectedTryNewExperiences.value != null ? tryNewExperiences[selectedTryNewExperiences.value!] : null,
-      },
-      'inspire': {
-        'selected_traits': selectedTraitIndices.map((index) => traits[index]).toList(),
-      },
-      'interests': {
-        'selected_interests': selectedInterestIndices.map((index) => interestOptions[index]['title']).toList(),
-      },
-      'lifestyle': {
-        'day_preference': selectedDayPreference.value != null ? dayPreferences[selectedDayPreference.value!] : null,
-        'love_language': selectedLoveLanguage.value != null ? loveLanguages[selectedLoveLanguage.value!] : null,
-        'weekend_activity': selectedWeekendActivity.value != null ? weekendActivities[selectedWeekendActivity.value!] : null,
-        'travel_preference': selectedTravelPreference.value != null ? travelPreferences[selectedTravelPreference.value!] : null,
-      },
-      'like_to_do': {
-        'selected_options': selectedLikeToDoOptions.map((category, indices) => 
-          MapEntry(category, indices.map((index) => likeToDoOptions[category]![index]).toList())
-        ),
-      },
-    };
-    AppLogger.debug('🧩 Prepared profile payload overview: email=${payload['email']}, sections=${payload.keys.where((k) => k != 'email').length}');
-    return payload;
+      };
+
+      final response = await _accountSetupService.completeProfile(data: heightWeightData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.success('✅ Height and weight submitted successfully');
+        return response.data as Map<String, dynamic>;
+      } else {
+        final errorMessage = 'Failed to submit height and weight: ${response.statusCode}';
+        AppLogger.error(errorMessage);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      AppLogger.error('❌ Exception during submitHeightWeight: $e');
+      return {'success': false, 'message': 'Failed to submit height and weight: $e'};
+    } finally {
+      isLoading.value = false;
+    }
   }
-  
+
+  /// Submit education information
+  Future<Map<String, dynamic>> submitEducation() async {
+    try {
+      isLoading.value = true;
+      _ensureService();
+      AppLogger.info('🚀 Submitting education information');
+
+      final educationData = getEducationFormData();
+
+      final response = await _accountSetupService.completeProfile(data: educationData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.success('✅ Education information submitted successfully');
+        return response.data as Map<String, dynamic>;
+      } else {
+        final errorMessage = 'Failed to submit education information: ${response.statusCode}';
+        AppLogger.error(errorMessage);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      AppLogger.error('❌ Exception during submitEducation: $e');
+      return {'success': false, 'message': 'Failed to submit education information: $e'};
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Submit faith and belief information
+  Future<Map<String, dynamic>> submitFaithBelief() async {
+    try {
+      isLoading.value = true;
+      _ensureService();
+      AppLogger.info('🚀 Submitting faith and belief information');
+
+      final faithData = {
+        'religion': selectedReligion ?? '',
+        'zodiac': selectedZodiac ?? '',
+        'communication_style': selectedCommunicationStyle.value != null ? communicationStyles[selectedCommunicationStyle.value!] : '',
+      };
+
+      final response = await _accountSetupService.completeProfile(data: faithData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.success('✅ Faith and belief information submitted successfully');
+        return response.data as Map<String, dynamic>;
+      } else {
+        final errorMessage = 'Failed to submit faith and belief information: ${response.statusCode}';
+        AppLogger.error(errorMessage);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      AppLogger.error('❌ Exception during submitFaithBelief: $e');
+      return {'success': false, 'message': 'Failed to submit faith and belief information: $e'};
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Submit habits information
+  Future<Map<String, dynamic>> submitHabits() async {
+    try {
+      isLoading.value = true;
+      _ensureService();
+      AppLogger.info('🚀 Submitting habits information');
+
+      final habitsData = {
+        'exercise_frequency': selectedExerciseFrequency.value != null ? exerciseFrequencies[selectedExerciseFrequency.value!] : '',
+        'food_preference': selectedFoodPreference.value != null ? foodPreferences[selectedFoodPreference.value!] : '',
+        'social_media_usage': selectedSocialMediaUsage.value != null ? socialMediaUsage[selectedSocialMediaUsage.value!] : '',
+        'smoking_drinking': selectedSmokingDrinking.value != null ? smokingDrinking[selectedSmokingDrinking.value!] : '',
+        'try_new_experiences': selectedTryNewExperiences.value != null ? tryNewExperiences[selectedTryNewExperiences.value!] : '',
+      };
+
+      final response = await _accountSetupService.completeProfile(data: habitsData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.success('✅ Habits information submitted successfully');
+        return response.data as Map<String, dynamic>;
+      } else {
+        final errorMessage = 'Failed to submit habits information: ${response.statusCode}';
+        AppLogger.error(errorMessage);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      AppLogger.error('❌ Exception during submitHabits: $e');
+      return {'success': false, 'message': 'Failed to submit habits information: $e'};
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Submit personality traits
+  Future<Map<String, dynamic>> submitTraits() async {
+    try {
+      isLoading.value = true;
+      _ensureService();
+      AppLogger.info('🚀 Submitting personality traits');
+
+      final traitsData = {
+        'personality_traits': selectedTraitIndices.map((index) => traits[index]).toList(),
+      };
+
+      final response = await _accountSetupService.completeProfile(data: traitsData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.success('✅ Personality traits submitted successfully');
+        return response.data as Map<String, dynamic>;
+      } else {
+        final errorMessage = 'Failed to submit personality traits: ${response.statusCode}';
+        AppLogger.error(errorMessage);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      AppLogger.error('❌ Exception during submitTraits: $e');
+      return {'success': false, 'message': 'Failed to submit personality traits: $e'};
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Submit interests
+  Future<Map<String, dynamic>> submitInterests() async {
+    try {
+      isLoading.value = true;
+      _ensureService();
+      AppLogger.info('🚀 Submitting interests');
+
+      final interestsData = {
+        'interests': selectedInterestIndices.map((index) => interestOptions[index]['title']).toList(),
+      };
+
+      final response = await _accountSetupService.completeProfile(data: interestsData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.success('✅ Interests submitted successfully');
+        return response.data as Map<String, dynamic>;
+      } else {
+        final errorMessage = 'Failed to submit interests: ${response.statusCode}';
+        AppLogger.error(errorMessage);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      AppLogger.error('❌ Exception during submitInterests: $e');
+      return {'success': false, 'message': 'Failed to submit interests: $e'};
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Submit lifestyle preferences
+  Future<Map<String, dynamic>> submitLifestyle() async {
+    try {
+      isLoading.value = true;
+      _ensureService();
+      AppLogger.info('🚀 Submitting lifestyle preferences');
+
+      final lifestyleData = {
+        'day_preference': selectedDayPreference.value != null ? dayPreferences[selectedDayPreference.value!] : '',
+        'love_language': selectedLoveLanguage.value != null ? loveLanguages[selectedLoveLanguage.value!] : '',
+        'weekend_activity': selectedWeekendActivity.value != null ? weekendActivities[selectedWeekendActivity.value!] : '',
+        'travel_preference': selectedTravelPreference.value != null ? travelPreferences[selectedTravelPreference.value!] : '',
+      };
+
+      final response = await _accountSetupService.completeProfile(data: lifestyleData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.success('✅ Lifestyle preferences submitted successfully');
+        return response.data as Map<String, dynamic>;
+      } else {
+        final errorMessage = 'Failed to submit lifestyle preferences: ${response.statusCode}';
+        AppLogger.error(errorMessage);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      AppLogger.error('❌ Exception during submitLifestyle: $e');
+      return {'success': false, 'message': 'Failed to submit lifestyle preferences: $e'};
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Submit "like to do" preferences
+  Future<Map<String, dynamic>> submitLikeToDo() async {
+    try {
+      isLoading.value = true;
+      _ensureService();
+      AppLogger.info('🚀 Submitting "like to do" preferences');
+
+      final likeToDoData = <String, List<String>>{};
+
+      selectedLikeToDoOptions.forEach((category, indices) {
+        if (indices.isNotEmpty) {
+          likeToDoData[category] = indices.map((index) => likeToDoOptions[category]![index]).toList();
+        }
+      });
+
+      final response = await _accountSetupService.completeProfile(data: likeToDoData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.success('✅ "Like to do" preferences submitted successfully');
+        return response.data as Map<String, dynamic>;
+      } else {
+        final errorMessage = 'Failed to submit "like to do" preferences: ${response.statusCode}';
+        AppLogger.error(errorMessage);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      AppLogger.error('❌ Exception during submitLikeToDo: $e');
+      return {'success': false, 'message': 'Failed to submit "like to do" preferences: $e'};
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   // =========================================
   // VALIDATION METHODS
   // =========================================
@@ -768,105 +1239,90 @@ class AccountsController extends GetxController {
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
-    
+
     // Gender validation
     if (!isGenderSelected) {
       Get.snackbar('Validation Error', 'Please select your gender',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
-    
+
+    // Choice validation
+    if (selectedGenders.isEmpty) {
+      Get.snackbar('Validation Error', 'Please select who you like to meet',
+          snackPosition: SnackPosition.BOTTOM);
+      return false;
+    }
+
     // Height & weight validation
     if (!areHeightWeightValid) {
       Get.snackbar('Validation Error', 'Please enter height and weight',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
-    
+
     // Education validation
     if (!isEducationButtonEnabled.value) {
       Get.snackbar('Validation Error', 'Please complete education information',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
-    
+
     // Faith validation
     if (!isFaithCompleted) {
-      Get.snackbar('Validation Error', 'Please complete faith and beliefs section',
+      Get.snackbar('Validation Error', 'Please select religion and zodiac',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
-    
+
     // Habits validation
     if (!areHabitsCompleted) {
-      Get.snackbar('Validation Error', 'Please complete habits section',
+      Get.snackbar('Validation Error', 'Please complete all habit selections',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
-    
+
     // Inspire validation
     if (!isInspireButtonEnabled) {
-      Get.snackbar('Validation Error', 'Please select at least 3 traits',
+      Get.snackbar('Validation Error', 'Please select at least 3 personality traits',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
-    
+
     // Interest validation
     if (selectedInterestIndices.isEmpty) {
       Get.snackbar('Validation Error', 'Please select at least one interest',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
-    
+
     // Lifestyle validation
     if (!isLifestyleCompleted) {
-      Get.snackbar('Validation Error', 'Please complete lifestyle section',
+      Get.snackbar('Validation Error', 'Please complete lifestyle preferences',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
-    
+
     // Like to do validation
     if (!isLikeToDoCompleted) {
-      Get.snackbar('Validation Error', 'Please complete likes and interests section',
+      Get.snackbar('Validation Error', 'Please select at least one option from each category',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
-    
+
     return true;
   }
-  
-  // =========================================
-  // LIFECYCLE METHODS
-  // =========================================
+
   @override
   void onInit() {
     super.onInit();
+    // Initialize controllers and set up listeners
     loadUserData();
-    AppLogger.info('👤 AccountsController onInit - tokenLoaded: ${LocalStorage.token.isNotEmpty}');
-    
-    // Sync text input to Rx values for personal info
-    firstNameController.addListener(() => updateFirstName(firstNameController.text));
-    lastNameController.addListener(() => updateLastName(lastNameController.text));
-    ageController.addListener(() => updateAge(ageController.text));
-    
-    // Add listeners for text controllers
-    heightController.addListener(validateHeightWeightInputs);
-    weightController.addListener(validateHeightWeightInputs);
-    
-    educationController.addListener(validateEducationInputs);
-    jobStatusController.addListener(validateEducationInputs);
-    incomeController.addListener(validateEducationInputs);
-
-    // Initialize AccountSetupService if token is available
-    if (LocalStorage.token.isNotEmpty) {
-      AppLogger.info('🔐 Initializing AccountSetupService from LocalStorage token');
-      initializeAccountSetupService(LocalStorage.token);
-    }
   }
-  
+
   @override
   void onClose() {
-    // Dispose text controllers
+    // Dispose of controllers
     firstNameController.dispose();
     lastNameController.dispose();
     ageController.dispose();
@@ -875,22 +1331,20 @@ class AccountsController extends GetxController {
     educationController.dispose();
     jobStatusController.dispose();
     incomeController.dispose();
-    
     super.onClose();
   }
-  
-  // =========================================
-  // UTILITY METHODS
-  // =========================================
+
   void clearAllData() {
-    // Clear personal info
     firstName.value = '';
     lastName.value = '';
     age.value = '';
-    
-    // Clear selections
     selectedGender.value = '';
     selectedGenders.clear();
+    heightController.clear();
+    weightController.clear();
+    educationController.clear();
+    jobStatusController.clear();
+    incomeController.clear();
     selectedReligionIndex.value = null;
     selectedZodiacIndex.value = null;
     selectedCommunicationStyle.value = null;
@@ -899,32 +1353,24 @@ class AccountsController extends GetxController {
     selectedSocialMediaUsage.value = null;
     selectedSmokingDrinking.value = null;
     selectedTryNewExperiences.value = null;
+    selectedTraitIndices.clear();
+    selectedInterestIndices.clear();
     selectedDayPreference.value = null;
     selectedLoveLanguage.value = null;
     selectedWeekendActivity.value = null;
     selectedTravelPreference.value = null;
-    
-    // Clear trait indices
-    selectedTraitIndices.clear();
-    selectedInterestIndices.clear();
-    
-    // Clear like to do options
-    selectedLikeToDoOptions.forEach((key, value) => value.clear());
-    
-    // Clear text controllers
-    heightController.clear();
-    weightController.clear();
-    educationController.clear();
-    jobStatusController.clear();
-    incomeController.clear();
+    selectedLikeToDoOptions.forEach((category, indices) {
+      indices.clear();
+    });
   }
-  
-  double getCompletionPercentage() {
-    int totalSections = 10; // Total number of sections
+
+  int getCompletionPercentage() {
     int completedSections = 0;
-    
+    int totalSections = 10; // Total number of sections to complete
+
     if (firstName.value.isNotEmpty && lastName.value.isNotEmpty && age.value.isNotEmpty) completedSections++;
     if (isGenderSelected) completedSections++;
+    if (selectedGenders.isNotEmpty) completedSections++;
     if (areHeightWeightValid) completedSections++;
     if (isEducationButtonEnabled.value) completedSections++;
     if (isFaithCompleted) completedSections++;
@@ -932,8 +1378,7 @@ class AccountsController extends GetxController {
     if (isInspireButtonEnabled) completedSections++;
     if (selectedInterestIndices.isNotEmpty) completedSections++;
     if (isLifestyleCompleted) completedSections++;
-    if (isLikeToDoCompleted) completedSections++;
-    
-    return (completedSections / totalSections) * 100;
+
+    return (completedSections / totalSections * 100).round();
   }
 }

@@ -6,6 +6,7 @@ import '../controller/accounts_controller.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/input_box.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
+import 'package:kindered_app/config/app_routes.dart';
 
 class IntroView extends GetView<AccountsController> {
   final _formKey = GlobalKey<FormState>();
@@ -190,7 +191,17 @@ class IntroView extends GetView<AccountsController> {
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
             ),
-            onPressed: controller.onNextPressed,
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                // Update controller data from form fields
+                controller.updateFirstName(controller.firstNameController.text);
+                controller.updateLastName(controller.lastNameController.text);
+                controller.updateAge(controller.ageController.text);
+                
+                // Navigate to gender view
+                Get.offAllNamed(AppRoutes.gender);
+              }
+            },
           ),
         ));
   }

@@ -9,7 +9,7 @@ import 'package:kindered_app/modules/acccounts_setting/widget/input_box.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 
 class EducationView extends GetView<AccountsController> {
-  final AccountsController controller = Get.find<AccountsController>();
+  const EducationView({super.key});
 
   @override
   Widget build(BuildContext context) {

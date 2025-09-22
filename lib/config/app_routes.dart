@@ -35,7 +35,6 @@ import 'package:kindered_app/modules/profile_and_settings/view/number_verify_vie
 import 'package:kindered_app/modules/home/view/message_view.dart';
 import 'package:kindered_app/modules/home/view/chat_view.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/display_profile.dart';
-import 'package:kindered_app/modules/profile_and_settings/view/edit_profile_new.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/about_us.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/help_support.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/terms_condition.dart';
@@ -256,11 +255,7 @@ class AppRoutes {
       page: () => const ChatConversationView(),
       binding: HomeBinding(),
     ),
-    GetPage(
-      name: editProfile,
-      page: () => EditProfileNew(),
-      binding: ProfileAndStettings(),
-    ),
+   
     GetPage(
       name: termsAndConditions,
       page: () => const TermsAndConditions(),
