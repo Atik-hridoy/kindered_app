@@ -147,7 +147,7 @@ class NumberVerifyView extends GetView<NumberVerifyController> {
                       text: 'Verify',
                       onPressed: () {
                         // TODO: Implement OTP verification logic
-                        Get.toNamed(AppRoutes.accountSettingView);   ; // Go back to previous screen after verification
+                        Get.toNamed(AppRoutes.accountSettingView); // Go back to previous screen after verification
                       },
                       style: AuthButtonStyle.filled,
                     ),

@@ -14,6 +14,8 @@ class EditProfile extends GetView<ProfileEditController> {
     'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=300&h=400&fit=crop',
   ];
 
+   EditProfile({super.key});
+
   @override
   Widget build(BuildContext context) {
     // Debug: Check if profile data is loading
@@ -264,7 +266,7 @@ class EditProfile extends GetView<ProfileEditController> {
                       SizedBox(height: 20),
                       
                       // Name Field
-                      Obx(() => _buildInfoField('Name', controller.userProfile.value?.firstName ?? '')),
+                      Obx(() => _buildInfoField('Name', controller.userProfile.value?.firstName ?? '', isEditable: true)),
                       
                       SizedBox(height: 16),
                       
@@ -272,54 +274,110 @@ class EditProfile extends GetView<ProfileEditController> {
                       Obx(() => Row(
                         children: [
                           Expanded(
-                            child: _buildInfoField('Age', controller.userProfile.value?.age.toString() ?? ''),
+                            child: _buildInfoField('Age', controller.userProfile.value?.age.toString() ?? '', isEditable: true),
                           ),
                           SizedBox(width: 16),
                           Expanded(
-                            child: _buildInfoField('Gender', controller.userProfile.value?.gender ?? ''),
+                            child: _buildInfoField('Gender', controller.userProfile.value?.gender ?? '', 
+                              dropdownItems: controller.genders,
+                              isEditable: true,
+                            ),
                           ),
                         ],
                       )),
                       
                       SizedBox(height: 16),
                       
-                      // Height and Weight Row (using lifestyle data if available)
+                      // Height and Weight Row
                       Obx(() => Row(
                         children: [
                           Expanded(
-                            child: _buildInfoField('Height', controller.userProfile.value?.lifestyle?.sleepingStyle ?? ''), // Using sleepingStyle as placeholder for height
+                            child: _buildInfoField('Height', controller.userProfile.value?.lifestyle?.sleepingStyle ?? '', isEditable: true),
                           ),
                           SizedBox(width: 16),
                           Expanded(
-                            child: _buildInfoField('Weight', controller.userProfile.value?.lifestyle?.loveStyle ?? ''), // Using loveStyle as placeholder for weight
+                            child: _buildInfoField('Weight', controller.userProfile.value?.lifestyle?.loveStyle ?? '', isEditable: true),
                           ),
                         ],
                       )),
                       
                       SizedBox(height: 16),
                       
-                      // Education (using lifestyle data if available)
-                      Obx(() => _buildInfoField('Education', controller.userProfile.value?.lifestyle?.weekends ?? '')), // Using weekends as placeholder for education
+                      // Education
+                      Obx(() => _buildInfoField(
+                        'Education', 
+                        controller.userProfile.value?.lifestyle?.weekends ?? '',
+                        isEditable: true
+                      )),
                       
                       SizedBox(height: 16),
                       
-                      // Job Status (using lifestyle data if available)
-                      Obx(() => _buildInfoField('Job Status', controller.userProfile.value?.lifestyle?.traveling ?? '')), // Using traveling as placeholder for job status
+                      // Job Status
+                      Obx(() => _buildInfoField(
+                        'Job Status',
+                        controller.userProfile.value?.lifestyle?.traveling ?? '',
+                        isEditable: true
+                      )),
                       
                       SizedBox(height: 16),
                       
-                      // Location (using coordinates)
-                      Obx(() => _buildInfoField('Location', controller.userProfile.value?.location != null ? 'Location set' : 'No location set')),
+                      // Communication Style
+                      Obx(() => _buildInfoField(
+                        'Communication Style',
+                        controller.userProfile.value?.habits?.communicationStyle.join(', ') ?? '',
+                        dropdownItems: controller.communicationStyles,
+                        isEditable: true
+                      )),
                       
                       SizedBox(height: 16),
                       
-                      // Interested In (using relationType)
-                      Obx(() => _buildInfoField('Interested In', controller.userProfile.value?.relationType ?? '')),
+                      // Workout
+                      Obx(() => _buildInfoField(
+                        'Workout',
+                        controller.userProfile.value?.habits?.workout ?? '',
+                        dropdownItems: controller.exerciseFrequencies,
+                        isEditable: true
+                      )),
                       
                       SizedBox(height: 16),
                       
-                      // Looking For (using likeToMeet data)
-                      Obx(() => _buildInfoField('Looking For', controller.userProfile.value?.likeToMeet.join(', ') ?? '')),
+                      // Eating Style
+                      Obx(() => _buildInfoField(
+                        'Eating Style',
+                        controller.userProfile.value?.habits?.eatingStyle.join(', ') ?? '',
+                        dropdownItems: controller.foodPreferences,
+                        isEditable: true
+                      )),
+                      
+                      SizedBox(height: 16),
+                      
+                      // Social Media Usage
+                      Obx(() => _buildInfoField(
+                        'Social Media',
+                        controller.userProfile.value?.habits?.socialMedia ?? '',
+                        dropdownItems: controller.socialMediaUsage,
+                        isEditable: true
+                      )),
+                      
+                      SizedBox(height: 16),
+                      
+                      // Smoke or Drink
+                      Obx(() => _buildInfoField(
+                        'Smoke or Drink',
+                        controller.userProfile.value?.habits?.smokeOrDrink ?? '',
+                        dropdownItems: controller.smokingDrinking,
+                        isEditable: true
+                      )),
+                      
+                      SizedBox(height: 16),
+                      
+                      // New Experiences
+                      Obx(() => _buildInfoField(
+                        'New Experiences',
+                        controller.userProfile.value?.habits?.newExercise ?? '',
+                        dropdownItems: controller.newExperienceOptions,
+                        isEditable: true
+                      )),
                       
                       SizedBox(height: 32),
                       
@@ -380,10 +438,33 @@ class EditProfile extends GetView<ProfileEditController> {
                       SizedBox(height: 16),
                       
                       // Basics Items
-                      Obx(() => _buildBasicItem('Zodiac', (controller.userProfile.value?.zodiacSign ?? '').obs)),
-                      Obx(() => _buildBasicItem('Education', (controller.userProfile.value?.lifestyle?.weekends ?? '').obs)), // Using weekends as placeholder for education
-                      Obx(() => _buildBasicItem('Job', (controller.userProfile.value?.lifestyle?.traveling ?? '').obs)), // Using traveling as placeholder for job
-                      Obx(() => _buildBasicItem('Religion', (controller.userProfile.value?.religion ?? '').obs)),
+                      Obx(() => _buildInfoField(
+                        'Zodiac',
+                        controller.userProfile.value?.zodiacSign ?? '',
+                        dropdownItems: controller.zodiacSigns,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'Education',
+                        controller.userProfile.value?.lifestyle?.weekends ?? '',
+                        dropdownItems: controller.educationLevels,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'Job',
+                        controller.userProfile.value?.lifestyle?.traveling ?? '',
+                        dropdownItems: controller.jobStatuses,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'Religion',
+                        controller.userProfile.value?.religion ?? '',
+                        dropdownItems: controller.religions,
+                        isEditable: true
+                      )),
                       
                       SizedBox(height: 32),
                       
@@ -400,12 +481,47 @@ class EditProfile extends GetView<ProfileEditController> {
                       SizedBox(height: 16),
                       
                       // Lifestyle Items
-                      Obx(() => _buildBasicItem('Sleeping style', (controller.userProfile.value?.lifestyle?.sleepingStyle ?? '').obs)),
-                      Obx(() => _buildBasicItem('Love style', (controller.userProfile.value?.lifestyle?.loveStyle ?? '').obs)),
-                      Obx(() => _buildBasicItem('Weekends', (controller.userProfile.value?.lifestyle?.weekends ?? '').obs)),
-                      Obx(() => _buildBasicItem('Travelling', (controller.userProfile.value?.lifestyle?.traveling ?? '').obs)),
-                      Obx(() => _buildBasicItem('Home environment', (controller.userProfile.value?.lifestyle?.homeEnvironment ?? '').obs)),
-                      Obx(() => _buildBasicItem('Living Space', (controller.userProfile.value?.lifestyle?.livingSpace ?? '').obs)),
+                      Obx(() => _buildInfoField(
+                        'Sleeping Style',
+                        controller.userProfile.value?.lifestyle?.sleepingStyle ?? '',
+                        dropdownItems: controller.sleepingStyles,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'Love Style',
+                        controller.userProfile.value?.lifestyle?.loveStyle ?? '',
+                        dropdownItems: controller.loveStyles,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'Weekends',
+                        controller.userProfile.value?.lifestyle?.weekends ?? '',
+                        dropdownItems: controller.weekendStyles,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'Travelling',
+                        controller.userProfile.value?.lifestyle?.traveling ?? '',
+                        dropdownItems: controller.travelingStyles,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'Home Environment',
+                        controller.userProfile.value?.lifestyle?.homeEnvironment ?? '',
+                        dropdownItems: controller.homeEnvironments,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'Living Space',
+                        controller.userProfile.value?.lifestyle?.livingSpace ?? '',
+                        dropdownItems: controller.livingSpaces,
+                        isEditable: true
+                      )),
                       
                       SizedBox(height: 32),
                       
@@ -422,36 +538,47 @@ class EditProfile extends GetView<ProfileEditController> {
                       SizedBox(height: 16),
                       
                       // Habits Items
-                      Obx(() {
-                        final habits = controller.userProfile.value?.habits;
-                        print('DEBUG: Habits object exists: ${habits != null}');
-                        if (habits != null) {
-                          print('DEBUG: Habits object: $habits');
-                        }
-                        
-                        final workoutData = controller.userProfile.value?.habits?.workout ?? '';
-                        final eatingStyleData = controller.userProfile.value?.habits?.eatingStyle.join(', ') ?? '';
-                        final socialMediaData = controller.userProfile.value?.habits?.socialMedia ?? '';
-                        final smokeOrDrinkData = controller.userProfile.value?.habits?.smokeOrDrink ?? '';
-                        final newExperiencesData = controller.userProfile.value?.habits?.newExercise ?? '';
-                        
-                        print('DEBUG: Habits data - Workout: $workoutData');
-                        print('DEBUG: Habits data - Eating style: $eatingStyleData');
-                        print('DEBUG: Habits data - Social media: $socialMediaData');
-                        print('DEBUG: Habits data - Smoke or drink: $smokeOrDrinkData');
-                        print('DEBUG: Habits data - New experiences: $newExperiencesData');
-                        
-                        return Column(
-                          children: [
-                            _buildBasicItem('Communication style', (controller.userProfile.value?.habits?.communicationStyle.join(', ') ?? '').obs),
-                            _buildBasicItem('Workout', workoutData.obs),
-                            _buildBasicItem('Eating style', eatingStyleData.obs),
-                            _buildBasicItem('Social media', socialMediaData.obs),
-                            _buildBasicItem('Smoke or drink', smokeOrDrinkData.obs),
-                            _buildBasicItem('New experiences', newExperiencesData.obs),
-                          ],
-                        );
-                      }),
+                      Obx(() => _buildInfoField(
+                        'Communication Style',
+                        controller.userProfile.value?.habits?.communicationStyle.join(', ') ?? '',
+                        dropdownItems: controller.communicationStyles,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'Workout',
+                        controller.userProfile.value?.habits?.workout ?? '',
+                        dropdownItems: controller.exerciseFrequencies,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'Eating Style',
+                        controller.userProfile.value?.habits?.eatingStyle.join(', ') ?? '',
+                        dropdownItems: controller.foodPreferences,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'Social Media',
+                        controller.userProfile.value?.habits?.socialMedia ?? '',
+                        dropdownItems: controller.socialMediaUsage,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'Smoke or Drink',
+                        controller.userProfile.value?.habits?.smokeOrDrink ?? '',
+                        dropdownItems: controller.smokingDrinking,
+                        isEditable: true
+                      )),
+                      SizedBox(height: 16),
+                      Obx(() => _buildInfoField(
+                        'New Experiences',
+                        controller.userProfile.value?.habits?.newExercise ?? '',
+                        dropdownItems: controller.newExperienceOptions,
+                        isEditable: true
+                      )),
                       
                       SizedBox(height: 40),
                     ],
@@ -729,7 +856,7 @@ class EditProfile extends GetView<ProfileEditController> {
                 SizedBox(height: 20),
                 
                 // Sample photos grid
-                Container(
+                SizedBox(
                   height: 300,
                   child: GridView.count(
                     crossAxisCount: 2,
@@ -776,7 +903,7 @@ class EditProfile extends GetView<ProfileEditController> {
     );
   }
 
-  Widget _buildInfoField(String label, dynamic value) {
+    Widget _buildInfoField(String label, dynamic value, {bool isEditable = true, List<String>? dropdownItems}) {
     String getDisplayValue() {
       if (value == null) return '';
       if (value is RxInt) return value.value.toString();
@@ -784,61 +911,162 @@ class EditProfile extends GetView<ProfileEditController> {
       if (value is Rx) return value.value?.toString() ?? '';
       return value.toString();
     }
-    
-    // Check if the value is reactive (Rx type)
-    bool isReactive = value is Rx;
-    
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Color(0xFF1E2A3A),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (label.isNotEmpty)
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Color(0xFF8B9CAD),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'PerifareDisplay',
-                    ),
+          if (label.isNotEmpty)
+            Text(
+              label,
+              style: TextStyle(
+                color: Color(0xFF8B9CAD),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'PerifareDisplay',
+              ),
+            ),
+          SizedBox(height: 8),
+          if (!isEditable)
+            Text(
+              getDisplayValue(),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'PerifareDisplay',
+              ),
+            )
+          else if (dropdownItems != null)
+            // Dropdown field
+            DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: dropdownItems.contains(getDisplayValue()) ? getDisplayValue() : null,
+                hint: Text(
+                  'Select $label',
+                  style: TextStyle(
+                    color: Color(0xFF5A6B7D),
+                    fontSize: 16,
                   ),
-                if (label.isNotEmpty) SizedBox(height: 2),
-                // Only use Obx if the value is reactive, otherwise use a regular Text widget
-                isReactive 
-                  ? Obx(() => Text(
-                        getDisplayValue().isEmpty ? label : getDisplayValue(),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'PerifareDisplay',
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                      ))
-                  : Text(
-                      getDisplayValue().isEmpty ? label : getDisplayValue(),
+                ),
+                dropdownColor: Color(0xFF1E2A3A),
+                items: dropdownItems.map((String item) {
+                  return DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(
+                      item,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'PerifareDisplay',
                       ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
                     ),
-              ],
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue == null) return;
+                  
+                  switch(label.toLowerCase()) {
+                    case 'gender':
+                      controller.updateGender(newValue);
+                      break;
+                    case 'religion':
+                      controller.updateReligion(newValue);
+                      break;
+                    case 'zodiac':
+                      controller.updateZodiac(newValue);
+                      break;
+                    case 'communication style':
+                      controller.updateCommunicationStyle(newValue);
+                      break;
+                    case 'workout':
+                      controller.updateWorkout(newValue);
+                      break;
+                    case 'eating style':
+                      controller.updateEatingStyle(newValue);
+                      break;
+                    case 'social media':
+                      controller.updateSocialMedia(newValue);
+                      break;
+                    case 'smoke or drink':
+                      controller.updateSmokeOrDrink(newValue);
+                      break;
+                    case 'new experiences':
+                      controller.updateNewExperiences(newValue);
+                      break;
+                  }
+                },
+              ),
+            )
+          else
+            // Text field for editable fields
+            TextFormField(
+              initialValue: getDisplayValue(),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'PerifareDisplay',
+              ),
+              keyboardType: label.toLowerCase() == 'age' ? TextInputType.number : TextInputType.text,
+              decoration: InputDecoration(
+                hintText: 'Enter $label',
+                hintStyle: TextStyle(
+                  color: Color(0xFF5A6B7D),
+                  fontSize: 16,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Color(0xFF3A4B5C),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Color(0xFF3A4B5C),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Color(0xFF4A9EFF),
+                    width: 1,
+                  ),
+                ),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              onChanged: (value) {
+                switch(label.toLowerCase()) {
+                  case 'name':
+                    controller.updateName(value);
+                    break;
+                  case 'age':
+                    final age = int.tryParse(value);
+                    if (age != null) controller.updateAge(value);
+                    break;
+                  case 'height':
+                    controller.updateHeight(value);
+                    break;
+                  case 'weight':
+                    controller.updateWeight(value);
+                    break;
+                  case 'education':
+                    controller.updateEducation(value);
+                    break;
+                  case 'job status':
+                    controller.updateJobStatus(value);
+                    break;
+                }
+              },
             ),
-          ),
         ],
       ),
     );

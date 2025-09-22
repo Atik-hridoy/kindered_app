@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class HelpSupportView extends StatefulWidget {
-  const HelpSupportView({Key? key}) : super(key: key);
+  const HelpSupportView({super.key});
 
   @override
   _HelpSupportViewState createState() => _HelpSupportViewState();
@@ -222,7 +222,7 @@ class _HelpSupportViewState extends State<HelpSupportView> {
               // Send Message Button
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(

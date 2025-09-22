@@ -14,7 +14,7 @@ class CustomPillCheckbox extends StatelessWidget {
   final double selectedOpacity;
 
   const CustomPillCheckbox({
-    Key? key,
+    super.key,
     required this.text,
     required this.isSelected,
     this.onChanged,
@@ -25,7 +25,7 @@ class CustomPillCheckbox extends StatelessWidget {
     this.padding,
     this.textStyle,
     this.selectedOpacity = 0.6,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

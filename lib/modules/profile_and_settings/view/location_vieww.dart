@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class LocationView extends StatelessWidget {
-  const LocationView({Key? key}) : super(key: key);
+  const LocationView({super.key});
 
   @override
   Widget build(BuildContext context) {

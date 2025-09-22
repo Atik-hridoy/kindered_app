@@ -39,6 +39,7 @@ import 'package:kindered_app/modules/profile_and_settings/view/about_us.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/help_support.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/terms_condition.dart';
 import 'package:kindered_app/modules/location/location_view.dart' as location_module;
+import 'package:kindered_app/modules/profile_and_settings/view/edit_profile.dart';
 
 class AppRoutes {
   // Route names
@@ -225,10 +226,12 @@ class AppRoutes {
     GetPage(
       name: profileView,
       page: () => ProfileView(),
+      binding: ProfileAndStettings(),
     ),
     GetPage(
       name: accountSettingView,
       page: () => const AccountSettingView(),
+      binding: ProfileAndStettings(),
     ),
     GetPage(
       name: updatePhonNumberView,
@@ -281,6 +284,11 @@ class AppRoutes {
       name: loginWithEmail,
       page: () => const LoginWithEmail(),
       binding: AuthBinding(),
+    ),
+    GetPage(
+      name: editProfile,
+      page: () => EditProfile(),
+      binding: ProfileAndStettings(),
     ),
   ];
 }

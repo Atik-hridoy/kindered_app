@@ -447,7 +447,7 @@ image: const DecorationImage(
                       // Lifestyle section
                       const _DetailSection(
                         title: 'Lifestyle',
-                        titleColor: const Color(0xFFD4A373),
+                        titleColor: Color(0xFFD4A373),
                         items: [
                           _DetailItem(label: 'Sleeping style', value: 'Night owl'),
                           _DetailItem(label: 'Love style', value: 'Thoughtful gestures'),
@@ -463,7 +463,7 @@ image: const DecorationImage(
                       // Habits section
                       const _DetailSection(
                         title: 'Habits',
-                        titleColor: const Color(0xFFD4A373),
+                        titleColor: Color(0xFFD4A373),
                         items: [
                           _DetailItem(label: 'Communication Style', value: 'Good texter'),
                           _DetailItem(label: 'Workout', value: 'Rarely'),

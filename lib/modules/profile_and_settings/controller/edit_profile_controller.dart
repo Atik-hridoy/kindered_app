@@ -399,4 +399,540 @@ class ProfileEditController extends GetxController {
   Future<void> refreshProfileData() async {
     await _loadProfileData();
   }
+
+  // Update methods for profile fields
+  void updateName(String value) {
+    if (userProfile.value != null) {
+      final updatedProfile = UserProfile(
+        id: userProfile.value!.id,
+        role: userProfile.value!.role,
+        email: userProfile.value!.email,
+        age: userProfile.value!.age,
+        gender: userProfile.value!.gender,
+        firstName: value, // Updated value
+        lastName: userProfile.value!.lastName,
+        aboutMe: userProfile.value!.aboutMe,
+        religion: userProfile.value!.religion,
+        zodiacSign: userProfile.value!.zodiacSign,
+        status: userProfile.value!.status,
+        isVerified: userProfile.value!.isVerified,
+        profileCompletionPercentage: userProfile.value!.profileCompletionPercentage,
+        isDeleted: userProfile.value!.isDeleted,
+        createdAt: userProfile.value!.createdAt,
+        updatedAt: userProfile.value!.updatedAt,
+        habits: userProfile.value!.habits,
+        interests: userProfile.value!.interests,
+        lifestyle: userProfile.value!.lifestyle,
+        likeToMeet: userProfile.value!.likeToMeet,
+        personalTraitsInspire: userProfile.value!.personalTraitsInspire,
+        image: userProfile.value!.image,
+        phone: userProfile.value!.phone,
+        relationType: userProfile.value!.relationType,
+        location: userProfile.value!.location,
+      );
+      userProfile.value = updatedProfile;
+      _submitUpdate({'firstName': value});
+    }
+  }
+
+  void updateAge(String value) {
+    if (userProfile.value != null) {
+      final age = int.tryParse(value);
+      if (age != null) {
+        final updatedProfile = UserProfile(
+          id: userProfile.value!.id,
+          role: userProfile.value!.role,
+          email: userProfile.value!.email,
+          age: age, // Updated value
+          gender: userProfile.value!.gender,
+          firstName: userProfile.value!.firstName,
+          lastName: userProfile.value!.lastName,
+          aboutMe: userProfile.value!.aboutMe,
+          religion: userProfile.value!.religion,
+          zodiacSign: userProfile.value!.zodiacSign,
+          status: userProfile.value!.status,
+          isVerified: userProfile.value!.isVerified,
+          profileCompletionPercentage: userProfile.value!.profileCompletionPercentage,
+          isDeleted: userProfile.value!.isDeleted,
+          createdAt: userProfile.value!.createdAt,
+          updatedAt: userProfile.value!.updatedAt,
+          habits: userProfile.value!.habits,
+          interests: userProfile.value!.interests,
+          lifestyle: userProfile.value!.lifestyle,
+          likeToMeet: userProfile.value!.likeToMeet,
+          personalTraitsInspire: userProfile.value!.personalTraitsInspire,
+          image: userProfile.value!.image,
+          phone: userProfile.value!.phone,
+          relationType: userProfile.value!.relationType,
+          location: userProfile.value!.location,
+        );
+        userProfile.value = updatedProfile;
+        _submitUpdate({'age': age});
+      }
+    }
+  }
+
+  void updateGender(String value) {
+    if (userProfile.value != null) {
+      final updatedProfile = UserProfile(
+        id: userProfile.value!.id,
+        role: userProfile.value!.role,
+        email: userProfile.value!.email,
+        age: userProfile.value!.age,
+        gender: value, // Updated value
+        firstName: userProfile.value!.firstName,
+        lastName: userProfile.value!.lastName,
+        aboutMe: userProfile.value!.aboutMe,
+        religion: userProfile.value!.religion,
+        zodiacSign: userProfile.value!.zodiacSign,
+        status: userProfile.value!.status,
+        isVerified: userProfile.value!.isVerified,
+        profileCompletionPercentage: userProfile.value!.profileCompletionPercentage,
+        isDeleted: userProfile.value!.isDeleted,
+        createdAt: userProfile.value!.createdAt,
+        updatedAt: userProfile.value!.updatedAt,
+        habits: userProfile.value!.habits,
+        interests: userProfile.value!.interests,
+        lifestyle: userProfile.value!.lifestyle,
+        likeToMeet: userProfile.value!.likeToMeet,
+        personalTraitsInspire: userProfile.value!.personalTraitsInspire,
+        image: userProfile.value!.image,
+        phone: userProfile.value!.phone,
+        relationType: userProfile.value!.relationType,
+        location: userProfile.value!.location,
+      );
+      userProfile.value = updatedProfile;
+      _submitUpdate({'gender': value});
+    }
+  }
+
+  void updateReligion(String value) {
+    if (userProfile.value != null) {
+      final updatedProfile = UserProfile(
+        id: userProfile.value!.id,
+        role: userProfile.value!.role,
+        email: userProfile.value!.email,
+        age: userProfile.value!.age,
+        gender: userProfile.value!.gender,
+        firstName: userProfile.value!.firstName,
+        lastName: userProfile.value!.lastName,
+        aboutMe: userProfile.value!.aboutMe,
+        religion: value, // Updated value
+        zodiacSign: userProfile.value!.zodiacSign,
+        status: userProfile.value!.status,
+        isVerified: userProfile.value!.isVerified,
+        profileCompletionPercentage: userProfile.value!.profileCompletionPercentage,
+        isDeleted: userProfile.value!.isDeleted,
+        createdAt: userProfile.value!.createdAt,
+        updatedAt: userProfile.value!.updatedAt,
+        habits: userProfile.value!.habits,
+        interests: userProfile.value!.interests,
+        lifestyle: userProfile.value!.lifestyle,
+        likeToMeet: userProfile.value!.likeToMeet,
+        personalTraitsInspire: userProfile.value!.personalTraitsInspire,
+        image: userProfile.value!.image,
+        phone: userProfile.value!.phone,
+        relationType: userProfile.value!.relationType,
+        location: userProfile.value!.location,
+      );
+      userProfile.value = updatedProfile;
+      _submitUpdate({'religion': value});
+    }
+  }
+
+  void updateZodiac(String value) {
+    if (userProfile.value != null) {
+      final updatedProfile = UserProfile(
+        id: userProfile.value!.id,
+        role: userProfile.value!.role,
+        email: userProfile.value!.email,
+        age: userProfile.value!.age,
+        gender: userProfile.value!.gender,
+        firstName: userProfile.value!.firstName,
+        lastName: userProfile.value!.lastName,
+        aboutMe: userProfile.value!.aboutMe,
+        religion: userProfile.value!.religion,
+        zodiacSign: value, // Updated value
+        status: userProfile.value!.status,
+        isVerified: userProfile.value!.isVerified,
+        profileCompletionPercentage: userProfile.value!.profileCompletionPercentage,
+        isDeleted: userProfile.value!.isDeleted,
+        createdAt: userProfile.value!.createdAt,
+        updatedAt: userProfile.value!.updatedAt,
+        habits: userProfile.value!.habits,
+        interests: userProfile.value!.interests,
+        lifestyle: userProfile.value!.lifestyle,
+        likeToMeet: userProfile.value!.likeToMeet,
+        personalTraitsInspire: userProfile.value!.personalTraitsInspire,
+        image: userProfile.value!.image,
+        phone: userProfile.value!.phone,
+        relationType: userProfile.value!.relationType,
+        location: userProfile.value!.location,
+      );
+      userProfile.value = updatedProfile;
+      _submitUpdate({'zodiacSign': value});
+    }
+  }
+
+  // Lifestyle update methods
+  void updateHeight(String value) {
+    if (userProfile.value != null && userProfile.value!.lifestyle != null) {
+      final oldLifestyle = userProfile.value!.lifestyle!;
+      final updatedLifestyle = Lifestyle(
+        sleepingStyle: value,  // Using sleepingStyle as placeholder for height
+        loveStyle: oldLifestyle.loveStyle,
+        weekends: oldLifestyle.weekends,
+        traveling: oldLifestyle.traveling,
+        homeEnvironment: oldLifestyle.homeEnvironment,
+        livingSpace: oldLifestyle.livingSpace,
+      );
+      
+      final updatedProfile = UserProfile(
+        id: userProfile.value!.id,
+        role: userProfile.value!.role,
+        email: userProfile.value!.email,
+        age: userProfile.value!.age,
+        gender: userProfile.value!.gender,
+        firstName: userProfile.value!.firstName,
+        lastName: userProfile.value!.lastName,
+        aboutMe: userProfile.value!.aboutMe,
+        religion: userProfile.value!.religion,
+        zodiacSign: userProfile.value!.zodiacSign,
+        status: userProfile.value!.status,
+        isVerified: userProfile.value!.isVerified,
+        profileCompletionPercentage: userProfile.value!.profileCompletionPercentage,
+        isDeleted: userProfile.value!.isDeleted,
+        createdAt: userProfile.value!.createdAt,
+        updatedAt: userProfile.value!.updatedAt,
+        habits: userProfile.value!.habits,
+        interests: userProfile.value!.interests,
+        lifestyle: updatedLifestyle,
+        likeToMeet: userProfile.value!.likeToMeet,
+        personalTraitsInspire: userProfile.value!.personalTraitsInspire,
+        image: userProfile.value!.image,
+        phone: userProfile.value!.phone,
+        relationType: userProfile.value!.relationType,
+        location: userProfile.value!.location,
+      );
+      userProfile.value = updatedProfile;
+      _submitUpdate({'lifestyle': {'sleepingStyle': value}});
+    }
+  }
+
+  void updateWeight(String value) {
+    if (userProfile.value != null && userProfile.value!.lifestyle != null) {
+      final oldLifestyle = userProfile.value!.lifestyle!;
+      final updatedLifestyle = Lifestyle(
+        sleepingStyle: oldLifestyle.sleepingStyle,
+        loveStyle: value,  // Using loveStyle as placeholder for weight
+        weekends: oldLifestyle.weekends,
+        traveling: oldLifestyle.traveling,
+        homeEnvironment: oldLifestyle.homeEnvironment,
+        livingSpace: oldLifestyle.livingSpace,
+      );
+
+      _updateUserProfileWithLifestyle(updatedLifestyle);
+      _submitUpdate({'lifestyle': {'loveStyle': value}});
+    }
+  }
+
+  void updateEducation(String value) {
+    if (userProfile.value != null && userProfile.value!.lifestyle != null) {
+      final oldLifestyle = userProfile.value!.lifestyle!;
+      final updatedLifestyle = Lifestyle(
+        sleepingStyle: oldLifestyle.sleepingStyle,
+        loveStyle: oldLifestyle.loveStyle,
+        weekends: value,  // Using weekends as placeholder for education
+        traveling: oldLifestyle.traveling,
+        homeEnvironment: oldLifestyle.homeEnvironment,
+        livingSpace: oldLifestyle.livingSpace,
+      );
+
+      _updateUserProfileWithLifestyle(updatedLifestyle);
+      _submitUpdate({'lifestyle': {'weekends': value}});
+    }
+  }
+
+  void updateJobStatus(String value) {
+    if (userProfile.value != null && userProfile.value!.lifestyle != null) {
+      final oldLifestyle = userProfile.value!.lifestyle!;
+      final updatedLifestyle = Lifestyle(
+        sleepingStyle: oldLifestyle.sleepingStyle,
+        loveStyle: oldLifestyle.loveStyle,
+        weekends: oldLifestyle.weekends,
+        traveling: value,  // Using traveling as placeholder for job status
+        homeEnvironment: oldLifestyle.homeEnvironment,
+        livingSpace: oldLifestyle.livingSpace,
+      );
+
+      _updateUserProfileWithLifestyle(updatedLifestyle);
+      _submitUpdate({'lifestyle': {'traveling': value}});
+    }
+  }
+
+  void _updateUserProfileWithLifestyle(Lifestyle lifestyle) {
+    userProfile.value = UserProfile(
+      id: userProfile.value!.id,
+      role: userProfile.value!.role,
+      email: userProfile.value!.email,
+      age: userProfile.value!.age,
+      gender: userProfile.value!.gender,
+      firstName: userProfile.value!.firstName,
+      lastName: userProfile.value!.lastName,
+      aboutMe: userProfile.value!.aboutMe,
+      religion: userProfile.value!.religion,
+      zodiacSign: userProfile.value!.zodiacSign,
+      status: userProfile.value!.status,
+      isVerified: userProfile.value!.isVerified,
+      profileCompletionPercentage: userProfile.value!.profileCompletionPercentage,
+      isDeleted: userProfile.value!.isDeleted,
+      createdAt: userProfile.value!.createdAt,
+      updatedAt: userProfile.value!.updatedAt,
+      habits: userProfile.value!.habits,
+      interests: userProfile.value!.interests,
+      lifestyle: lifestyle,
+      likeToMeet: userProfile.value!.likeToMeet,
+      personalTraitsInspire: userProfile.value!.personalTraitsInspire,
+      image: userProfile.value!.image,
+      phone: userProfile.value!.phone,
+      relationType: userProfile.value!.relationType,
+      location: userProfile.value!.location,
+    );
+  }
+
+  // Habits update methods
+  void updateCommunicationStyle(String value) {
+    if (userProfile.value != null && userProfile.value!.habits != null) {
+      final oldHabits = userProfile.value!.habits!;
+      final updatedHabits = Habits(
+        communicationStyle: [value],
+        workout: oldHabits.workout,
+        eatingStyle: oldHabits.eatingStyle,
+        socialMedia: oldHabits.socialMedia,
+        smokeOrDrink: oldHabits.smokeOrDrink,
+        newExercise: oldHabits.newExercise,
+      );
+
+      _updateUserProfileWithHabits(updatedHabits);
+      _submitUpdate({'habits': {'communicationStyle': [value]}});
+    }
+  }
+
+  void updateWorkout(String value) {
+    if (userProfile.value != null && userProfile.value!.habits != null) {
+      final oldHabits = userProfile.value!.habits!;
+      final updatedHabits = Habits(
+        communicationStyle: oldHabits.communicationStyle,
+        workout: value,
+        eatingStyle: oldHabits.eatingStyle,
+        socialMedia: oldHabits.socialMedia,
+        smokeOrDrink: oldHabits.smokeOrDrink,
+        newExercise: oldHabits.newExercise,
+      );
+
+      _updateUserProfileWithHabits(updatedHabits);
+      _submitUpdate({'habits': {'workout': value}});
+    }
+  }
+
+  void updateEatingStyle(String value) {
+    if (userProfile.value != null && userProfile.value!.habits != null) {
+      final oldHabits = userProfile.value!.habits!;
+      final updatedHabits = Habits(
+        communicationStyle: oldHabits.communicationStyle,
+        workout: oldHabits.workout,
+        eatingStyle: [value],
+        socialMedia: oldHabits.socialMedia,
+        smokeOrDrink: oldHabits.smokeOrDrink,
+        newExercise: oldHabits.newExercise,
+      );
+
+      _updateUserProfileWithHabits(updatedHabits);
+      _submitUpdate({'habits': {'eatingStyle': [value]}});
+    }
+  }
+
+  void updateSocialMedia(String value) {
+    if (userProfile.value != null && userProfile.value!.habits != null) {
+      final oldHabits = userProfile.value!.habits!;
+      final updatedHabits = Habits(
+        communicationStyle: oldHabits.communicationStyle,
+        workout: oldHabits.workout,
+        eatingStyle: oldHabits.eatingStyle,
+        socialMedia: value,
+        smokeOrDrink: oldHabits.smokeOrDrink,
+        newExercise: oldHabits.newExercise,
+      );
+
+      _updateUserProfileWithHabits(updatedHabits);
+      _submitUpdate({'habits': {'socialMedia': value}});
+    }
+  }
+
+  void updateSmokeOrDrink(String value) {
+    if (userProfile.value != null && userProfile.value!.habits != null) {
+      final oldHabits = userProfile.value!.habits!;
+      final updatedHabits = Habits(
+        communicationStyle: oldHabits.communicationStyle,
+        workout: oldHabits.workout,
+        eatingStyle: oldHabits.eatingStyle,
+        socialMedia: oldHabits.socialMedia,
+        smokeOrDrink: value,
+        newExercise: oldHabits.newExercise,
+      );
+
+      _updateUserProfileWithHabits(updatedHabits);
+      _submitUpdate({'habits': {'smokeOrDrink': value}});
+    }
+  }
+
+  void updateNewExperiences(String value) {
+    if (userProfile.value != null && userProfile.value!.habits != null) {
+      final oldHabits = userProfile.value!.habits!;
+      final updatedHabits = Habits(
+        communicationStyle: oldHabits.communicationStyle,
+        workout: oldHabits.workout,
+        eatingStyle: oldHabits.eatingStyle,
+        socialMedia: oldHabits.socialMedia,
+        smokeOrDrink: oldHabits.smokeOrDrink,
+        newExercise: value,
+      );
+
+      _updateUserProfileWithHabits(updatedHabits);
+      _submitUpdate({'habits': {'newExercise': value}});
+    }
+  }
+
+  void _updateUserProfileWithHabits(Habits habits) {
+    userProfile.value = UserProfile(
+      id: userProfile.value!.id,
+      role: userProfile.value!.role,
+      email: userProfile.value!.email,
+      age: userProfile.value!.age,
+      gender: userProfile.value!.gender,
+      firstName: userProfile.value!.firstName,
+      lastName: userProfile.value!.lastName,
+      aboutMe: userProfile.value!.aboutMe,
+      religion: userProfile.value!.religion,
+      zodiacSign: userProfile.value!.zodiacSign,
+      status: userProfile.value!.status,
+      isVerified: userProfile.value!.isVerified,
+      profileCompletionPercentage: userProfile.value!.profileCompletionPercentage,
+      isDeleted: userProfile.value!.isDeleted,
+      createdAt: userProfile.value!.createdAt,
+      updatedAt: userProfile.value!.updatedAt,
+      habits: habits,
+      interests: userProfile.value!.interests,
+      lifestyle: userProfile.value!.lifestyle,
+      likeToMeet: userProfile.value!.likeToMeet,
+      personalTraitsInspire: userProfile.value!.personalTraitsInspire,
+      image: userProfile.value!.image,
+      phone: userProfile.value!.phone,
+      relationType: userProfile.value!.relationType,
+      location: userProfile.value!.location,
+    );
+  }
+
+  // Common lists for dropdowns
+  final religions = [
+    'Agnostic', 'Atheist', 'Buddhist', 'Christian', 'Hindu',
+    'Jewish', 'Muslim', 'Sikh', 'Spiritual', 'Prefer not to say',
+  ];
+
+  final zodiacSigns = [
+    'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius',
+    'Pisces', 'Not sure', 'Prefer not to say',
+  ];
+
+  final communicationStyles = [
+    'Good texter', 'Bad texter', 'Video Chatter', 'Phone caller'
+  ];
+
+  final exerciseFrequencies = [
+    'Yes', 'Several times a week', 'Rarely', 'Never'
+  ];
+
+  final foodPreferences = [
+    'Healthy and balanced', 'Whatever I feel like', 'Specific diet', "I don't eat"
+  ];
+
+  final socialMediaUsage = [
+    'Yes', 'Occasionally', 'Frequently', 'Rarely', 'Never'
+  ];
+
+  final smokingDrinking = [
+    'Yes', 'Occasionally', 'No'
+  ];
+
+  final newExperienceOptions = [
+    'Absolutely', 'Sometimes', 'Rarely', 'Never'
+  ];
+
+  final genders = [
+    'Male', 'Female', 'Non-binary', 'Prefer not to say'
+  ];
+
+  // Education and Job Status options
+  final educationLevels = [
+    'High School', 'Some College', 'Associates Degree', "Bachelor's Degree",
+    "Master's Degree", 'Doctorate', 'Trade School', 'Prefer not to say'
+  ];
+
+  final jobStatuses = [
+    'Student', 'Employed Full-time', 'Employed Part-time', 'Self-employed',
+    'Freelancer', 'Looking for work', 'Not working', 'Retired', 'Prefer not to say'
+  ];
+
+  // Lifestyle options
+  final sleepingStyles = [
+    'Early bird', 'Night owl', 'Flexible', 'Regular schedule'
+  ];
+
+  final loveStyles = [
+    'Romantic', 'Practical', 'Passionate', 'Playful', 'Traditional',
+    'Modern', 'Independent', 'Affectionate'
+  ];
+
+  final weekendStyles = [
+    'Active and outdoors', 'Relaxing at home', 'Socializing', 'Mix of everything',
+    'Working', 'Hobbies and projects'
+  ];
+
+  final travelingStyles = [
+    'Love to travel', 'Occasional trips', 'Rarely travel', 'Never travel',
+    'Business travel only', 'Adventure seeker'
+  ];
+
+  final homeEnvironments = [
+    'Neat and organized', 'Comfortably messy', 'Minimalist', 'Cozy and decorated',
+    'Practical', 'Always changing'
+  ];
+
+  final livingSpaces = [
+    'Live alone', 'With roommates', 'With family', 'With partner',
+    'Frequently moving', 'Other'
+  ];
+
+  // Submit updates to the server
+  Future<void> _submitUpdate(Map<String, dynamic> data) async {
+    try {
+      await _profileService.updateProfile(data: data);
+      Get.snackbar(
+        'Success',
+        'Profile updated successfully',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to update profile',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
 }

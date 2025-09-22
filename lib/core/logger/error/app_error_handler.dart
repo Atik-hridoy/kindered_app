@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:kindered_app/core/logger/app_logger.dart';
 
 /// Centralized error handling for the application.

@@ -8,7 +8,7 @@ import 'package:kindered_app/modules/acccounts_setting/widget/checkbox.dart';
 import '../controller/accounts_controller.dart';
 
 class InspireView extends GetView<AccountsController> {
-  const InspireView({Key? key}) : super(key: key);
+  const InspireView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +77,7 @@ class InspireView extends GetView<AccountsController> {
             ),
             const SizedBox(height: 24),
             Obx(() {
-              if (controller.selectedTraitIndices.isNotEmpty && controller.selectedTraitIndices.length < 3)
+              if (controller.selectedTraitIndices.isNotEmpty && controller.selectedTraitIndices.length < 3) {
                 return Text(
                   'Select ${3 - controller.selectedTraitIndices.length} more to continue',
                   style: GoogleFonts.playfairDisplay(
@@ -85,6 +85,7 @@ class InspireView extends GetView<AccountsController> {
                     fontSize: 14.0,
                   ),
                 );
+              }
               return const SizedBox.shrink();
             }),
           ],

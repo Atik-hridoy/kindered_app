@@ -6,7 +6,7 @@ import 'package:kindered_app/modules/acccounts_setting/widget/button.dart';
 import 'location_controller.dart';
 
 class LocationView extends GetView<LocationController> {
-  const LocationView({Key? key}) : super(key: key);
+  const LocationView({super.key});
 
   @override
   Widget build(BuildContext context) {
