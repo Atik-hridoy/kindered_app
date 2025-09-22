@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:kindered_app/config/app_routes.dart';
+import 'package:kindered_app/modules/home/controller/home_suggestion_controller.dart';
 import 'package:kindered_app/modules/home/widget/custom_photo_card.dart';
 import 'package:kindered_app/modules/home/widget/nav_card.dart';
 
@@ -13,6 +14,7 @@ class HomeSuggestionView extends StatefulWidget {  // Changed to StatefulWidget
 }
 
 class _HomeSuggestionViewState extends State<HomeSuggestionView> {
+  final HomeSuggestionController _controller = Get.put(HomeSuggestionController());
   int _currentIndex = 0;  // Add this line to track the selected tab
 
   void _onNavItemTapped(int index) {
@@ -53,19 +55,86 @@ class _HomeSuggestionViewState extends State<HomeSuggestionView> {
                   // Photo Card
                   SizedBox(
                     height: MediaQuery.of(context).size.height * 0.7, // 60% of screen height
-                    child: CustomPhotoCard(
-                      imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
-                      matchPercentage: '92%',
-                      name: 'Kelvin',
-                      age: '23',
-                      location: '5 km away',
-                      onChatPressed: () {
-                        // Handle chat action
-                      },
-                      onSharePressed: () {
-                        Get.toNamed(AppRoutes.displayProfile);
-                      },
-                    ),
+                    child: Obx(() {
+                      if (_controller.isLoading.value) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFD4A373)),
+                          ),
+                        );
+                      }
+                      
+                      if (_controller.errorMessage.value.isNotEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: Color(0xFFD4A373),
+                                size: 48,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _controller.errorMessage.value,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: () => _controller.refreshCurrentMatch(),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFD4A373),
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      
+                      if (!_controller.hasSuggestion) {
+                        return const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                color: Color(0xFFD4A373),
+                                size: 48,
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'No suggestions available',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      
+                      return CustomPhotoCard(
+                        imageUrl: _controller.imageUrl.isNotEmpty 
+                            ? _controller.imageUrl 
+                            : 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+                        matchPercentage: _controller.matchPercentage,
+                        name: _controller.name,
+                        age: _controller.age,
+                        location: _controller.location.isNotEmpty ? _controller.location : 'Unknown location',
+                        onChatPressed: () {
+                          // Handle chat action
+                        },
+                        onSharePressed: () {
+                          Get.toNamed(AppRoutes.displayProfile);
+                        },
+                      );
+                    }),
                   ),
                   
                   const SizedBox(height: 20),
