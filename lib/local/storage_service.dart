@@ -6,7 +6,7 @@ import 'storage_keys.dart';
 
 class LocalStorage {
   static String get myProfileImage =>
-      preferences?.getString(LocalStorageKeys.myProfileImage) ?? '';
+  preferences?.getString(LocalStorageKeys.myProfileImage) ?? '';
   static String token = "";
   static String cookie = "";
   static String refreshToken = "";
@@ -60,6 +60,65 @@ static Future<void> getAllPrefData() async {
   static Future<String> getString(String key) async {
     final localStorage = await _getStorage();
     return localStorage.getString(key) ?? '';
+  }
+
+  /// Save authentication tokens
+  static Future<void> saveAuthTokens({
+    required String accessToken,
+    String? refreshToken,
+    String? cookie,
+    String? userId,
+  }) async {
+    final localStorage = await _getStorage();
+
+    // Save access token
+    await localStorage.setString(LocalStorageKeys.token, accessToken);
+    token = accessToken;
+
+    // Save refresh token if provided
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await localStorage.setString(LocalStorageKeys.refreshToken, refreshToken);
+      LocalStorage.refreshToken = refreshToken;
+    }
+
+    // Save cookie if provided
+    if (cookie != null && cookie.isNotEmpty) {
+      await localStorage.setString(LocalStorageKeys.cookie, cookie);
+      LocalStorage.cookie = cookie;
+    }
+
+    // Save user ID if provided
+    if (userId != null && userId.isNotEmpty) {
+      await localStorage.setString(LocalStorageKeys.userId, userId);
+      LocalStorage.userId = userId;
+    }
+
+    // Set login status
+    await localStorage.setBool(LocalStorageKeys.isLogIn, true);
+    isLogIn = true;
+
+    AppLogger.info(' Auth tokens saved successfully');
+    AppLogger.info(' Access token length: ${accessToken.length}');
+    if (refreshToken != null) {
+      AppLogger.info(' Refresh token length: ${refreshToken.length}');
+    }
+  }
+
+  /// Get authentication header for API requests
+  static Map<String, String> getAuthHeaders() {
+    if (token.isNotEmpty) {
+      return {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      };
+    }
+    return {};
+  }
+
+  /// Check if user is authenticated
+  static bool isAuthenticated() {
+    return isLogIn && token.isNotEmpty;
   }
 
   /// Optional: Clear everything (on logout)

@@ -61,21 +61,55 @@ class OtpController extends GetxController {
         LocalStorage.myEmail = target.value; // Update in-memory cache
         AppLogger.info('💾 Email saved locally: ${target.value}');
         
-        // Save user session/token if provided in response (support multiple possible keys)
-        String? token;
+        // Save all authentication tokens from response
         try {
           final data = response['data'];
+          String? accessToken;
+          String? refreshToken;
+          String? cookie;
+          String? userId;
+          
+          // Extract tokens from response data (support multiple possible key names)
           if (data is Map) {
-            token = data['token'] ?? data['accessToken'] ?? data['access_token'] ?? data['jwt'] ?? data['bearer'];
+            // Access token - try multiple possible keys
+            accessToken = data['token'] ?? data['accessToken'] ?? data['access_token'] ?? data['jwt'] ?? data['bearer'];
+            
+            // Refresh token
+            refreshToken = data['refreshToken'] ?? data['refresh_token'];
+            
+            // Cookie
+            cookie = data['cookie'] ?? data['session'];
+            
+            // User ID
+            userId = data['userId'] ?? data['user_id'] ?? data['id'];
           }
-          token ??= response['token'];
-
-          if (token != null && token.isNotEmpty) {
-            await LocalStorage.setString(LocalStorageKeys.token, token);
-            LocalStorage.token = token;
-            await LocalStorage.setBool(LocalStorageKeys.isLogIn, true);
-            LocalStorage.isLogIn = true;
-            AppLogger.info('🔐 User session saved (token len=${token.length})');
+          
+          // Also check for tokens at the root level
+          accessToken ??= response['token'] ?? response['accessToken'] ?? response['access_token'];
+          refreshToken ??= response['refreshToken'] ?? response['refresh_token'];
+          cookie ??= response['cookie'] ?? response['session'];
+          userId ??= response['userId'] ?? response['user_id'] ?? response['id'];
+          
+          if (accessToken != null && accessToken.isNotEmpty) {
+            // Save all tokens using the enhanced storage method
+            await LocalStorage.saveAuthTokens(
+              accessToken: accessToken,
+              refreshToken: refreshToken,
+              cookie: cookie,
+              userId: userId,
+            );
+            
+            AppLogger.success('✅ All authentication tokens saved successfully');
+            AppLogger.info('🔐 Access token: ${accessToken.length} chars');
+            if (refreshToken != null) {
+              AppLogger.info('🔄 Refresh token: ${refreshToken.length} chars');
+            }
+            if (cookie != null) {
+              AppLogger.info('🍪 Cookie: ${cookie.length} chars');
+            }
+            if (userId != null) {
+              AppLogger.info('👤 User ID: $userId');
+            }
 
             // Initialize AccountsController service with fresh token if available
             if (Get.isRegistered<AccountsController>()) {
@@ -87,9 +121,12 @@ class OtpController extends GetxController {
                 AppLogger.warning('⚠️ Failed to init AccountsController after OTP: $e');
               }
             }
+          } else {
+            AppLogger.warning('⚠️ No access token found in OTP response');
+            AppLogger.info('📋 Full response: $response');
           }
         } catch (e) {
-          AppLogger.error('❌ Error saving user session: $e');
+          AppLogger.error('❌ Error saving authentication tokens: $e');
         }
         
         // Navigate based on source

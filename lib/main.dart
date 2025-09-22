@@ -81,8 +81,8 @@ class MyApp extends StatelessWidget {
   title: AppStrings.appName,
   debugShowCheckedModeBanner: false,
   theme: AppTheme.lightTheme,
-  //initialRoute: AppRoutes.splash,
-  initialRoute: AppRoutes.homeSuggestionView,
+  initialRoute: AppRoutes.splash,
+  //initialRoute: AppRoutes.homeSuggestionView,
   initialBinding: BindingsBuilder(() {
     // Register a single, permanent AccountsController instance for the whole app
     if (!Get.isRegistered<AccountsController>()) {

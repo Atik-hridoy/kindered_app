@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:kindered_app/core/app_urls.dart'; 
 import 'package:kindered_app/core/logger/app_logger.dart';
+import 'package:kindered_app/local/storage_service.dart';
 
 class AccountSetupService {
   final Dio _dio;
@@ -11,11 +12,14 @@ class AccountSetupService {
       : _dio = Dio(
           BaseOptions(
             baseUrl: AppUrls.baseUrl,
-            headers: {
-              'Authorization': 'Bearer $token',
-            },
+            headers: LocalStorage.getAuthHeaders(),
           ),
-        );
+        ) {
+    // Ensure the token is set correctly
+    if (token.isNotEmpty) {
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+    }
+  }
 
   /// Complete Profile POST request
   /// If [images] are provided, the request will be sent as multipart/form-data

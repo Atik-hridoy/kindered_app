@@ -58,13 +58,46 @@ class EducationView extends GetView<AccountsController> {
             ),
             const SizedBox(height: 32),
             
-            // Education Level Input
+            // Education Level Dropdown
             Text('Education Level', style: GoogleFonts.playfairDisplay(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
-            CustomInputField(
-              controller: controller.educationController,
-              hintText: 'e.g., High School, Bachelor\'s Degree',
-              onChanged: (_) => controller.validateEducationInputs(),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color: Color(0xFF1E2A3A),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Color(0xFF3A4B5C), width: 1),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: controller.educationController.text.isEmpty ? null : controller.validEducationLevels.contains(controller.educationController.text) ? controller.educationController.text : null,
+                  hint: Text('Select Education Level', 
+                    style: GoogleFonts.playfairDisplay(
+                      color: Color(0xFF5A6B7D),
+                      fontSize: 16,
+                    ),
+                  ),
+                  dropdownColor: Color(0xFF1E2A3A),
+                  items: controller.validEducationLevels.map((String level) {
+                    return DropdownMenuItem<String>(
+                      value: level,
+                      child: Text(level,
+                        style: GoogleFonts.playfairDisplay(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      controller.educationController.text = newValue;
+                      controller.validateEducationInputs();
+                    }
+                  },
+                ),
+              ),
             ),
             const SizedBox(height: 20),
             

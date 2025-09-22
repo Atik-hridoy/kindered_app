@@ -16,6 +16,7 @@ abstract class AppUrls {
   // accounts setting endpoints
   static const String completeProfile = '/users/complete-profile';
   static const String getProfile = '/users/profile';
+  static const String updateProfile = '/users/profile';
 
 
 

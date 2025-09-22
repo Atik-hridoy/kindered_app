@@ -9,10 +9,7 @@ class AiAssistentService {
 
   AiAssistentService() : _dio = Dio(BaseOptions(
     baseUrl: AppUrls.baseUrl,
-    headers: {
-      'Authorization': 'Bearer ${LocalStorage.token}',
-      'Content-Type': 'application/json',
-    },
+    headers: LocalStorage.getAuthHeaders(),
   ));
 
   /// Get AI matchmaking data

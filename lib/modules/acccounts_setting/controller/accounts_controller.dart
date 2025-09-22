@@ -240,12 +240,22 @@ class AccountsController extends GetxController {
 
   // Helper methods
   
+  // Valid education level enum values
+  final List<String> validEducationLevels = [
+    'High School',
+    'Associate',
+    'Bachelors', 
+    'Masters',
+    'PhD',
+    'Diploma',
+    'Other'
+  ];
+
   /// Map education level text to valid enum values
   String _mapEducationLevel(String educationText) {
     final normalizedText = educationText.toLowerCase().trim();
     
     // Map common education level inputs to valid enum values
-    // Based on Postman data, backend expects values like "Bachelors", "High School", etc.
     switch (normalizedText) {
       case 'high school':
       case 'highschool':
@@ -256,6 +266,8 @@ class AccountsController extends GetxController {
       case 'associate':
       case 'associate degree':
       case 'associates':
+      case 'associate\'s':
+      case 'associate\'s degree':
         return 'Associate';
       case 'bachelor':
       case 'bachelor\'s':
@@ -272,6 +284,7 @@ class AccountsController extends GetxController {
       case 'phd':
       case 'doctorate':
       case 'doctoral':
+      case 'doctor':
       case 'doctor\'s':
       case 'doctor\'s degree':
         return 'PhD';
@@ -280,8 +293,8 @@ class AccountsController extends GetxController {
       case 'certification':
         return 'Diploma';
       default:
-        // If no match found, return the original text with proper capitalization
-        return educationText.trim();
+        // If no match found, return 'Other' as fallback
+        return 'Other';
     }
   }
   String _str(String? v) => (v ?? '').trim();

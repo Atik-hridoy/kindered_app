@@ -9,10 +9,7 @@ class LocationService {
 
   LocationService() : _dio = Dio(BaseOptions(
     baseUrl: AppUrls.baseUrl,
-    headers: {
-      'Authorization': 'Bearer ${LocalStorage.token}',
-      'Content-Type': 'application/json',
-    },
+    headers: LocalStorage.getAuthHeaders(),
   )) {
     AppLogger.info('🔧 LocationService initialized');
     AppLogger.info('🌐 Base URL: ${AppUrls.baseUrl}');

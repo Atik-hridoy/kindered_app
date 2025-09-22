@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:kindered_app/core/app_urls.dart';
+import 'package:kindered_app/core/logger/app_logger.dart';
 
 class AuthService {
   final Dio _dio = Dio(BaseOptions(
@@ -11,24 +12,36 @@ class AuthService {
 
   Future<Map<String, dynamic>> login(String email) async {
     try {
+      AppLogger.info('🔄 [AUTH SERVICE] Sending login request for email: $email');
+      
       final response = await _dio.post(
-        '${AppUrls.baseUrl}${AppUrls.login}',
+        AppUrls.login,
         data: {
           'email': email,
         },
       );
       
-      // Check if email exists and OTP can be sent
-      if (response.data['success'] == true || response.data['status'] == 'success') {
+      AppLogger.info('📝 [AUTH SERVICE] Server response: ${response.data}');
+      
+      // Check response status
+      final bool isSuccess = response.data['success'] == true || response.data['status'] == 'success';
+      final String message = response.data['message'] ?? '';
+      
+      // Handle both successful login and verification needed cases
+      if (isSuccess || message.contains('not verified')) {
+        AppLogger.success('✅ [AUTH SERVICE] Login request processed');
         return {
-          'success': true,
-          'message': response.data['message'] ?? 'OTP sent successfully',
+          'success': isSuccess,
+          'message': message,
+          'error': isSuccess ? null : message, // Include error message for unverified case
           'data': response.data,
+          'needsVerification': message.contains('not verified')
         };
       } else {
+        AppLogger.warning('⚠️ [AUTH SERVICE] Login request failed: $message');
         return {
           'success': false,
-          'error': response.data['message'] ?? 'Email not found or login failed',
+          'error': message.isEmpty ? 'Email not found or login failed' : message,
         };
       }
     } on DioException catch (e) {
@@ -49,7 +62,7 @@ class AuthService {
   Future<Map<String, dynamic>> verifyOtp(String email, String otp) async {
     try {
       final response = await _dio.post(
-        '${AppUrls.baseUrl}${AppUrls.verifyOtp}',
+        AppUrls.verifyOtp,
         data: {
           'email': email,
           'otp': otp,

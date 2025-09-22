@@ -1,29 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:kindered_app/modules/profile_and_settings/controller/edit_profile_controller.dart';
 
 class EditProfile extends GetView<ProfileEditController> {
-  // Sample internet photos for demonstration
-  final List<String> samplePhotos = [
-    'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=400&fit=crop',
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop',
-    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&h=400&fit=crop',
-    'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&h=400&fit=crop',
-    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=400&fit=crop',
-    'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=300&h=400&fit=crop',
-  ];
-
    EditProfile({super.key});
 
   @override
   Widget build(BuildContext context) {
     // Debug: Check if profile data is loading
     print('DEBUG: Building EditProfile view');
-    print('DEBUG: Is loading: ${controller.isLoading.value}');
-    print('DEBUG: User profile: ${controller.userProfile.value}');
-    print('DEBUG: Profile completion: ${controller.profileCompletion.value}%');
-    print('DEBUG: User name: ${controller.userProfile.value?.firstName ?? 'No name'}');
+    print('DEBUG: Is loading: ${controller.isLoading}');
+    print('DEBUG: User profile: ${controller.profile}');
+    print('DEBUG: Profile completion: ${controller.profileCompletion}%');
+    print('DEBUG: User name: ${controller.userFirstName ?? 'No name'}');
     
     return Scaffold(
       backgroundColor: Color(0xFF0F1419),
@@ -88,7 +79,7 @@ class EditProfile extends GetView<ProfileEditController> {
                             // Name Section
                             Obx(() {
                               print('DEBUG: Name widget rebuilding');
-                              final name = controller.userProfile.value?.firstName ?? 'No name';
+                              final name = controller.userFirstName;
                               print('DEBUG: Displaying name: $name');
                               return Text(
                                 name,
@@ -102,7 +93,7 @@ class EditProfile extends GetView<ProfileEditController> {
                             SizedBox(height: 16),
                             Obx(() {
                               print('DEBUG: Profile completion widget rebuilding');
-                              print('DEBUG: Current completion: ${controller.profileCompletion.value}%');
+                              print('DEBUG: Current completion: ${controller.profileCompletion}%');
                               return Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -177,7 +168,7 @@ class EditProfile extends GetView<ProfileEditController> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Obx(() => TextField(
-                          controller: TextEditingController(text: controller.userProfile.value?.aboutMe ?? ''),
+                          controller: TextEditingController(text: controller.userAboutMe),
                           onChanged: (value) => controller.updateAboutMe(value),
                           maxLines: 4,
                           style: TextStyle(
@@ -222,7 +213,7 @@ class EditProfile extends GetView<ProfileEditController> {
                       
                       // Photo Grid with dynamic photos
                       Obx(() {
-                        final userPhotos = controller.userProfile.value?.image ?? [];
+                        final userPhotos = controller.userPhotos;
                         print('DEBUG: User photos count: ${userPhotos.length}');
                         print('DEBUG: User photos: $userPhotos');
                         
@@ -236,14 +227,9 @@ class EditProfile extends GetView<ProfileEditController> {
                           children: [
                             // Display existing photos or sample photos
                             ...List.generate(9, (index) {
-                              if (index < userPhotos.length && userPhotos[index].isNotEmpty) {
-                                print('DEBUG: Building user photo slot $index with: ${userPhotos[index]}');
-                                return _buildPhotoSlot(userPhotos[index], index);
-                              } else if (index < samplePhotos.length) {
-                                print('DEBUG: Building sample photo slot $index');
-                                return _buildSamplePhotoSlot(samplePhotos[index], index);
+                              if (index < controller.userPhotos.length) {
+                                return _buildPhotoSlot(controller.userPhotos[index], index);
                               } else {
-                                print('DEBUG: Building add photo slot $index');
                                 return _buildAddPhotoSlot(index, context);
                               }
                             }),
@@ -266,7 +252,7 @@ class EditProfile extends GetView<ProfileEditController> {
                       SizedBox(height: 20),
                       
                       // Name Field
-                      Obx(() => _buildInfoField('Name', controller.userProfile.value?.firstName ?? '', isEditable: true)),
+                      Obx(() => _buildInfoField('Name', controller.userFirstName, isEditable: true)),
                       
                       SizedBox(height: 16),
                       
@@ -274,11 +260,11 @@ class EditProfile extends GetView<ProfileEditController> {
                       Obx(() => Row(
                         children: [
                           Expanded(
-                            child: _buildInfoField('Age', controller.userProfile.value?.age.toString() ?? '', isEditable: true),
+                            child: _buildInfoField('Age', controller.userAge, isEditable: true),
                           ),
                           SizedBox(width: 16),
                           Expanded(
-                            child: _buildInfoField('Gender', controller.userProfile.value?.gender ?? '', 
+                            child: _buildInfoField('Gender', controller.userGender, 
                               dropdownItems: controller.genders,
                               isEditable: true,
                             ),
@@ -292,39 +278,22 @@ class EditProfile extends GetView<ProfileEditController> {
                       Obx(() => Row(
                         children: [
                           Expanded(
-                            child: _buildInfoField('Height', controller.userProfile.value?.lifestyle?.sleepingStyle ?? '', isEditable: true),
+                            child: _buildInfoField('Height', controller.userSleepingStyle, isEditable: true),
                           ),
                           SizedBox(width: 16),
                           Expanded(
-                            child: _buildInfoField('Weight', controller.userProfile.value?.lifestyle?.loveStyle ?? '', isEditable: true),
+                            child: _buildInfoField('Weight', controller.userLoveStyle, isEditable: true),
                           ),
                         ],
-                      )),
+                      )
+                  ),
                       
-                      SizedBox(height: 16),
+                      SizedBox(height: 32),
                       
-                      // Education
-                      Obx(() => _buildInfoField(
-                        'Education', 
-                        controller.userProfile.value?.lifestyle?.weekends ?? '',
-                        isEditable: true
-                      )),
-                      
-                      SizedBox(height: 16),
-                      
-                      // Job Status
-                      Obx(() => _buildInfoField(
-                        'Job Status',
-                        controller.userProfile.value?.lifestyle?.traveling ?? '',
-                        isEditable: true
-                      )),
-                      
-                      SizedBox(height: 16),
-                      
-                      // Communication Style
+                      // Habits
                       Obx(() => _buildInfoField(
                         'Communication Style',
-                        controller.userProfile.value?.habits?.communicationStyle.join(', ') ?? '',
+                        controller.userCommunicationStyle.join(', '),
                         dropdownItems: controller.communicationStyles,
                         isEditable: true
                       )),
@@ -334,7 +303,7 @@ class EditProfile extends GetView<ProfileEditController> {
                       // Workout
                       Obx(() => _buildInfoField(
                         'Workout',
-                        controller.userProfile.value?.habits?.workout ?? '',
+                        controller.userWorkout,
                         dropdownItems: controller.exerciseFrequencies,
                         isEditable: true
                       )),
@@ -344,7 +313,7 @@ class EditProfile extends GetView<ProfileEditController> {
                       // Eating Style
                       Obx(() => _buildInfoField(
                         'Eating Style',
-                        controller.userProfile.value?.habits?.eatingStyle.join(', ') ?? '',
+                        controller.userEatingStyle.join(', ') ?? '',
                         dropdownItems: controller.foodPreferences,
                         isEditable: true
                       )),
@@ -354,7 +323,7 @@ class EditProfile extends GetView<ProfileEditController> {
                       // Social Media Usage
                       Obx(() => _buildInfoField(
                         'Social Media',
-                        controller.userProfile.value?.habits?.socialMedia ?? '',
+                        controller.userSocialMedia,
                         dropdownItems: controller.socialMediaUsage,
                         isEditable: true
                       )),
@@ -364,7 +333,7 @@ class EditProfile extends GetView<ProfileEditController> {
                       // Smoke or Drink
                       Obx(() => _buildInfoField(
                         'Smoke or Drink',
-                        controller.userProfile.value?.habits?.smokeOrDrink ?? '',
+                        controller.userSmokeOrDrink,
                         dropdownItems: controller.smokingDrinking,
                         isEditable: true
                       )),
@@ -374,7 +343,7 @@ class EditProfile extends GetView<ProfileEditController> {
                       // New Experiences
                       Obx(() => _buildInfoField(
                         'New Experiences',
-                        controller.userProfile.value?.habits?.newExercise ?? '',
+                        controller.userNewExperiences,
                         dropdownItems: controller.newExperienceOptions,
                         isEditable: true
                       )),
@@ -397,7 +366,7 @@ class EditProfile extends GetView<ProfileEditController> {
                       Obx(() => Wrap(
                         spacing: 12,
                         runSpacing: 12,
-                        children: controller.userProfile.value?.personalTraitsInspire.map((trait) => _buildTraitChip(trait)).toList() ?? [],
+                        children: controller.userTraits.map((trait) => _buildTraitChip(trait)).toList(),
                       )),
                       
                       SizedBox(height: 24),
@@ -413,13 +382,13 @@ class EditProfile extends GetView<ProfileEditController> {
                         runSpacing: 12,
                         children: [
                           // Display hobbies
-                          ...controller.userProfile.value?.interests?.hobbies.map((interest) => _buildInterestChip(interest)) ?? [],
+                          ...controller.userInterests.where((interest) => controller.profile?.interests?.hobbies.contains(interest) ?? false).map((interest) => _buildInterestChip(interest)),
                           // Display creative outlets
-                          ...controller.userProfile.value?.interests?.creativeOutlets.map((interest) => _buildInterestChip(interest)) ?? [],
+                          ...controller.userInterests.where((interest) => controller.profile?.interests?.creativeOutlets.contains(interest) ?? false).map((interest) => _buildInterestChip(interest)),
                           // Display fitness and sports
-                          ...controller.userProfile.value?.interests?.fitnessAndSports.map((interest) => _buildInterestChip(interest)) ?? [],
+                          ...controller.userInterests.where((interest) => controller.profile?.interests?.fitnessAndSports.contains(interest) ?? false).map((interest) => _buildInterestChip(interest)),
                           // Display entertainment
-                          ...controller.userProfile.value?.interests?.entertainment.map((interest) => _buildInterestChip(interest)) ?? [],
+                          ...controller.userInterests.where((interest) => controller.profile?.interests?.entertainment.contains(interest) ?? false).map((interest) => _buildInterestChip(interest)),
                         ],
                       )),
                       
@@ -440,28 +409,28 @@ class EditProfile extends GetView<ProfileEditController> {
                       // Basics Items
                       Obx(() => _buildInfoField(
                         'Zodiac',
-                        controller.userProfile.value?.zodiacSign ?? '',
+                        controller.userZodiacSign,
                         dropdownItems: controller.zodiacSigns,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Education',
-                        controller.userProfile.value?.lifestyle?.weekends ?? '',
+                        controller.userWeekend,
                         dropdownItems: controller.educationLevels,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Job',
-                        controller.userProfile.value?.lifestyle?.traveling ?? '',
+                        controller.jobStatus,
                         dropdownItems: controller.jobStatuses,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Religion',
-                        controller.userProfile.value?.religion ?? '',
+                        controller.userReligion,
                         dropdownItems: controller.religions,
                         isEditable: true
                       )),
@@ -483,42 +452,42 @@ class EditProfile extends GetView<ProfileEditController> {
                       // Lifestyle Items
                       Obx(() => _buildInfoField(
                         'Sleeping Style',
-                        controller.userProfile.value?.lifestyle?.sleepingStyle ?? '',
+                        controller.userSleepingStyle,
                         dropdownItems: controller.sleepingStyles,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Love Style',
-                        controller.userProfile.value?.lifestyle?.loveStyle ?? '',
+                        controller.userLoveStyle,
                         dropdownItems: controller.loveStyles,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Weekends',
-                        controller.userProfile.value?.lifestyle?.weekends ?? '',
+                        controller.userWeekend,
                         dropdownItems: controller.weekendStyles,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Travelling',
-                        controller.userProfile.value?.lifestyle?.traveling ?? '',
+                        controller.userTravelling,
                         dropdownItems: controller.travelingStyles,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Home Environment',
-                        controller.userProfile.value?.lifestyle?.homeEnvironment ?? '',
+                        controller.userHomeEnvironment,
                         dropdownItems: controller.homeEnvironments,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Living Space',
-                        controller.userProfile.value?.lifestyle?.livingSpace ?? '',
+                        controller.userLivingSpace,
                         dropdownItems: controller.livingSpaces,
                         isEditable: true
                       )),
@@ -540,42 +509,42 @@ class EditProfile extends GetView<ProfileEditController> {
                       // Habits Items
                       Obx(() => _buildInfoField(
                         'Communication Style',
-                        controller.userProfile.value?.habits?.communicationStyle.join(', ') ?? '',
+                        controller.userCommunicationStyle.join(', '),
                         dropdownItems: controller.communicationStyles,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Workout',
-                        controller.userProfile.value?.habits?.workout ?? '',
+                        controller.userWorkout,
                         dropdownItems: controller.exerciseFrequencies,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Eating Style',
-                        controller.userProfile.value?.habits?.eatingStyle.join(', ') ?? '',
+                        controller.userEatingStyle.join(', '),
                         dropdownItems: controller.foodPreferences,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Social Media',
-                        controller.userProfile.value?.habits?.socialMedia ?? '',
+                        controller.userSocialMedia,
                         dropdownItems: controller.socialMediaUsage,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Smoke or Drink',
-                        controller.userProfile.value?.habits?.smokeOrDrink ?? '',
+                        controller.userSmokeOrDrink,
                         dropdownItems: controller.smokingDrinking,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'New Experiences',
-                        controller.userProfile.value?.habits?.newExercise ?? '',
+                        controller.userNewExperiences,
                         dropdownItems: controller.newExperienceOptions,
                         isEditable: true
                       )),
@@ -764,66 +733,45 @@ class EditProfile extends GetView<ProfileEditController> {
 
   Widget _buildAddPhotoSlot(int index, BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        // Show dialog to choose from sample photos or add custom
-        _showPhotoSelectionDialog(context, index);
-      },
+      onTap: () => _showPhotoSelectionDialog(context, index),
       child: Container(
-        width: double.infinity,
-        height: 120,
         decoration: BoxDecoration(
           color: Color(0xFF1E2A3A).withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Color(0xFF4A9EFF),
-            width: 1.5,
-            style: BorderStyle.solid,
+            color: Color(0xFF4A9EFF).withOpacity(0.5),
+            width: 1,
           ),
         ),
-        child: Container(
-          margin: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: Color(0xFF4A9EFF),
-              width: 1.5,
-              style: BorderStyle.solid,
-            ),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Color(0xFF4A9EFF),
-                      width: 1.5,
-                      style: BorderStyle.solid,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.add,
-                    color: Color(0xFF4A9EFF),
-                    size: 24,
-                  ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Color(0xFF4A9EFF),
+                  width: 2,
                 ),
-                SizedBox(height: 8),
-                Text(
-                  'Add Image',
-                  style: TextStyle(
-                    color: Color(0xFF4A9EFF),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'PerifareDisplay',
-                  ),
-                ),
-              ],
+              ),
+              child: Icon(
+                Icons.add_a_photo,
+                color: Color(0xFF4A9EFF),
+                size: 24,
+              ),
             ),
-          ),
+            SizedBox(height: 8),
+            Text(
+              'Add Photo',
+              style: TextStyle(
+                color: Color(0xFF4A9EFF),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -850,40 +798,68 @@ class EditProfile extends GetView<ProfileEditController> {
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    fontFamily: 'PerifareDisplay',
                   ),
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: 24),
                 
-                // Sample photos grid
-                SizedBox(
-                  height: 300,
-                  child: GridView.count(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.8,
-                    children: samplePhotos.map((photo) => GestureDetector(
-                      onTap: () {
-                        controller.addPhoto(photo);
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          image: DecorationImage(
-                            image: NetworkImage(photo),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    )).toList(),
+                // Camera option
+                ListTile(
+                  onTap: () {
+                    controller.pickImageFromCamera(index);
+                    Navigator.pop(context);
+                  },
+                  leading: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF4A9EFF).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.camera_alt,
+                      color: Color(0xFF4A9EFF),
+                    ),
                   ),
+                  title: Text(
+                    'Take Photo',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.zero,
                 ),
                 
-                SizedBox(height: 20),
+                SizedBox(height: 16),
                 
-                // Close button
+                // Gallery option
+                ListTile(
+                  onTap: () {
+                    controller.pickImageFromGallery(index);
+                    Navigator.pop(context);
+                  },
+                  leading: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF4A9EFF).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.photo_library,
+                      color: Color(0xFF4A9EFF),
+                    ),
+                  ),
+                  title: Text(
+                    'Choose from Gallery',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                
+                SizedBox(height: 24),
+                
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(
@@ -903,15 +879,8 @@ class EditProfile extends GetView<ProfileEditController> {
     );
   }
 
-    Widget _buildInfoField(String label, dynamic value, {bool isEditable = true, List<String>? dropdownItems}) {
-    String getDisplayValue() {
-      if (value == null) return '';
-      if (value is RxInt) return value.value.toString();
-      if (value is RxString) return value.value;
-      if (value is Rx) return value.value?.toString() ?? '';
-      return value.toString();
-    }
-
+  // Update the field access in _buildInfoField
+  Widget _buildInfoField(String label, String value, {bool isEditable = true, List<String>? dropdownItems}) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
@@ -921,39 +890,24 @@ class EditProfile extends GetView<ProfileEditController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (label.isNotEmpty)
-            Text(
-              label,
-              style: TextStyle(
-                color: Color(0xFF8B9CAD),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'PerifareDisplay',
-              ),
+          Text(
+            label,
+            style: TextStyle(
+              color: Color(0xFF8B9CAD),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
+          ),
           SizedBox(height: 8),
-          if (!isEditable)
-            Text(
-              getDisplayValue(),
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'PerifareDisplay',
-              ),
-            )
-          else if (dropdownItems != null)
+          if (dropdownItems != null)
             // Dropdown field
             DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 isExpanded: true,
-                value: dropdownItems.contains(getDisplayValue()) ? getDisplayValue() : null,
+                value: dropdownItems.contains(value) ? value : null,
                 hint: Text(
                   'Select $label',
-                  style: TextStyle(
-                    color: Color(0xFF5A6B7D),
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Color(0xFF5A6B7D), fontSize: 16),
                 ),
                 dropdownColor: Color(0xFF1E2A3A),
                 items: dropdownItems.map((String item) {
@@ -961,25 +915,32 @@ class EditProfile extends GetView<ProfileEditController> {
                     value: item,
                     child: Text(
                       item,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   );
                 }).toList(),
                 onChanged: (String? newValue) {
                   if (newValue == null) return;
                   
+                  // Match dropdown updates with controller methods
                   switch(label.toLowerCase()) {
-                    case 'gender':
-                      controller.updateGender(newValue);
+                    case 'sleeping style':
+                      controller.updateHeight(newValue);
                       break;
-                    case 'religion':
-                      controller.updateReligion(newValue);
+                    case 'love style':
+                      controller.updateWeight(newValue);
                       break;
-                    case 'zodiac':
-                      controller.updateZodiac(newValue);
+                    case 'weekends':
+                      controller.updateEducation(newValue);
+                      break;
+                    case 'travelling':
+                      controller.updateJobStatus(newValue);
+                      break;
+                    case 'home environment':
+                      // Add updateHomeEnvironment method to controller if needed
+                      break;
+                    case 'living space':
+                      // Add updateLivingSpace method to controller if needed
                       break;
                     case 'communication style':
                       controller.updateCommunicationStyle(newValue);
@@ -999,6 +960,18 @@ class EditProfile extends GetView<ProfileEditController> {
                     case 'new experiences':
                       controller.updateNewExperiences(newValue);
                       break;
+                    case 'zodiac':
+                      controller.updateZodiac(newValue);
+                      break;
+                    case 'education':
+                      controller.updateEducation(newValue);
+                      break;
+                    case 'job':
+                      controller.updateJobStatus(newValue);
+                      break;
+                    case 'religion':
+                      controller.updateReligion(newValue);
+                      break;
                   }
                 },
               ),
@@ -1006,42 +979,19 @@ class EditProfile extends GetView<ProfileEditController> {
           else
             // Text field for editable fields
             TextFormField(
-              initialValue: getDisplayValue(),
+              initialValue: value,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                fontFamily: 'PerifareDisplay',
               ),
-              keyboardType: label.toLowerCase() == 'age' ? TextInputType.number : TextInputType.text,
               decoration: InputDecoration(
                 hintText: 'Enter $label',
                 hintStyle: TextStyle(
                   color: Color(0xFF5A6B7D),
                   fontSize: 16,
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: Color(0xFF3A4B5C),
-                    width: 1,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: Color(0xFF3A4B5C),
-                    width: 1,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: Color(0xFF4A9EFF),
-                    width: 1,
-                  ),
-                ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                border: InputBorder.none,
               ),
               onChanged: (value) {
                 switch(label.toLowerCase()) {
@@ -1049,20 +999,10 @@ class EditProfile extends GetView<ProfileEditController> {
                     controller.updateName(value);
                     break;
                   case 'age':
-                    final age = int.tryParse(value);
-                    if (age != null) controller.updateAge(value);
+                    controller.updateAge(value);
                     break;
-                  case 'height':
-                    controller.updateHeight(value);
-                    break;
-                  case 'weight':
-                    controller.updateWeight(value);
-                    break;
-                  case 'education':
-                    controller.updateEducation(value);
-                    break;
-                  case 'job status':
-                    controller.updateJobStatus(value);
+                  case 'gender':
+                    controller.updateGender(value);
                     break;
                 }
               },
@@ -1078,12 +1018,12 @@ class EditProfile extends GetView<ProfileEditController> {
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: controller.selectedTraits.contains(trait)
+              color: controller.userTraits.contains(trait)
                   ? Color(0xFF4A9EFF).withOpacity(0.2)
                   : Color(0xFF1E2A3A),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: controller.selectedTraits.contains(trait)
+                color: controller.userTraits.contains(trait)
                     ? Color(0xFF4A9EFF)
                     : Color(0xFF3A4B5C),
                 width: 1,
@@ -1092,7 +1032,7 @@ class EditProfile extends GetView<ProfileEditController> {
             child: Text(
               trait,
               style: TextStyle(
-                color: controller.selectedTraits.contains(trait)
+                color: controller.userTraits.contains(trait)
                     ? Color(0xFF4A9EFF)
                     : Colors.white,
                 fontSize: 13,
@@ -1134,12 +1074,12 @@ class EditProfile extends GetView<ProfileEditController> {
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: controller.selectedInterests.contains(interest)
+              color: controller.userInterests.contains(interest)
                   ? Color(0xFF4A9EFF).withOpacity(0.2)
                   : Color(0xFF1E2A3A),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: controller.selectedInterests.contains(interest)
+                color: controller.userInterests.contains(interest)
                     ? Color(0xFF4A9EFF)
                     : Color(0xFF3A4B5C),
                 width: 1,
@@ -1148,7 +1088,7 @@ class EditProfile extends GetView<ProfileEditController> {
             child: Text(
               interest,
               style: TextStyle(
-                color: controller.selectedInterests.contains(interest)
+                color: controller.userInterests.contains(interest)
                     ? Color(0xFF4A9EFF)
                     : Color(0xFF8B9CAD),
                 fontSize: 13,
