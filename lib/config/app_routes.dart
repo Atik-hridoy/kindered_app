@@ -35,12 +35,10 @@ import 'package:kindered_app/modules/profile_and_settings/view/number_verify_vie
 import 'package:kindered_app/modules/home/view/message_view.dart';
 import 'package:kindered_app/modules/home/view/chat_view.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/display_profile.dart';
-import 'package:kindered_app/modules/profile_and_settings/view/edit_profile.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/about_us.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/help_support.dart';
 import 'package:kindered_app/modules/profile_and_settings/view/terms_condition.dart';
 import 'package:kindered_app/modules/location/location_view.dart' as location_module;
-import 'package:kindered_app/modules/profile_and_settings/view/location_vieww.dart' as settings_module;
 
 class AppRoutes {
   // Route names
@@ -147,7 +145,7 @@ class AppRoutes {
     GetPage(
       name:AppRoutes.otp,
       page: () => const OtpView(),
-      // binding: AuthBinding(),
+      binding: AuthBinding(),
     ),
     GetPage(
       name: intro,
@@ -215,11 +213,6 @@ class AppRoutes {
       binding: LocationBinding(),
     ),
     GetPage(
-      name: locationView,
-      page: () => const settings_module.LocationView(),
-      binding: ProfileAndStettings(),
-    ),
-    GetPage(
       name: homeSuggestionView,
       page: () => const HomeSuggestionView(),
       binding: HomeBinding(),
@@ -231,7 +224,7 @@ class AppRoutes {
     ),
     GetPage(
       name: profileView,
-      page: () => const ProfileView(),
+      page: () => ProfileView(),
     ),
     GetPage(
       name: accountSettingView,
@@ -262,11 +255,7 @@ class AppRoutes {
       page: () => const ChatConversationView(),
       binding: HomeBinding(),
     ),
-    GetPage(
-      name: editProfile,
-      page: () => EditProfile(),
-      binding: ProfileAndStettings(),
-    ),
+   
     GetPage(
       name: termsAndConditions,
       page: () => const TermsAndConditions(),

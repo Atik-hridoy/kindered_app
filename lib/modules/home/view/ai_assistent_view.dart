@@ -256,26 +256,50 @@ class AiAssistantView extends GetView<AiAssistentController> {
   }
 
   Widget _buildActionButtons() {
+    final AiAssistentController controller = Get.find<AiAssistentController>();
+    
     return Row(
       children: [
-        _buildActionButton('Discover', const Color(0xFF2E3A59), Colors.white),
+        _buildActionButton(
+          'Discover', 
+          const Color(0xFF2E3A59), 
+          Colors.white,
+          onPressed: () => controller.discoverMatch(),
+        ),
         const SizedBox(width: 12),
-        _buildActionButton('Pass', Colors.transparent, const Color(0xFF2E3A59), borderColor: const Color(0xFF2E3A59)),
+        _buildActionButton(
+          'Pass', 
+          Colors.transparent, 
+          const Color(0xFF2E3A59),
+          borderColor: const Color(0xFF2E3A59),
+          onPressed: () => controller.passMatch(),
+        ),
       ],
     );
   }
 
-  Widget _buildActionButton(String text, Color backgroundColor, Color textColor, {Color? borderColor}) {
+  Widget _buildActionButton(String text, Color backgroundColor, Color textColor, {Color? borderColor, VoidCallback? onPressed}) {
     return Expanded(
-      child: Container(
-        height: 44,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(22),
-          border: borderColor != null ? Border.all(color: borderColor, width: 1) : null,
-        ),
-        child: Center(
-          child: Text(text, style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.w600)),
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          height: 44,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(22),
+            border: borderColor != null ? Border.all(color: borderColor, width: 1) : null,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                spreadRadius: 0,
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(text, style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.w600)),
+          ),
         ),
       ),
     );
@@ -285,10 +309,73 @@ class AiAssistantView extends GetView<AiAssistentController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Quick question:', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
+        Row(
+          children: [
+            const Text('Quick question:', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
+            const SizedBox(width: 8),
+              Obx(
+                () => controller.isQuickQuestionsLoading.value
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFD4A574)),
+                        ),
+                      )
+                    : GestureDetector(
+                        onTap: () => controller.refreshQuickQuestions(),
+                        child: const Icon(
+                          Icons.refresh,
+                          color: Color(0xFFD4A574),
+                          size: 16,
+                        ),
+                      ),
+              ),
+          ],
+        ),
         const SizedBox(height: 12),
-        _buildQuickQuestionButton('Give me a romantic date idea!'),
-        _buildQuickQuestionButton("What's my love compatibility?"),
+        
+        // Show error message if exists
+        Obx(
+          () => controller.quickQuestionsError.value.isNotEmpty
+              ? Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          controller.quickQuestionsError.value,
+                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => controller.clearQuickQuestionsError(),
+                        child: const Icon(Icons.close, color: Colors.red, size: 16),
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+        
+        // Show quick questions
+        Obx(
+          () => Column(
+            children: controller.quickQuestions.map((question) {
+              return _buildQuickQuestionButton(question);
+            }).toList(),
+          ),
+        ),
       ],
     );
   }
@@ -299,9 +386,8 @@ class AiAssistantView extends GetView<AiAssistentController> {
       margin: const EdgeInsets.only(bottom: 8),
       child: ElevatedButton(
         onPressed: () {
-          // Set the text in the controller and send message
-          controller.messageController.text = text;
-          controller.sendMessage();
+          // Process the quick question using the dedicated method
+          controller.processQuickQuestion(text);
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF3A4A6B),

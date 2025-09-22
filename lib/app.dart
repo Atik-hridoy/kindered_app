@@ -146,11 +146,11 @@ class MyApp extends StatelessWidget {
         ),
         GetPage(
           name: AppRoutes.profileView,
-          page: () => const ProfileView(),
+          page: () => ProfileView(),
         ),
         GetPage(
           name: AppRoutes.accountSettingView,
-          page: () => const AccountSettingView(),
+          page: () => AccountSettingView(),
         ),
         GetPage(
           name: AppRoutes.updatePhonNumberView,
