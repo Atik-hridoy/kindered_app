@@ -112,7 +112,6 @@ class MatchUser {
   final List<dynamic> likeToMeet;
   final List<dynamic> personalTraitsInspire;
   final String status;
-  final bool isVerified;
   final int profileCompletionPercentage;
   final bool isDeleted;
   final String createdAt;
@@ -134,11 +133,10 @@ class MatchUser {
     required this.likeToMeet,
     required this.personalTraitsInspire,
     required this.status,
-    required this.isVerified,
     required this.profileCompletionPercentage,
     required this.isDeleted,
     required this.createdAt,
-    required this.updatedAt,
+    required this.updatedAt,      
   });
 
   factory MatchUser.fromJson(Map<String, dynamic> json) {
@@ -158,7 +156,6 @@ class MatchUser {
       likeToMeet: json['likeToMeet'] ?? [],
       personalTraitsInspire: json['personalTraitsInspire'] ?? [],
       status: json['status'] ?? '',
-      isVerified: json['isVerified'] ?? false,
       profileCompletionPercentage: json['profileCompletionPercentage'] ?? 0,
       isDeleted: json['isDeleted'] ?? false,
       createdAt: json['createdAt'] ?? '',
@@ -182,7 +179,6 @@ class MatchUser {
         'likeToMeet': likeToMeet,
         'personalTraitsInspire': personalTraitsInspire,
         'status': status,
-        'isVerified': isVerified,
         'profileCompletionPercentage': profileCompletionPercentage,
         'isDeleted': isDeleted,
         'createdAt': createdAt,

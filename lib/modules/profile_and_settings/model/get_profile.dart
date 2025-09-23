@@ -11,7 +11,6 @@ class UserProfile {
   final String? religion;
   final String? zodiacSign;
   final String status;
-  final bool isVerified;
   final int profileCompletionPercentage;
   final bool isDeleted;
   final DateTime createdAt;
@@ -39,7 +38,6 @@ class UserProfile {
     this.religion,
     this.zodiacSign,
     required this.status,
-    required this.isVerified,
     required this.profileCompletionPercentage,
     required this.isDeleted,
     required this.createdAt,
@@ -72,7 +70,6 @@ class UserProfile {
       religion: json['religion'],
       zodiacSign: json['zodiacSign'],
       status: json['status'] ?? '',
-      isVerified: json['isVerified'] ?? false,
       profileCompletionPercentage: json['profileCompletionPercentage'] ?? 0,
       isDeleted: json['isDeleted'] ?? false,
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
@@ -106,7 +103,6 @@ class UserProfile {
       'religion': religion,
       'zodiacSign': zodiacSign,
       'status': status,
-      'isVerified': isVerified,
       'profileCompletionPercentage': profileCompletionPercentage,
       'isDeleted': isDeleted,
       'createdAt': createdAt.toIso8601String(),

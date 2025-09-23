@@ -14,6 +14,9 @@ class AuthService {
     try {
       AppLogger.info('🔄 [AUTH SERVICE] Sending login request for email: $email');
       
+      // Clear any existing Authorization header to ensure clean login request
+      _dio.options.headers.remove('Authorization');
+      
       final response = await _dio.post(
         AppUrls.login,
         data: {
@@ -22,6 +25,25 @@ class AuthService {
       );
       
       AppLogger.info('📝 [AUTH SERVICE] Server response: ${response.data}');
+      
+      // Log detailed response structure for debugging
+      AppLogger.info('📋 [LOGIN DEBUG] Full response structure:');
+      AppLogger.info('   - Success: ${response.data['success']}');
+      AppLogger.info('   - Status: ${response.data['status']}');
+      AppLogger.info('   - Message: ${response.data['message']}');
+      
+      if (response.data['data'] != null) {
+        AppLogger.info('   - Data keys: ${(response.data['data'] as Map).keys.toList()}');
+        if (response.data['data']['user'] != null) {
+          AppLogger.info('   - User data: ${response.data['data']['user']}');
+        }
+        if (response.data['data']['isVerified'] != null) {
+          AppLogger.info('   - IsVerified: ${response.data['data']['isVerified']}');
+        }
+        if (response.data['data']['verified'] != null) {
+          AppLogger.info('   - Verified: ${response.data['data']['verified']}');
+        }
+      }
       
       // Check response status
       final bool isSuccess = response.data['success'] == true || response.data['status'] == 'success';

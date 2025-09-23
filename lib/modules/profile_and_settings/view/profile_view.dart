@@ -239,8 +239,70 @@ class _ProfileViewState extends State<ProfileView> {
           () => Get.toNamed(AppRoutes.termsAndConditions)),
       _buildListTile('assets/svg/profile/informations.svg', 'About', () => Get.toNamed(AppRoutes.aboutUsView)),
       _buildListTile('assets/svg/profile/faq.svg', 'Help and Support', () => Get.toNamed(AppRoutes.helpSupportView)),
-      _buildListTile('assets/svg/profile/log out.svg', 'Logout', () {}),
+      _buildListTile('assets/svg/profile/log out.svg', 'Logout', () => _showLogoutConfirmation()),
     ];
+  }
+
+  void _showLogoutConfirmation() {
+    Get.defaultDialog(
+      title: 'Logout Confirmation',
+      titleStyle: const TextStyle(
+        color: Color(0xFFD29A67),
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        fontFamily: 'PlayfairDisplay',
+      ),
+      content: const Text(
+        'Are you sure you want to logout?',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+        ),
+        textAlign: TextAlign.center,
+      ),
+      backgroundColor: const Color(0xFF2E3A59),
+      radius: 16,
+      confirm: ElevatedButton(
+        onPressed: () {
+          Get.offAllNamed(AppRoutes.onboarding);
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFD29A67),
+          foregroundColor: Colors.white,
+          minimumSize: const Size(80, 40),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        child: const Text(
+          'Yes',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      cancel: ElevatedButton(
+        onPressed: Get.back,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF21293F),
+          foregroundColor: Colors.white,
+          minimumSize: const Size(80, 40),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: const BorderSide(color: Color(0xFFD29A67), width: 1),
+          ),
+        ),
+        child: const Text(
+          'No',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
   }
 
   Widget _buildListTile(String iconPath, String title, VoidCallback onTap) {
