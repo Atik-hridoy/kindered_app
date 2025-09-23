@@ -105,6 +105,29 @@ class AccountSetupService {
       AppLogger.info('    ${const JsonEncoder.withIndent('    ').convert(response.data)}');
       
       AppLogger.success('✅ Complete profile successful');
+      
+      // Check if response contains verification status information
+      if (response.data != null && response.data is Map) {
+        final responseData = response.data as Map<String, dynamic>;
+        
+        // Check for verification-related messages
+        if (responseData['message'] != null) {
+          final message = responseData['message'].toString();
+          if (message.contains('not verified') || message.contains('verification')) {
+            AppLogger.warning('⚠️ [ACCOUNT SETUP] Verification status change detected: $message');
+            
+            // Show verification required message
+            // Note: We need to import Get for snackbar, but this service shouldn't depend on UI
+            // The controller that calls this service should handle the UI feedback
+          }
+        }
+        
+        // Check for success messages
+        if (responseData['success'] == true || responseData['status'] == 'success') {
+          AppLogger.success('✅ [ACCOUNT SETUP] Profile completion confirmed by server');
+        }
+      }
+      
       return response;
     } on DioException catch (e) {
       // Log Dio error with details
@@ -230,6 +253,29 @@ class AccountSetupService {
       AppLogger.info('    ${const JsonEncoder.withIndent('    ').convert(response.data)}');
       
       AppLogger.success('✅ Complete profile (multipart) successful');
+      
+      // Check if response contains verification status information
+      if (response.data != null && response.data is Map) {
+        final responseData = response.data as Map<String, dynamic>;
+        
+        // Check for verification-related messages
+        if (responseData['message'] != null) {
+          final message = responseData['message'].toString();
+          if (message.contains('not verified') || message.contains('verification')) {
+            AppLogger.warning('⚠️ [ACCOUNT SETUP MULTIPART] Verification status change detected: $message');
+            
+            // Show verification required message
+            // Note: We need to import Get for snackbar, but this service shouldn't depend on UI
+            // The controller that calls this service should handle the UI feedback
+          }
+        }
+        
+        // Check for success messages
+        if (responseData['success'] == true || responseData['status'] == 'success') {
+          AppLogger.success('✅ [ACCOUNT SETUP MULTIPART] Profile completion confirmed by server');
+        }
+      }
+      
       return response;
     } on DioException catch (e) {
       // Log Dio error with details

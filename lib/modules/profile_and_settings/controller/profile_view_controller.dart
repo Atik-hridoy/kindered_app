@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
+import 'dart:async';
 import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:kindered_app/modules/profile_and_settings/services/profile_service.dart';
 import 'package:kindered_app/local/storage_service.dart';
 import 'package:kindered_app/modules/profile_and_settings/model/get_profile.dart';
+import 'package:kindered_app/modules/acccounts_setting/controller/accounts_controller.dart';
+import 'package:kindered_app/modules/profile_and_settings/controller/edit_profile_controller.dart';
 
 class ProfileViewController extends GetxController {
   // Profile service for API calls
   late ProfileService _profileService;
+  
+  // Access to AccountsController for profile completion data
+  final AccountsController accountsController = Get.find<AccountsController>();
+  
+  // Access to ProfileEditController for edit profile data
+  final ProfileEditController profileEditController = Get.find<ProfileEditController>();
   
   // Loading state
   var isLoading = false.obs;
@@ -18,31 +27,98 @@ class ProfileViewController extends GetxController {
   
   // Computed getters for profile data
   String get name {
-    // Get the actual first name from the reactive userProfile
-    final firstName = userProfile.value?.firstName ?? '';
-    final lastName = userProfile.value?.lastName ?? '';
+    // Try to get name from ProfileEditController first (most up-to-date from edits)
+    final editProfileName = profileEditController.userFirstName.isNotEmpty 
+        ? profileEditController.userFirstName 
+        : '';
     
-    // TEMPORARY TEST DATA - Remove when API returns correct data
-    final testFirstName = 'ashik';
+    // Try to get name from AccountsController as second source
+    final accountsFirstName = accountsController.firstName.value;
+    final accountsLastName = accountsController.lastName.value;
     
-    // Use test data if API returns empty, otherwise use API data
-    final displayName = firstName.isNotEmpty ? firstName : testFirstName;
+    // Get name from API profile data as fallback
+    final apiFirstName = userProfile.value?.firstName ?? '';
+    final apiLastName = userProfile.value?.lastName ?? '';
     
-    AppLogger.info('👤 [PROFILE VIEW] Dynamic name getter called: "$displayName" (API firstName: "$firstName", lastName: "$lastName", using test: ${firstName.isEmpty ? 'YES' : 'NO'}, userProfile.value: ${userProfile.value != null ? 'EXISTS' : 'NULL'})');
+    // Use data in order of priority: ProfileEditController > AccountsController > API
+    String firstName, lastName;
+    
+    if (editProfileName.isNotEmpty) {
+      // Use name from ProfileEditController
+      firstName = editProfileName;
+      lastName = ''; // ProfileEditController might not have separate last name
+      AppLogger.info('👤 [PROFILE VIEW] Using name from ProfileEditController: "$firstName"');
+    } else if (accountsFirstName.isNotEmpty) {
+      // Use name from AccountsController
+      firstName = accountsFirstName;
+      lastName = accountsLastName;
+      AppLogger.info('👤 [PROFILE VIEW] Using name from AccountsController: "$firstName $lastName"');
+    } else {
+      // Use name from API
+      firstName = apiFirstName;
+      lastName = apiLastName;
+      AppLogger.info('👤 [PROFILE VIEW] Using name from API: "$firstName $lastName"');
+    }
+    
+    // Combine first and last name
+    final displayName = firstName.isNotEmpty 
+        ? (lastName.isNotEmpty ? '$firstName $lastName' : firstName)
+        : (apiFirstName.isNotEmpty ? apiFirstName : 'User');
+    
+    AppLogger.info('👤 [PROFILE VIEW] Final display name: "$displayName"');
     return displayName;
   }
   
-  String get age => userProfile.value?.age?.toString() ?? '';
+  String get age => userProfile.value?.age?.toString() ?? accountsController.age.value;
   String get profilePhoto => _getProfilePhoto();
-  int get profileCompletion => userProfile.value?.profileCompletionPercentage ?? 0;
+  int get profileCompletion {
+    // Try to get completion from ProfileEditController first (most up-to-date from edits)
+    final editProfileCompletion = profileEditController.profileCompletionPercentage;
+    
+    // Try to get completion from AccountsController as second source
+    final accountsCompletion = accountsController.getCompletionPercentage();
+    
+    // Get completion from API profile data as fallback
+    final apiCompletion = userProfile.value?.profileCompletionPercentage ?? 0;
+    
+    // Use data in order of priority: ProfileEditController > AccountsController > API
+    final completion = editProfileCompletion > 0 
+        ? editProfileCompletion 
+        : (accountsCompletion > 0 ? accountsCompletion : apiCompletion);
+    
+    AppLogger.info('📊 [PROFILE VIEW] Profile completion: $completion% (EditProfile: $editProfileCompletion%, Accounts: $accountsCompletion%, API: $apiCompletion%)');
+    return completion;
+  }
   
   @override
   void onInit() {
     super.onInit();
     _initializeProfileService();
     _loadProfileData();
+    
+    // Listen to changes in AccountsController to update profile view dynamically
+    ever(accountsController.firstName, (_) => updateProfileData());
+    ever(accountsController.lastName, (_) => updateProfileData());
+    ever(accountsController.profileCompletionPercentage, (_) => updateProfileData());
+    
+    // Listen to changes in ProfileEditController to update profile view dynamically
+    // Since ProfileEditController uses private reactive variables, we'll use a timer-based approach
+    // to check for changes periodically when the profile view is active
+    _startProfileEditControllerListener();
   }
   
+  void _startProfileEditControllerListener() {
+    // Check for changes in ProfileEditController every 2 seconds
+    Timer.periodic(const Duration(seconds: 2), (timer) {
+      if (!Get.isRegistered<ProfileViewController>()) {
+        timer.cancel();
+        return;
+      }
+      
+      // Force update to refresh UI with latest data from ProfileEditController
+      updateProfileData();
+    });
+  }
   void _initializeProfileService() {
     try {
       if (LocalStorage.token.isNotEmpty) {
@@ -151,7 +227,6 @@ class ProfileViewController extends GetxController {
       religion: '',
       zodiacSign: '',
       status: '',
-      isVerified: false,
       profileCompletionPercentage: 0,
       isDeleted: false,
       createdAt: DateTime.now(),
@@ -190,6 +265,13 @@ class ProfileViewController extends GetxController {
   
   void refreshProfileData() {
     _loadProfileData();
+  }
+  
+  /// Update profile data when AccountsController changes
+  void updateProfileData() {
+    // Trigger UI update by forcing a reactive update
+    userProfile.refresh();
+    AppLogger.info('🔄 [PROFILE VIEW] Profile data updated from AccountsController');
   }
   
   /// Refresh only the profile photo (useful when returning from edit profile)

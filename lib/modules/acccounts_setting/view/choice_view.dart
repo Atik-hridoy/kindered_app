@@ -8,13 +8,7 @@ import 'package:kindered_app/modules/acccounts_setting/widget/checkbox.dart';
 import 'package:kindered_app/modules/acccounts_setting/widget/progress_bar.dart';
 
 class ChoiceView extends GetView<AccountsController> {
-  final List<String> genderOptions = [
-    'Men',
-    'Women',
-    'Trans woman',
-    'Trans man',
-    'Nonbinary',
-  ];
+  final List<String> genderOptions = ['Woman', 'Man', 'Nonbinary', "Trans"];
 
   ChoiceView({super.key});
 

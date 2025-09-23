@@ -12,7 +12,6 @@ class CompleteProfile {
   final List<String> personalTraitsInspire;
   final String address;
   final String status;
-  final bool isVerified;
   final int profileCompletionPercentage;
   final bool isDeleted;
   final DateTime createdAt;
@@ -47,7 +46,6 @@ class CompleteProfile {
     required this.personalTraitsInspire,
     required this.address,
     required this.status,
-    required this.isVerified,
     required this.profileCompletionPercentage,
     required this.isDeleted,
     required this.createdAt,
@@ -69,43 +67,40 @@ class CompleteProfile {
     required this.location,
   });
 
-  factory CompleteProfile.fromJson(Map<String, dynamic> json) {
-    return CompleteProfile(
-      id: json['_id'] ?? '',
-      role: json['role'] ?? '',
-      email: json['email'] ?? '',
-      age: json['age'] ?? 0,
-      gender: json['gender'] ?? '',
-      bodyImage: json['bodyImage'],
-      headShotImage: json['headShotImage'],
-      personalityImage: json['personalityImage'],
-      image: json['image'],
-      likeToMeet: List<String>.from(json['likeToMeet'] ?? []),
-      personalTraitsInspire: List<String>.from(json['personalTraitsInspire'] ?? []),
-      address: json['address'] ?? '',
-      status: json['status'] ?? '',
-      isVerified: json['isVerified'] ?? false,
-      profileCompletionPercentage: json['profileCompletionPercentage'] ?? 0,
-      isDeleted: json['isDeleted'] ?? false,
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
-      aboutMe: json['aboutMe'] ?? '',
-      beliefsOtherText: json['beliefsOtherText'] ?? '',
-      body: Body.fromJson(json['body'] ?? {}),
-      eduJob: EduJob.fromJson(json['eduJob'] ?? {}),
-      firstName: json['firstName'] ?? '',
-      habits: Habits.fromJson(json['habits'] ?? {}),
-      interests: Interests.fromJson(json['interests'] ?? {}),
-      lastName: json['lastName'] ?? '',
-      lifestyle: Lifestyle.fromJson(json['lifestyle'] ?? {}),
-      phone: json['phone'] ?? '',
-      relationType: json['relationType'] ?? '',
-      religion: json['religion'] ?? '',
-      traitsOtherText: json['traitsOtherText'] ?? '',
-      zodiacSign: json['zodiacSign'] ?? '',
-      location: Location.fromJson(json['location'] ?? {}),
-    );
-  }
+  factory CompleteProfile.fromJson(Map<String, dynamic> json) => CompleteProfile(
+        id: json['_id'] ?? json['id'] ?? '',
+        role: json['role'] ?? '',
+        email: json['email'] ?? '',
+        age: json['age'] ?? 0,
+        gender: json['gender'] ?? '',
+        bodyImage: json['bodyImage'],
+        headShotImage: json['headShotImage'],
+        personalityImage: json['personalityImage'],
+        image: json['image'],
+        likeToMeet: List<String>.from(json['likeToMeet'] ?? []),
+        personalTraitsInspire: List<String>.from(json['personalTraitsInspire'] ?? []),
+        address: json['address'] ?? '',
+        status: json['status'] ?? '',
+        profileCompletionPercentage: json['profileCompletionPercentage'] ?? 0,
+        isDeleted: json['isDeleted'] ?? false,
+        createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
+        updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : DateTime.now(),
+        aboutMe: json['aboutMe'] ?? '',
+        beliefsOtherText: json['beliefsOtherText'] ?? '',
+        body: Body.fromJson(json['body'] ?? {}),
+        eduJob: EduJob.fromJson(json['eduJob'] ?? {}),
+        firstName: json['firstName'] ?? '',
+        habits: Habits.fromJson(json['habits'] ?? {}),
+        interests: Interests.fromJson(json['interests'] ?? {}),
+        lastName: json['lastName'] ?? '',
+        lifestyle: Lifestyle.fromJson(json['lifestyle'] ?? {}),
+        phone: json['phone'] ?? '',
+        relationType: json['relationType'] ?? '',
+        religion: json['religion'] ?? '',
+        traitsOtherText: json['traitsOtherText'] ?? '',
+        zodiacSign: json['zodiacSign'] ?? '',
+        location: Location.fromJson(json['location'] ?? {}),
+      );
 
   Map<String, dynamic> toJson() => {
         '_id': id,
@@ -121,7 +116,6 @@ class CompleteProfile {
         'personalTraitsInspire': personalTraitsInspire,
         'address': address,
         'status': status,
-        'isVerified': isVerified,
         'profileCompletionPercentage': profileCompletionPercentage,
         'isDeleted': isDeleted,
         'createdAt': createdAt.toIso8601String(),

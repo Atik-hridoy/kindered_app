@@ -95,7 +95,7 @@ class GenderView extends GetView<AccountsController> {
 
   /// 🔸 Gender Selection List
   Widget _buildGenderSelection() {
-    final genders = ['Woman', 'Man', 'Nonbinary', "I'm Trans"];
+    final genders = ['Woman', 'Man', 'Nonbinary', "Trans"];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

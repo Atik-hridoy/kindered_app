@@ -33,8 +33,8 @@ class LoginEmailController extends GetxController {
       AppLogger.info('📝 [LOGIN] Server response: $result');
       
       // Check if user needs verification (this includes both successful login and unverified user cases)
-      if (result['success'] || result['error']?.contains('not verified') == true) {
-        AppLogger.info('📱 [LOGIN] Navigating to OTP view for verification');
+      if (result['success'] == true) {
+        AppLogger.info('📱 [LOGIN] Login successful, navigating to OTP view for verification');
         // Navigate to OTP verification
         await Get.toNamed(
           AppRoutes.otp, 
@@ -45,6 +45,26 @@ class LoginEmailController extends GetxController {
           }
         );
         AppLogger.success('✅ [LOGIN] Navigation to OTP completed');
+      } else if (result['error']?.contains('not verified') == true || result['error']?.contains('User not verified') == true) {
+        AppLogger.info('📱 [LOGIN] User not verified, navigating to OTP view');
+        // Show user-friendly message about verification
+        Get.snackbar(
+          'Verification Required',
+          'Please verify your email to continue. Check your email for the OTP code.',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 4),
+        );
+        
+        // Navigate to OTP verification
+        await Get.toNamed(
+          AppRoutes.otp, 
+          arguments: {
+            'target': emailController.text.trim(), 
+            'type': 'email',
+            'source': 'login'
+          }
+        );
+        AppLogger.success('✅ [LOGIN] Navigation to OTP completed for unverified user');
       } else {
         // Handle other error cases (invalid email, server error, etc)
         AppLogger.warning('⚠️ [LOGIN] Login failed: ${result['error']}');

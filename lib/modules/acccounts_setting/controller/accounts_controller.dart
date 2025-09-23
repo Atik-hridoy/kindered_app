@@ -238,7 +238,7 @@ class AccountsController extends GetxController {
       },
       'role': 'USER', // Default role
       'status': 'active', // Default status
-      'isVerified': false, // Default verification status
+      // Note: Removed 'isVerified' field to prevent overriding existing verification status
       'profileCompletionPercentage': getCompletionPercentage(),
       'isDeleted': false, // Default deletion status
     };
@@ -370,6 +370,24 @@ class AccountsController extends GetxController {
         AppLogger.info('  • Success: ${result['success']}');
         AppLogger.info('  • Message: ${result['message'] ?? 'No message'}');
         AppLogger.info('  • Full Response: $result');
+        
+        // Check for verification status changes
+        if (result['message'] != null) {
+          final message = result['message'].toString();
+          if (message.contains('not verified') || message.contains('verification')) {
+            AppLogger.warning('⚠️ [ACCOUNTS CONTROLLER MULTIPART] Verification status change detected: $message');
+            
+            // Show verification required message
+            Get.snackbar(
+              'Verification Required',
+              message,
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.orange,
+              colorText: Colors.white,
+              duration: const Duration(seconds: 5),
+            );
+          }
+        }
 
         if (result['success'] == true) {
           AppLogger.success('🎉 Profile submitted successfully with photos!');
@@ -518,7 +536,7 @@ class AccountsController extends GetxController {
       personalTraitsInspire: personalTraitsInspire,
       address: _str(LocalStorage.myAddress),
       status: 'active',
-      isVerified: false,
+
       profileCompletionPercentage: getCompletionPercentage(),
       isDeleted: false,
       createdAt: DateTime.now(),
@@ -954,6 +972,24 @@ class AccountsController extends GetxController {
       // Check if the response is successful
       if (response.statusCode == 200 || response.statusCode == 201) {
         final result = response.data as Map<String, dynamic>;
+        
+        // Check for verification status changes
+        if (result['message'] != null) {
+          final message = result['message'].toString();
+          if (message.contains('not verified') || message.contains('verification')) {
+            AppLogger.warning('⚠️ [ACCOUNTS CONTROLLER] Verification status change detected: $message');
+            
+            // Show verification required message
+            Get.snackbar(
+              'Verification Required',
+              message,
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.orange,
+              colorText: Colors.white,
+              duration: const Duration(seconds: 5),
+            );
+          }
+        }
 
         if (result['success'] == true) {
           AppLogger.success('✅ Profile completed successfully');
@@ -967,14 +1003,33 @@ class AccountsController extends GetxController {
 
         return result;
       } else {
-        final errorMessage = 'Failed to complete profile: ${response.statusCode}';
+        final result = response.data as Map<String, dynamic>;
+        
+        // Check for verification status changes in error responses
+        if (result['message'] != null) {
+          final message = result['message'].toString();
+          if (message.contains('not verified') || message.contains('verification')) {
+            AppLogger.warning('⚠️ [ACCOUNTS CONTROLLER] Verification status change detected in error response: $message');
+            
+            // Show verification required message
+            Get.snackbar(
+              'Verification Required',
+              message,
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.orange,
+              colorText: Colors.white,
+              duration: const Duration(seconds: 5),
+            );
+            
+            return result; // Return the original error response
+          }
+        }
+        
+        final errorMessage = result['message'] ?? 'Failed to complete profile: ${response.statusCode}';
         AppLogger.error(errorMessage);
         Get.snackbar('Error', errorMessage,
             snackPosition: SnackPosition.BOTTOM);
-        return {
-          'success': false,
-          'message': errorMessage,
-        };
+        return result;
       }
     } catch (e) {
       AppLogger.error('❌ Exception during submitCompleteProfile: $e');

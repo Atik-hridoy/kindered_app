@@ -54,6 +54,25 @@ class OtpController extends GetxController {
       
       AppLogger.success('✅ Verification Success: $response');
       
+      // Log detailed response structure for debugging
+      AppLogger.info('📋 [OTP DEBUG] Full response structure:');
+      AppLogger.info('   - Success: ${response['success']}');
+      AppLogger.info('   - Status: ${response['status']}');
+      AppLogger.info('   - Message: ${response['message']}');
+      
+      if (response['data'] != null) {
+        AppLogger.info('   - Data keys: ${(response['data'] as Map).keys.toList()}');
+        if (response['data']['user'] != null) {
+          AppLogger.info('   - User data: ${response['data']['user']}');
+        }
+        if (response['data']['isVerified'] != null) {
+          AppLogger.info('   - IsVerified: ${response['data']['isVerified']}');
+        }
+        if (response['data']['verified'] != null) {
+          AppLogger.info('   - Verified: ${response['data']['verified']}');
+        }
+      }
+      
       // Check if verification was successful
       if (response['success'] == true || response['status'] == 'success') {
         // Save email locally for both register and login flows

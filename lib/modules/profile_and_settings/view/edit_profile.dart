@@ -17,15 +17,15 @@ class EditProfile extends GetView<ProfileEditController> {
     print('DEBUG: User name: ${controller.userFirstName ?? 'No name'}');
     
     return Scaffold(
-      backgroundColor: Color(0xFF0F1419),
+      backgroundColor: Color(0xFF2E3A59),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF1A2332),
-              Color(0xFF0F1419),
+              Color(0xFF2E3A59),
+              Color(0xFF2E3A59),
             ],
           ),
         ),
@@ -52,6 +52,7 @@ class EditProfile extends GetView<ProfileEditController> {
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
+                        fontFamily: 'PerifareDisplay',
                       ),
                     ),
                   ],
@@ -87,6 +88,7 @@ class EditProfile extends GetView<ProfileEditController> {
                                   color: Colors.white,
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
+                                  fontFamily: 'PerifareDisplay',
                                 ),
                               );
                             }),
@@ -103,6 +105,7 @@ class EditProfile extends GetView<ProfileEditController> {
                                       color: Colors.white,
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
+                                      fontFamily: 'PerifareDisplay',
                                     ),
                                   ),
                                   Text(
@@ -111,6 +114,7 @@ class EditProfile extends GetView<ProfileEditController> {
                                       color: Color(0xFF4A9EFF),
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
+                                      fontFamily: 'PerifareDisplay',
                                     ),
                                   ),
                                 ],
@@ -141,6 +145,7 @@ class EditProfile extends GetView<ProfileEditController> {
                                 color: Color(0xFF8B9CAD),
                                 fontSize: 13,
                                 height: 1.4,
+                                fontFamily: 'PerifareDisplay',
                               ),
                             ),
                           ],
@@ -167,25 +172,65 @@ class EditProfile extends GetView<ProfileEditController> {
                           color: Color(0xFF1E2A3A),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Obx(() => TextField(
-                          controller: TextEditingController(text: controller.userAboutMe),
-                          onChanged: (value) => controller.updateAboutMe(value),
-                          maxLines: 4,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontFamily: 'PerifareDisplay',
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Type here...',
-                            hintStyle: TextStyle(
-                              color: Color(0xFF5A6B7D),
-                              fontSize: 14,
-                              fontFamily: 'PerifareDisplay',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            TextField(
+                              controller: controller.aboutMeController,
+                              onChanged: (value) => controller.updateAboutMe(value),
+                              maxLines: 4,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontFamily: 'PerifareDisplay',
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Type here...',
+                                hintStyle: TextStyle(
+                                  color: Color(0xFF5A6B7D),
+                                  fontSize: 14,
+                                  fontFamily: 'PerifareDisplay',
+                                ),
+                                border: InputBorder.none,
+                              ),
                             ),
-                            border: InputBorder.none,
-                          ),
-                        )),
+                            SizedBox(height: 8),
+                            // Update button for about me
+                            Obx(() => ElevatedButton(
+                              onPressed: controller.isAboutMeDirty.value 
+                                  ? () => controller.submitAboutMe() 
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: controller.isAboutMeDirty.value 
+                                    ? Color(0xFF4A9EFF) 
+                                    : Color(0xFF2A3441),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: controller.isLoading.value
+                                  ? SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      ),
+                                    )
+                                  : Text(
+                                      'Update About Me',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'PerifareDisplay',
+                                      ),
+                                    ),
+                            )),
+                          ],
+                        ),
                       ),
                       
                       SizedBox(height: 24),
@@ -278,18 +323,49 @@ class EditProfile extends GetView<ProfileEditController> {
                       Obx(() => Row(
                         children: [
                           Expanded(
-                            child: _buildInfoField('Height', controller.userSleepingStyle, isEditable: true),
+                            child: _buildInfoField('Height', controller.userHeight, isEditable: true),
                           ),
                           SizedBox(width: 16),
                           Expanded(
-                            child: _buildInfoField('Weight', controller.userLoveStyle, isEditable: true),
+                            child: _buildInfoField('Weight', controller.userWeight, isEditable: true),
                           ),
                         ],
-                      )
-                  ),
-                      
+                      )),
+
+                      SizedBox(height: 24),
+
+                      // Update Button for Personal Information
+                      Obx(() => ElevatedButton(
+                        onPressed: controller.isLoading.value ? null : () => controller.updateBasicProfileInfo(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF4A9EFF),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: controller.isLoading.value
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : Text(
+                                'Update Profile Information',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      )),
+
                       SizedBox(height: 32),
-                      
+
                       // Habits
                       Obx(() => _buildInfoField(
                         'Communication Style',
@@ -452,14 +528,14 @@ class EditProfile extends GetView<ProfileEditController> {
                       // Lifestyle Items
                       Obx(() => _buildInfoField(
                         'Sleeping Style',
-                        controller.userSleepingStyle,
+                        controller.userHeight,
                         dropdownItems: controller.sleepingStyles,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Love Style',
-                        controller.userLoveStyle,
+                        controller.userWeight,
                         dropdownItems: controller.loveStyles,
                         isEditable: true
                       )),
@@ -925,22 +1001,22 @@ class EditProfile extends GetView<ProfileEditController> {
                   // Match dropdown updates with controller methods
                   switch(label.toLowerCase()) {
                     case 'sleeping style':
-                      controller.updateHeight(newValue);
+                      controller.updateSleepingStyle(newValue);
                       break;
                     case 'love style':
-                      controller.updateWeight(newValue);
+                      controller.updateLoveStyle(newValue);
                       break;
                     case 'weekends':
-                      controller.updateEducation(newValue);
+                      controller.updateWeekend(newValue);
                       break;
                     case 'travelling':
-                      controller.updateJobStatus(newValue);
+                      controller.updateTravelling(newValue);
                       break;
                     case 'home environment':
-                      // Add updateHomeEnvironment method to controller if needed
+                      controller.updateHomeEnvironment(newValue);
                       break;
                     case 'living space':
-                      // Add updateLivingSpace method to controller if needed
+                      controller.updateLivingSpace(newValue);
                       break;
                     case 'communication style':
                       controller.updateCommunicationStyle(newValue);
@@ -1100,41 +1176,4 @@ class EditProfile extends GetView<ProfileEditController> {
         ));
   }
 
-  Widget _buildBasicItem(String label, RxString value) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: Color(0xFF1E2A3A),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'PerifareDisplay',
-            ),
-          ),
-          Row(
-            children: [
-              Obx(() => Text(
-                    value.value,
-                    style: TextStyle(
-                      color: Color(0xFF8B9CAD),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'PerifareDisplay',
-                    ),
-                  )),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
