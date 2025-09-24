@@ -6,6 +6,7 @@ import 'package:kindered_app/modules/home/controller/home_suggestion_controller.
 import 'package:kindered_app/modules/home/widget/custom_photo_card.dart';
 import 'package:kindered_app/modules/home/widget/nav_card.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:kindered_app/core/logger/app_logger.dart';
 
 class HomeSuggestionView extends StatefulWidget { 
   const HomeSuggestionView({super.key});
@@ -89,7 +90,7 @@ class _HomeSuggestionViewState extends State<HomeSuggestionView> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2D3748).withOpacity(0.8),
+                  color: const Color(0xFF2D3748).withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Bone.text(
@@ -289,10 +290,28 @@ class _HomeSuggestionViewState extends State<HomeSuggestionView> {
                         );
                       }
                       
+                      // Log what data is being displayed
+                      final displayedImageUrl = _controller.getValidImageUrl();
+                      AppLogger.info('=== HOME SUGGESTION VIEW DATA ===');
+                      AppLogger.info('Displaying Image URL: $displayedImageUrl');
+                      AppLogger.info('Original Body Image: ${_controller.bodyImage}');
+                      AppLogger.info('Original Primary Image: ${_controller.primaryImage}');
+                      AppLogger.info('Original Image URL: ${_controller.imageUrl}');
+                      AppLogger.info('User Images List: ${_controller.userImages}');
+                      AppLogger.info('Match Percentage: ${_controller.matchPercentage}');
+                      AppLogger.info('Name: ${_controller.name}');
+                      AppLogger.info('Age: ${_controller.age}');
+                      AppLogger.info('Location: ${_controller.location}');
+                      AppLogger.info('Full Name: ${_controller.fullName}');
+                      AppLogger.info('Bio: ${_controller.bio}');
+                      AppLogger.info('User Age: ${_controller.userAge}');
+                      AppLogger.info('Gender: ${_controller.gender}');
+                      AppLogger.info('Has Comprehensive Data: ${_controller.hasComprehensiveData}');
+                      AppLogger.info('Has Suggestion: ${_controller.hasSuggestion}');
+                      AppLogger.info('===================================');
+                      
                       return CustomPhotoCard(
-                        imageUrl: _controller.imageUrl.isNotEmpty 
-                            ? _controller.imageUrl 
-                            : 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80',
+                        imageUrl: displayedImageUrl,
                         matchPercentage: _controller.matchPercentage,
                         name: _controller.name,
                         age: _controller.age,

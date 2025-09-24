@@ -152,8 +152,10 @@ class ProfileEditController extends GetxController {
   String get userSmokeOrDrink => _userProfile.value?.habits?.smokeOrDrink ?? '';
   String get userNewExperiences => _userProfile.value?.habits?.newExercise ?? '';
 
-  String get userHeight => _userProfile.value?.lifestyle?.sleepingStyle ?? '';
-  String get userWeight => _userProfile.value?.lifestyle?.loveStyle ?? '';
+  String get userHeight => _userProfile.value?.body?.heightCm?.toString() ?? '';
+  String get userWeight => _userProfile.value?.body?.weightKg?.toString() ?? '';
+  String get userSleepingStyle => _userProfile.value?.lifestyle?.sleepingStyle ?? '';
+  String get userLoveStyle => _userProfile.value?.lifestyle?.loveStyle ?? '';
   String get userWeekend => _userProfile.value?.lifestyle?.weekends ?? '';
   String get userTravelling => _userProfile.value?.lifestyle?.traveling ?? '';
   String get userHomeEnvironment => _userProfile.value?.lifestyle?.homeEnvironment ?? '';
@@ -266,10 +268,10 @@ class ProfileEditController extends GetxController {
     if (_userProfile.value != null) {
       nameController.text = _userProfile.value!.firstName ?? '';
       ageController.text = _userProfile.value!.age?.toString() ?? '';
-      heightController.text = ''; // Height is not available in UserProfile model
-      weightController.text = ''; // Weight is not available in UserProfile model
-      educationController.text = ''; // Education is not available in UserProfile model
-      jobStatusController.text = ''; // Job status is not available in UserProfile model
+      heightController.text = _userProfile.value!.body?.heightCm?.toString() ?? '';
+      weightController.text = _userProfile.value!.body?.weightKg?.toString() ?? '';
+      educationController.text = _userProfile.value!.eduJob?.educationLevel ?? '';
+      jobStatusController.text = _userProfile.value!.eduJob?.jobTitle ?? '';
       locationController.text = _userProfile.value!.location?.toString() ?? '';
       
       // Initialize dropdown selections
@@ -731,6 +733,7 @@ class ProfileEditController extends GetxController {
 
         profileCompletionPercentage: currProfile.profileCompletionPercentage,
         isDeleted: currProfile.isDeleted,
+        isVerified: currProfile.isVerified,
         createdAt: currProfile.createdAt,
         updatedAt: currProfile.updatedAt,
         habits: currProfile.habits,
@@ -780,6 +783,7 @@ class ProfileEditController extends GetxController {
   
         profileCompletionPercentage: currProfile.profileCompletionPercentage,
         isDeleted: currProfile.isDeleted,
+        isVerified: currProfile.isVerified,
         createdAt: currProfile.createdAt,
         updatedAt: currProfile.updatedAt,
         habits: currProfile.habits,
@@ -841,6 +845,7 @@ class ProfileEditController extends GetxController {
 
         profileCompletionPercentage: currProfile.profileCompletionPercentage,
         isDeleted: currProfile.isDeleted,
+        isVerified: currProfile.isVerified,
         createdAt: currProfile.createdAt,
         updatedAt: currProfile.updatedAt,
         habits: currProfile.habits,
@@ -898,6 +903,7 @@ class ProfileEditController extends GetxController {
 
         profileCompletionPercentage: currProfile.profileCompletionPercentage,
         isDeleted: currProfile.isDeleted,
+        isVerified: currProfile.isVerified,
         createdAt: currProfile.createdAt,
         updatedAt: currProfile.updatedAt,
         habits: currProfile.habits,
@@ -937,6 +943,7 @@ class ProfileEditController extends GetxController {
 
           profileCompletionPercentage: currProfile.profileCompletionPercentage,
           isDeleted: currProfile.isDeleted,
+          isVerified: currProfile.isVerified,
           createdAt: currProfile.createdAt,
           updatedAt: currProfile.updatedAt,
           habits: currProfile.habits,
@@ -975,6 +982,7 @@ class ProfileEditController extends GetxController {
 
         profileCompletionPercentage: currProfile.profileCompletionPercentage,
         isDeleted: currProfile.isDeleted,
+        isVerified: currProfile.isVerified,
         createdAt: currProfile.createdAt,
         updatedAt: currProfile.updatedAt,
         habits: currProfile.habits,
@@ -1012,6 +1020,7 @@ class ProfileEditController extends GetxController {
 
         profileCompletionPercentage: currProfile.profileCompletionPercentage,
         isDeleted: currProfile.isDeleted,
+        isVerified: currProfile.isVerified,
         createdAt: currProfile.createdAt,
         updatedAt: currProfile.updatedAt,
         habits: currProfile.habits,
@@ -1049,6 +1058,7 @@ class ProfileEditController extends GetxController {
 
         profileCompletionPercentage: currProfile.profileCompletionPercentage,
         isDeleted: currProfile.isDeleted,
+        isVerified: currProfile.isVerified,
         createdAt: currProfile.createdAt,
         updatedAt: currProfile.updatedAt,
         habits: currProfile.habits,
@@ -1068,41 +1078,36 @@ class ProfileEditController extends GetxController {
     }
   }
 
-  // Lifestyle update methods
+  // Body update methods
   void updateHeight(String value) {
-    if (_userProfile.value != null && _userProfile.value!.lifestyle != null) {
+    if (_userProfile.value != null) {
       final currProfile = _userProfile.value!;
-      final oldLifestyle = currProfile.lifestyle!;
+      final oldBody = currProfile.body;
+      final heightValue = double.tryParse(value);
 
-      final updatedLifestyle = Lifestyle(
-        sleepingStyle: value,  // Using sleepingStyle as placeholder for height
-        loveStyle: oldLifestyle.loveStyle,
-        weekends: oldLifestyle.weekends,
-        traveling: oldLifestyle.traveling,
-        homeEnvironment: oldLifestyle.homeEnvironment,
-        livingSpace: oldLifestyle.livingSpace,
+      final updatedBody = Body(
+        heightCm: heightValue,
+        weightKg: oldBody?.weightKg,
       );
 
-      _updateUserProfileWithLifestyle(updatedLifestyle);
-      _submitUpdate({'lifestyle': {'sleepingStyle': value}});
+      _updateUserProfileWithBody(updatedBody);
+      _submitUpdate({'body': {'heightCm': heightValue}});
     }
   }
 
   void updateWeight(String value) {
-    if (_userProfile.value != null && _userProfile.value!.lifestyle != null) {
+    if (_userProfile.value != null) {
       final currProfile = _userProfile.value!;
-      final oldLifestyle = currProfile.lifestyle!;
-      final updatedLifestyle = Lifestyle(
-        sleepingStyle: oldLifestyle.sleepingStyle,
-        loveStyle: value,  // Using loveStyle as placeholder for weight
-        weekends: oldLifestyle.weekends,
-        traveling: oldLifestyle.traveling,
-        homeEnvironment: oldLifestyle.homeEnvironment,
-        livingSpace: oldLifestyle.livingSpace,
+      final oldBody = currProfile.body;
+      final weightValue = double.tryParse(value);
+
+      final updatedBody = Body(
+        heightCm: oldBody?.heightCm,
+        weightKg: weightValue,
       );
 
-      _updateUserProfileWithLifestyle(updatedLifestyle);
-      _submitUpdate({'lifestyle': {'loveStyle': value}});
+      _updateUserProfileWithBody(updatedBody);
+      _submitUpdate({'body': {'weightKg': weightValue}});
     }
   }
 
@@ -1222,6 +1227,7 @@ class ProfileEditController extends GetxController {
         status: currProfile.status,
         profileCompletionPercentage: currProfile.profileCompletionPercentage,
         isDeleted: currProfile.isDeleted,
+        isVerified: currProfile.isVerified,
         createdAt: currProfile.createdAt,
         updatedAt: currProfile.updatedAt,
         habits: currProfile.habits,
@@ -1230,9 +1236,60 @@ class ProfileEditController extends GetxController {
         likeToMeet: currProfile.likeToMeet,
         personalTraitsInspire: currProfile.personalTraitsInspire,
         image: currProfile.image,
+        bodyImage: currProfile.bodyImage,
+        headShotImage: currProfile.headShotImage,
+        personalityImage: currProfile.personalityImage,
         phone: currProfile.phone,
         relationType: currProfile.relationType,
         location: currProfile.location,
+        body: currProfile.body,
+        eduJob: currProfile.eduJob,
+        beliefsOtherText: currProfile.beliefsOtherText,
+        address: currProfile.address,
+        traitsOtherText: currProfile.traitsOtherText,
+      );
+      _userProfile.value = updatedProfile;
+    }
+  }
+
+  /// Update user profile with new body data
+  void _updateUserProfileWithBody(Body updatedBody) {
+    if (_userProfile.value != null) {
+      final currProfile = _userProfile.value!;
+      final updatedProfile = UserProfile(
+        id: currProfile.id,
+        role: currProfile.role,
+        email: currProfile.email,
+        age: currProfile.age,
+        gender: currProfile.gender,
+        firstName: currProfile.firstName,
+        lastName: currProfile.lastName,
+        aboutMe: currProfile.aboutMe,
+        religion: currProfile.religion,
+        zodiacSign: currProfile.zodiacSign,
+        status: currProfile.status,
+        profileCompletionPercentage: currProfile.profileCompletionPercentage,
+        isDeleted: currProfile.isDeleted,
+        isVerified: currProfile.isVerified,
+        createdAt: currProfile.createdAt,
+        updatedAt: currProfile.updatedAt,
+        habits: currProfile.habits,
+        interests: currProfile.interests,
+        lifestyle: currProfile.lifestyle,
+        likeToMeet: currProfile.likeToMeet,
+        personalTraitsInspire: currProfile.personalTraitsInspire,
+        image: currProfile.image,
+        bodyImage: currProfile.bodyImage,
+        headShotImage: currProfile.headShotImage,
+        personalityImage: currProfile.personalityImage,
+        phone: currProfile.phone,
+        relationType: currProfile.relationType,
+        location: currProfile.location,
+        body: updatedBody,
+        eduJob: currProfile.eduJob,
+        beliefsOtherText: currProfile.beliefsOtherText,
+        address: currProfile.address,
+        traitsOtherText: currProfile.traitsOtherText,
       );
       _userProfile.value = updatedProfile;
     }
@@ -1448,6 +1505,7 @@ class ProfileEditController extends GetxController {
         status: currProfile.status,
         profileCompletionPercentage: currProfile.profileCompletionPercentage,
         isDeleted: currProfile.isDeleted,
+        isVerified: currProfile.isVerified,
         createdAt: currProfile.createdAt,
         updatedAt: currProfile.updatedAt,
         habits: updatedHabits,
@@ -1456,9 +1514,17 @@ class ProfileEditController extends GetxController {
         likeToMeet: currProfile.likeToMeet,
         personalTraitsInspire: currProfile.personalTraitsInspire,
         image: currProfile.image,
+        bodyImage: currProfile.bodyImage,
+        headShotImage: currProfile.headShotImage,
+        personalityImage: currProfile.personalityImage,
         phone: currProfile.phone,
         relationType: currProfile.relationType,
         location: currProfile.location,
+        body: currProfile.body,
+        eduJob: currProfile.eduJob,
+        beliefsOtherText: currProfile.beliefsOtherText,
+        address: currProfile.address,
+        traitsOtherText: currProfile.traitsOtherText,
       );
       _userProfile.value = updatedProfile;
     }

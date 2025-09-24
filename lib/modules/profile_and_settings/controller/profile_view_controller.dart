@@ -229,6 +229,7 @@ class ProfileViewController extends GetxController {
       status: '',
       profileCompletionPercentage: 0,
       isDeleted: false,
+      isVerified: true,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       habits: null,

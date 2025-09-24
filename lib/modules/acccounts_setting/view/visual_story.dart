@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../widget/button.dart';
 import '../widget/progress_bar.dart';
@@ -41,7 +40,6 @@ class _VisualStoryState extends State<VisualStory> {
 
   // Handle image selection
   Future<void> _handleImageSelection(int index) async {
-    AppLogger.info('📸 Starting image selection for index: $index');
     
     // Check if plugins are available
     if (!await _checkPluginsAvailable()) {
@@ -63,7 +61,7 @@ class _VisualStoryState extends State<VisualStory> {
         if (image != null) {
           await _processSelectedImage(image, index);
         } else {
-          AppLogger.warning('❌ No image selected');
+         
         }
       }
     } catch (e) {
@@ -78,29 +76,23 @@ class _VisualStoryState extends State<VisualStory> {
     // Test image picker
     try {
       ImagePicker();
-      AppLogger.info('✅ ImagePicker plugin is available');
       imagePickerAvailable = true;
     } catch (e) {
-      AppLogger.warning('❌ ImagePicker plugin not available: $e');
     }
     
     // Test permission handler
     try {
       await Permission.photos.status;
-      AppLogger.info('✅ PermissionHandler plugin is available');
     } catch (e) {
-      AppLogger.warning('❌ PermissionHandler plugin not available: $e');
       // Don't fail completely if permission handler is not available
       // We can try to proceed without it on some devices
     }
     
     // At minimum, we need image picker
     if (imagePickerAvailable) {
-      AppLogger.info('✅ Core functionality available (ImagePicker)');
       return true;
     }
     
-    AppLogger.warning('❌ Critical plugins not available');
     return false;
   }
   
@@ -112,35 +104,27 @@ class _VisualStoryState extends State<VisualStory> {
       try {
         await Permission.photos.status;
         permissionHandlerWorking = true;
-        AppLogger.info('✅ PermissionHandler is working');
       } catch (e) {
-        AppLogger.warning('⚠️ PermissionHandler not working: $e');
-        AppLogger.info('🔄 Will attempt to proceed without permission checks');
       }
       
       if (!permissionHandlerWorking) {
         // If permission handler is not available, try to proceed anyway
         // Some Android versions work without explicit permission requests
-        AppLogger.info('🔄 Proceeding without explicit permission check');
         return true;
       }
       
       // Strategy 1: Try photos permission (Android 13+)
       var status = await Permission.photos.request();
-      AppLogger.info('📱 Photos permission status: $status');
       
       if (status.isGranted) {
-        AppLogger.info('✅ Photos permission granted');
         return true;
       }
       
       // Strategy 2: Try storage permission (Android 12 and below)
       if (status.isDenied) {
         status = await Permission.storage.request();
-        AppLogger.info('📱 Storage permission status: $status');
         
         if (status.isGranted) {
-          AppLogger.info('✅ Storage permission granted');
           return true;
         }
       }
@@ -148,7 +132,6 @@ class _VisualStoryState extends State<VisualStory> {
       // Strategy 3: Try external storage permission
       if (status.isDenied) {
         status = await Permission.manageExternalStorage.request();
-        AppLogger.info('📱 Manage external storage permission status: $status');
         
       
         if (status.isGranted) {
@@ -159,13 +142,11 @@ class _VisualStoryState extends State<VisualStory> {
       
       // Handle permanent denial
       if (status.isPermanentlyDenied) {
-        AppLogger.warning('⚠️ Permissions permanently denied');
         _showPermissionDialog();
         return false;
       }
       
       // If all strategies failed
-      AppLogger.warning('❌ All permission strategies failed');
       _showSnackBar(
         'Permission Denied',
         'Gallery permission is required to select images',
@@ -174,8 +155,6 @@ class _VisualStoryState extends State<VisualStory> {
       return false;
       
     } catch (permissionError) {
-      AppLogger.warning('⚠️ Permission handler error: $permissionError');
-      AppLogger.info('🔄 Attempting to proceed without explicit permission check');
       // If permission handler fails, try to proceed anyway
       // Some devices work without explicit permission requests
       return true;
@@ -185,7 +164,6 @@ class _VisualStoryState extends State<VisualStory> {
   // Pick image with fallback strategies
   Future<XFile?> _pickImageWithFallback() async {
     try {
-      AppLogger.info('🔄 Attempting to pick image from gallery');
       
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -193,28 +171,23 @@ class _VisualStoryState extends State<VisualStory> {
       );
       
       if (image != null) {
-        AppLogger.info('📷 Image selected: ${image.path}');
         return image;
       }
       
       return null;
     } catch (e) {
-      AppLogger.warning('❌ Error picking image from gallery: $e');
       
       // Fallback: Try camera if gallery fails
       try {
-        AppLogger.info('🔄 Attempting fallback to camera');
         final XFile? cameraImage = await _picker.pickImage(
           source: ImageSource.camera,
           imageQuality: 80,
         );
         
         if (cameraImage != null) {
-          AppLogger.info('📷 Camera image selected: ${cameraImage.path}');
           return cameraImage;
         }
       } catch (cameraError) {
-        AppLogger.warning('❌ Camera fallback also failed: $cameraError');
       }
       
       return null;
@@ -224,7 +197,6 @@ class _VisualStoryState extends State<VisualStory> {
   // Process the selected image
   Future<void> _processSelectedImage(XFile image, int index) async {
     try {
-      AppLogger.info('📊 Image size: ${await image.length()} bytes');
       
       // Validate image file
       final File imageFile = File(image.path);
@@ -236,9 +208,7 @@ class _VisualStoryState extends State<VisualStory> {
         selectedImages[index] = image;
       });
       
-      AppLogger.info('✅ Image stored at index $index');
     } catch (e) {
-      AppLogger.warning('❌ Error processing selected image: $e');
       _showSnackBar(
         'Processing Error',
         'Failed to process selected image',
@@ -249,7 +219,6 @@ class _VisualStoryState extends State<VisualStory> {
   
   // Handle image selection errors
   Future<void> _handleImageSelectionError(dynamic error) async {
-    AppLogger.warning('❌ Error picking image: $error');
     
     String errorMessage = 'Failed to pick image';
     String errorDetails = '';
@@ -257,7 +226,6 @@ class _VisualStoryState extends State<VisualStory> {
     if (error.toString().contains('MissingPluginException')) {
       errorMessage = 'Plugin not available';
       errorDetails = 'Required plugins are not properly initialized. Please restart the app.';
-      AppLogger.info('💡 Plugin issue detected - app may need restart');
     } else if (error.toString().contains('permission')) {
       errorMessage = 'Permission denied';
       errorDetails = 'Please check app settings and grant gallery permissions.';
@@ -301,7 +269,6 @@ class _VisualStoryState extends State<VisualStory> {
 
   // Show snack bar with logging
   void _showSnackBar(String title, String message, Color backgroundColor) {
-    AppLogger.info('📢 Showing snack bar: $title - $message');
     
     // If message is too long, split it into title and details
     String displayTitle = title;

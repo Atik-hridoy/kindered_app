@@ -37,6 +37,9 @@ class AppLogger {
   // Prevent instantiation
   AppLogger._();
 
+  /// 🔍 Check if the app is running in debug mode
+  static bool get isDebugMode => kDebugMode;
+
   /// 🔍 Log a debug message (only in debug mode)
   static void debug(dynamic message, [dynamic error, StackTrace? stackTrace]) {
     if (kDebugMode) {

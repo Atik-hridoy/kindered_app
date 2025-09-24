@@ -29,6 +29,5 @@ abstract class AppUrls {
 
 
   //location
-
   static const String userLocation = '/users/update-location';
 }
