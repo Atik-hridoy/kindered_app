@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widget/nav_card.dart';
 import '../controller/ai_assistent_controller.dart';
+import '../models/ai_assistent_get_model.dart';
 import '../../../config/app_routes.dart';
 
 class AiAssistantView extends GetView<AiAssistentController> {
@@ -195,60 +196,92 @@ class AiAssistantView extends GetView<AiAssistentController> {
   }
 
   Widget _buildMatchSuggestionCard() {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.only(left: 16, right: 100, top: 4, bottom: 4),
+    return Obx(() {
+      final matchmakingData = controller.matchmakingData.value;
+      final isLoading = controller.isLoading.value;
+      final errorMessage = controller.errorMessage.value;
+      
+      if (isLoading) {
+        return _buildLoadingCard();
+      }
+      
+      if (errorMessage.isNotEmpty) {
+        return _buildErrorCard(errorMessage);
+      }
+      
+      if (matchmakingData?.data?.currentMatch == null) {
+        return _buildNoMatchCard();
+      }
+      
+      final currentMatch = matchmakingData!.data!.currentMatch!;
+      final user = currentMatch.user;
+      
+      return Align(
+        alignment: Alignment.centerLeft,
         child: Container(
-          padding: const EdgeInsets.all(20),
-          margin: const EdgeInsets.only(left: 0, right: 0, top: 4, bottom: 4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFD4A373),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(Get.context!).size.width * 0.75,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Text(
-                'We found someone who matches with you',
-                style: TextStyle(color: Color(0xFF2E3A59), fontSize: 16, fontWeight: FontWeight.w600),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              _buildProfileImage(),
-              const SizedBox(height: 16),
-              const SizedBox(height: 8),
-              const Text('Kelvin, 28', style: TextStyle(color: Color(0xFF2E3A59), fontSize: 18, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              const Text('Love cooking, enjoy new things, values kindness', 
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF2E3A59), fontSize: 12)
-              ),
-              const SizedBox(height: 20),
-              _buildActionButtons(),
-              const SizedBox(height: 12),
-              const Text(
-                'If pass, your next curated match will arrive soon', 
-                style: TextStyle(color: Color(0xFF2E3A59), fontSize: 10, fontWeight: FontWeight.w500),
-                textAlign: TextAlign.center,
-              ),
-            ],
+          padding: const EdgeInsets.only(left: 16, right: 100, top: 4, bottom: 4),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            margin: const EdgeInsets.only(left: 0, right: 0, top: 4, bottom: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4A373),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(Get.context!).size.width * 0.75,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'We found someone who matches with you',
+                  style: const TextStyle(color: Color(0xFF2E3A59), fontSize: 16, fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                _buildProfileImage(user?.headShotImage),
+                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                Text(
+                  '${user?.firstName ?? ''}, ${user?.age ?? ''}', 
+                  style: const TextStyle(color: Color(0xFF2E3A59), fontSize: 18, fontWeight: FontWeight.w700)
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _buildUserDescription(currentMatch), 
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0xFF2E3A59), fontSize: 12)
+                ),
+                const SizedBox(height: 20),
+                _buildActionButtons(),
+                const SizedBox(height: 12),
+                Text(
+                  matchmakingData.data?.hasMoreMatches == true 
+                      ? 'If pass, your next curated match will arrive soon'
+                      : 'This is your last curated match for today', 
+                  style: const TextStyle(color: Color(0xFF2E3A59), fontSize: 10, fontWeight: FontWeight.w500),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
-  Widget _buildProfileImage() {
+  Widget _buildProfileImage([String? imageUrl]) {
+    final defaultImage = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80';
+    final imageProvider = imageUrl != null && imageUrl.isNotEmpty 
+        ? NetworkImage(imageUrl) 
+        : NetworkImage(defaultImage) as ImageProvider;
+    
     return Container(
       width: 120, height: 140,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        image: const DecorationImage(
-          image: NetworkImage('https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80'),
+        image: DecorationImage(
+          image: imageProvider,
           fit: BoxFit.cover,
         ),
       ),
@@ -437,5 +470,152 @@ class AiAssistantView extends GetView<AiAssistentController> {
         ],
       ),
     );
+  }
+
+  // Helper methods for dynamic match suggestion card
+  Widget _buildLoadingCard() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.only(left: 16, right: 100, top: 4, bottom: 4),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          margin: const EdgeInsets.only(left: 0, right: 0, top: 4, bottom: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFD4A373),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(Get.context!).size.width * 0.75,
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Finding your perfect match...',
+                style: TextStyle(color: Color(0xFF2E3A59), fontSize: 16, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 20),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E3A59)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorCard(String errorMessage) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.only(left: 16, right: 100, top: 4, bottom: 4),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          margin: const EdgeInsets.only(left: 0, right: 0, top: 4, bottom: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFD4A373),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(Get.context!).size.width * 0.75,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                'Oops! Something went wrong',
+                style: TextStyle(color: Color(0xFF2E3A59), fontSize: 16, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                errorMessage,
+                style: const TextStyle(color: Color(0xFF2E3A59), fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => controller.refreshMatchmakingData(),
+                child: const Text(
+                  'Try Again',
+                  style: TextStyle(color: Color(0xFF2E3A59), fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoMatchCard() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.only(left: 16, right: 100, top: 4, bottom: 4),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          margin: const EdgeInsets.only(left: 0, right: 0, top: 4, bottom: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFD4A373),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(Get.context!).size.width * 0.75,
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'No matches available right now',
+                style: TextStyle(color: Color(0xFF2E3A59), fontSize: 16, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 12),
+              Text(
+                'We\'re working on finding your perfect match. Check back soon!',
+                style: TextStyle(color: Color(0xFF2E3A59), fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _buildUserDescription(CurrentMatch currentMatch) {
+    final user = currentMatch.user;
+    final interests = currentMatch.commonInterests;
+    final reasons = currentMatch.reasons;
+    
+    List<String> descriptionParts = [];
+    
+    // Add interests if available
+    if (interests.isNotEmpty) {
+      final interestText = interests.take(3).join(', ');
+      descriptionParts.add('Loves $interestText');
+    }
+    
+    // Add match reasons if available
+    if (reasons.isNotEmpty) {
+      descriptionParts.add(reasons.first);
+    }
+    
+    // Add personality traits if available
+    if (user?.personalTraitsInspire != null && user!.personalTraitsInspire.isNotEmpty) {
+      final traits = user.personalTraitsInspire.take(2).join(', ');
+      descriptionParts.add('Values $traits');
+    }
+    
+    // If no description parts available, use a generic message
+    if (descriptionParts.isEmpty) {
+      return 'Great match based on your preferences';
+    }
+    
+    return descriptionParts.join(', ');
   }
 }

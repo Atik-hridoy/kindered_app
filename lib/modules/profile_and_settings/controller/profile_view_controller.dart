@@ -76,7 +76,7 @@ class ProfileViewController extends GetxController {
     final editProfileCompletion = profileEditController.profileCompletionPercentage;
     
     // Try to get completion from AccountsController as second source
-    final accountsCompletion = accountsController.getCompletionPercentage();
+    final accountsCompletion = accountsController.profileCompletionPercentage.value;
     
     // Get completion from API profile data as fallback
     final apiCompletion = userProfile.value?.profileCompletionPercentage ?? 0;

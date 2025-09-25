@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:kindered_app/local/storage_service.dart';
-import '../controller/accounts_controller.dart';
+import 'package:kindered_app/modules/acccounts_setting/controller/accounts_controller.dart';
 
 
 class AccountsBinding extends Bindings {

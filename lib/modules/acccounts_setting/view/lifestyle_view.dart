@@ -113,6 +113,16 @@ class LifestyleView extends GetView<AccountsController> {
             const SizedBox(height: 10),
             _buildOptions(controller.travelPreferences, controller.selectedTravelPreference, controller.toggleTravelPreference),
             const SizedBox(height: 24),
+
+            _buildQuestion('What\'s your preferred home environment?'),
+            const SizedBox(height: 10),
+            _buildOptions(controller.homeEnvironments, controller.selectedHomeEnvironment, controller.toggleHomeEnvironment),
+            const SizedBox(height: 24),
+
+            _buildQuestion('What type of living space do you prefer?'),
+            const SizedBox(height: 10),
+            _buildOptions(controller.livingSpaces, controller.selectedLivingSpace, controller.toggleLivingSpace),
+            const SizedBox(height: 24),
           ],
         ),
       ),

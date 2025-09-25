@@ -26,10 +26,8 @@ void main() async {
     
     // Run the app
     runApp(const MyApp());
-  } catch (error, stackTrace) {
-    // Catch and log any errors during initialization
-    debugPrint('❌ Fatal error during app initialization: $error');
-    debugPrintStack(stackTrace: stackTrace);
+  } catch (error) {
+  
     
     // Show error UI if possible
     runApp(
@@ -50,25 +48,18 @@ Future<void> _initializePlugins() async {
   try {
     // Test image picker plugin
     ImagePicker();
-    debugPrint('✅ ImagePicker plugin initialized successfully');
     imagePickerOk = true;
+  
   } catch (e) {
-    debugPrint('❌ ImagePicker plugin initialization failed: $e');
   }
   
   try {
     // Test permission handler plugin
     await Permission.photos.status;
-    debugPrint('✅ PermissionHandler plugin initialized successfully');
   } catch (e) {
-    debugPrint('⚠️ PermissionHandler plugin initialization failed: $e');
-    debugPrint('🔄 Will attempt to proceed without PermissionHandler');
   }
   
   if (imagePickerOk) {
-    debugPrint('🔧 Core plugins initialized successfully');
-  } else {
-    debugPrint('❌ Critical plugin initialization failed');
   }
 }
 

@@ -12,6 +12,7 @@ import 'package:kindered_app/modules/profile_and_settings/controller/location_vi
 import 'package:kindered_app/modules/profile_and_settings/controller/number_verify_controller.dart';
 import 'package:kindered_app/modules/profile_and_settings/controller/terms_condition_controller.dart';
 import 'package:kindered_app/modules/profile_and_settings/controller/update_phon_number_controller.dart';
+import 'package:kindered_app/modules/location/location_controller.dart';
 
 
 
@@ -26,6 +27,7 @@ class ProfileAndStettings extends Bindings {
     Get.lazyPut<ProfileEditController>(() => ProfileEditController());
     Get.lazyPut<TermsAndConditionsController>(() => TermsAndConditionsController());
     Get.lazyPut<LocationViewController>(() => LocationViewController());
+    Get.lazyPut<LocationController>(() => LocationController());
     Get.lazyPut<AboutUsController>(() => AboutUsController());
     Get.lazyPut<HelpSupportController>(() => HelpSupportController());
   }

@@ -1,11 +1,10 @@
-import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:kindered_app/modules/home/models/user_suggestion_model.dart';
 import 'package:kindered_app/modules/home/services/user_suggestion_service.dart';
 import 'package:kindered_app/core/logger/app_logger.dart';
 
 class HomeSuggestionController extends GetxController {
-  final UserSuggestionService _suggestionService = UserSuggestionService(Dio());
+  final UserSuggestionService _suggestionService = UserSuggestionService();
   
   // Reactive variables
   final Rx<UserSuggestion?> currentSuggestion = Rx<UserSuggestion?>(null);
@@ -161,9 +160,8 @@ class HomeSuggestionController extends GetxController {
     AppLogger.info('Starting to load current match from API...');
     
     try {
-      // For now, we'll use the existing service which returns UserSuggestion
-      // In a full implementation, you'd modify the service to return UserSuggestionResponse
-      final currentMatch = await _suggestionService.getCurrentMatch();
+      // Use legacy method for backward compatibility
+      final currentMatch = await _suggestionService.getCurrentMatchLegacy();
       
       AppLogger.info('API Response Received:');
       AppLogger.info('Current Match: $currentMatch');
@@ -171,12 +169,7 @@ class HomeSuggestionController extends GetxController {
       if (currentMatch != null) {
         currentSuggestion.value = currentMatch;
         
-        AppLogger.info('Current Suggestion Set:');
-        AppLogger.info('Image URL: ${currentMatch.imageUrl}');
-        AppLogger.info('Name: ${currentMatch.name}');
-        AppLogger.info('Age: ${currentMatch.age}');
-        AppLogger.info('Match Percentage: ${currentMatch.matchPercentage}');
-        AppLogger.info('Location: ${currentMatch.location}');
+       
         
       } else {
         errorMessage.value = 'No match available';
@@ -188,44 +181,6 @@ class HomeSuggestionController extends GetxController {
     } finally {
       isLoading.value = false;
       AppLogger.info('Current match loading completed. Loading state: ${isLoading.value}');
-    }
-  }
-  
-  /// Load next match suggestion
-  Future<void> loadNextMatch() async {
-    if (isLoading.value) return;
-    
-    isLoading.value = true;
-    errorMessage.value = '';
-    
-    AppLogger.info('=== HOME SUGGESTION CONTROLLER - LOADING NEXT MATCH ===');
-    AppLogger.info('Starting to load next match from API...');
-    
-    try {
-      final nextMatch = await _suggestionService.getNextMatch();
-      
-      AppLogger.info('Next Match API Response Received:');
-      AppLogger.info('Next Match: $nextMatch');
-      
-      if (nextMatch != null) {
-        currentSuggestion.value = nextMatch;
-        
-        AppLogger.info('Next Suggestion Set:');
-        AppLogger.info('Image URL: ${nextMatch.imageUrl}');
-        AppLogger.info('Name: ${nextMatch.name}');
-        AppLogger.info('Age: ${nextMatch.age}');
-        AppLogger.info('Match Percentage: ${nextMatch.matchPercentage}');
-        AppLogger.info('Location: ${nextMatch.location}');
-      } else {
-        errorMessage.value = 'No next match available';
-        AppLogger.warning('No next match available from API');
-      }
-    } catch (e) {
-      errorMessage.value = 'Failed to load next match';
-      AppLogger.error('Error loading next match: $e');
-    } finally {
-      isLoading.value = false;
-      AppLogger.info('Next match loading completed. Loading state: ${isLoading.value}');
     }
   }
   

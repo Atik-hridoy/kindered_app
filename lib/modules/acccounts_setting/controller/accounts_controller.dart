@@ -194,8 +194,8 @@ class AccountsController extends GetxController {
       'loveStyle': selectedLoveLanguage.value != null ? loveLanguages[selectedLoveLanguage.value!] : '',
       'weekends': selectedWeekendActivity.value != null ? weekendActivities[selectedWeekendActivity.value!] : '',
       'traveling': selectedTravelPreference.value != null ? travelPreferences[selectedTravelPreference.value!] : '',
-      'homeEnvironment': '', // Not collected in current flow
-      'livingSpace': '', // Not collected in current flow
+      'homeEnvironment': selectedHomeEnvironment.value != null ? homeEnvironments[selectedHomeEnvironment.value!] : '',
+      'livingSpace': selectedLivingSpace.value != null ? livingSpaces[selectedLivingSpace.value!] : '',
     };
   }
 
@@ -858,6 +858,12 @@ class AccountsController extends GetxController {
   final travelPreferences = ['Love traveling', 'Like it occasionally', 'Prefer staying local', 'Depends on the destination'];
   final selectedTravelPreference = Rxn<int>();
 
+  final homeEnvironments = ['Modern', 'Traditional', 'Cozy', 'Rustic', 'Minimalist'];
+  final selectedHomeEnvironment = Rxn<int>();
+
+  final livingSpaces = ['Apartment', 'House', 'Townhouse', 'Villa', 'Other'];
+  final selectedLivingSpace = Rxn<int>();
+
   void toggleDayPreference(int index) {
     selectedDayPreference.value = selectedDayPreference.value == index ? null : index;
     updateProfileCompletion();
@@ -875,11 +881,23 @@ class AccountsController extends GetxController {
     updateProfileCompletion();
   }
 
+  void toggleHomeEnvironment(int index) {
+    selectedHomeEnvironment.value = selectedHomeEnvironment.value == index ? null : index;
+    updateProfileCompletion();
+  }
+
+  void toggleLivingSpace(int index) {
+    selectedLivingSpace.value = selectedLivingSpace.value == index ? null : index;
+    updateProfileCompletion();
+  }
+
   bool get isLifestyleCompleted =>
       selectedDayPreference.value != null &&
       selectedLoveLanguage.value != null &&
       selectedWeekendActivity.value != null &&
-      selectedTravelPreference.value != null;
+      selectedTravelPreference.value != null &&
+      selectedHomeEnvironment.value != null &&
+      selectedLivingSpace.value != null;
 
   // =========================================
   // LIKE TO DO SECTION (from LikeToDoController)

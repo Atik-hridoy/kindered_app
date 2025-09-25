@@ -62,10 +62,10 @@ class CurrentMatch {
   factory CurrentMatch.fromJson(Map<String, dynamic> json) {
     return CurrentMatch(
       user: UserData.fromJson(json['user'] ?? {}),
-      matchScore: json['matchScore'] ?? 0,
+      matchScore: (json['matchScore'] ?? 0).toInt(),
       commonInterests: List<String>.from(json['commonInterests'] ?? []),
       reasons: List<String>.from(json['reasons'] ?? []),
-      distance: json['distance'] ?? 0,
+      distance: (json['distance'] ?? 0).toInt(),
     );
   }
 }
@@ -204,7 +204,7 @@ class UserData {
       role: json['role'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
-      age: json['age'] ?? 0,
+      age: (json['age'] ?? 0).toInt(),
       gender: json['gender'] ?? '',
       location: Location.fromJson(json['location'] ?? {}),
       bodyImage: json['bodyImage'] ?? '',
@@ -227,7 +227,7 @@ class UserData {
       aboutMe: json['aboutMe'] ?? '',
       status: json['status'] ?? '',
       isVerified: json['isVerified'] ?? false,
-      profileCompletionPercentage: json['profileCompletionPercentage'] ?? 0,
+      profileCompletionPercentage: (json['profileCompletionPercentage'] ?? 0).toInt(),
       isDeleted: json['isDeleted'] ?? false,
     );
   }

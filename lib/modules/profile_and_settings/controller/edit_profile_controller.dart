@@ -256,12 +256,18 @@ class ProfileEditController extends GetxController {
     isEditMode.value = !isEditMode.value;
     if (isEditMode.value) {
       _initializeControllersForEdit();
+      // Load current data when entering edit mode
+      AppLogger.info('✏️ [EDIT MODE] Entering edit mode - loading current profile data');
+    } else {
+      // Save changes when exiting edit mode
+      _saveProfileChanges();
     }
   }
   
   void cancelEditMode() {
     isEditMode.value = false;
     _resetControllersToProfileData();
+    AppLogger.info('❌ [EDIT MODE] Edit mode cancelled - changes discarded');
   }
   
   void _initializeControllersForEdit() {
@@ -299,6 +305,137 @@ class ProfileEditController extends GetxController {
     // This method updates profile completion based on controller values
     // Implementation will sync controller values with profile data and update completion
     updateProfileCompletion();
+  }
+  
+  /// Save all profile changes when exiting edit mode
+  Future<void> _saveProfileChanges() async {
+    try {
+      AppLogger.info('💾 [EDIT MODE] Saving profile changes...');
+      
+      if (_userProfile.value == null) {
+        AppLogger.warning('❌ [EDIT MODE] No profile data available to save');
+        return;
+      }
+      
+      isLoading.value = true;
+      
+      // Collect all changes from controllers
+      final Map<String, dynamic> changes = {};
+      
+      // Personal information
+      if (nameController.text.isNotEmpty && nameController.text != _userProfile.value!.firstName) {
+        changes['firstName'] = nameController.text;
+      }
+      
+      final newAge = int.tryParse(ageController.text);
+      if (newAge != null && newAge != _userProfile.value!.age) {
+        changes['age'] = newAge;
+      }
+      
+      if (selectedGender.value.isNotEmpty && selectedGender.value != _userProfile.value!.gender) {
+        changes['gender'] = selectedGender.value;
+      }
+      
+      // Body information
+      final newHeight = double.tryParse(heightController.text);
+      final newWeight = double.tryParse(weightController.text);
+      
+      if (newHeight != null && newHeight != _userProfile.value!.body?.heightCm) {
+        changes['body'] = {'heightCm': newHeight};
+      }
+      
+      if (newWeight != null && newWeight != _userProfile.value!.body?.weightKg) {
+        if (changes['body'] == null) {
+          changes['body'] = {};
+        }
+        changes['body']['weightKg'] = newWeight;
+      }
+      
+      // Zodiac and Religion
+      if (selectedZodiac.value.isNotEmpty && selectedZodiac.value != _userProfile.value!.zodiacSign) {
+        changes['zodiacSign'] = selectedZodiac.value;
+      }
+      
+      if (selectedReligion.value.isNotEmpty && selectedReligion.value != _userProfile.value!.religion) {
+        changes['religion'] = selectedReligion.value;
+      }
+      
+      // Lifestyle preferences
+      if (selectedSleepingStyle.value.isNotEmpty && selectedSleepingStyle.value != _userProfile.value!.lifestyle?.sleepingStyle) {
+        if (changes['lifestyle'] == null) changes['lifestyle'] = {};
+        changes['lifestyle']['sleepingStyle'] = selectedSleepingStyle.value;
+      }
+      
+      if (selectedLoveStyle.value.isNotEmpty && selectedLoveStyle.value != _userProfile.value!.lifestyle?.loveStyle) {
+        if (changes['lifestyle'] == null) changes['lifestyle'] = {};
+        changes['lifestyle']['loveStyle'] = selectedLoveStyle.value;
+      }
+      
+      if (selectedWeekends.value.isNotEmpty && selectedWeekends.value != _userProfile.value!.lifestyle?.weekends) {
+        if (changes['lifestyle'] == null) changes['lifestyle'] = {};
+        changes['lifestyle']['weekends'] = selectedWeekends.value;
+      }
+      
+      if (selectedTraveling.value.isNotEmpty && selectedTraveling.value != _userProfile.value!.lifestyle?.traveling) {
+        if (changes['lifestyle'] == null) changes['lifestyle'] = {};
+        changes['lifestyle']['traveling'] = selectedTraveling.value;
+      }
+      
+      // Habits
+      if (selectedCommunicationStyle.value.isNotEmpty && selectedCommunicationStyle.value != _userProfile.value!.habits?.communicationStyle.join(', ')) {
+        if (changes['habits'] == null) changes['habits'] = {};
+        changes['habits']['communicationStyle'] = selectedCommunicationStyle.value.split(', ').map((s) => s.trim()).toList();
+      }
+      
+      if (selectedExerciseFrequency.value.isNotEmpty && selectedExerciseFrequency.value != _userProfile.value!.habits?.workout) {
+        if (changes['habits'] == null) changes['habits'] = {};
+        changes['habits']['workout'] = selectedExerciseFrequency.value;
+      }
+      
+      if (selectedFoodPreference.value.isNotEmpty && selectedFoodPreference.value != _userProfile.value!.habits?.eatingStyle.join(', ')) {
+        if (changes['habits'] == null) changes['habits'] = {};
+        changes['habits']['eatingStyle'] = selectedFoodPreference.value.split(', ').map((s) => s.trim()).toList();
+      }
+      
+      if (selectedSocialMediaUsage.value.isNotEmpty && selectedSocialMediaUsage.value != _userProfile.value!.habits?.socialMedia) {
+        if (changes['habits'] == null) changes['habits'] = {};
+        changes['habits']['socialMedia'] = selectedSocialMediaUsage.value;
+      }
+      
+      if (selectedSmokingDrinking.value.isNotEmpty && selectedSmokingDrinking.value != _userProfile.value!.habits?.smokeOrDrink) {
+        if (changes['habits'] == null) changes['habits'] = {};
+        changes['habits']['smokeOrDrink'] = selectedSmokingDrinking.value;
+      }
+      
+      if (selectedNewExperiences.value.isNotEmpty && selectedNewExperiences.value != _userProfile.value!.habits?.newExercise) {
+        if (changes['habits'] == null) changes['habits'] = {};
+        changes['habits']['newExercise'] = selectedNewExperiences.value;
+      }
+      
+      // Only submit if there are changes
+      if (changes.isNotEmpty) {
+        AppLogger.info('📝 [EDIT MODE] Changes to save: $changes');
+        await _submitUpdate(changes);
+        AppLogger.success('✅ [EDIT MODE] Profile changes saved successfully');
+        
+        // Show only success snackbar
+        Get.snackbar(
+          'Success',
+          'Profile updated successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      } else {
+        AppLogger.info('ℹ️ [EDIT MODE] No changes to save');
+      }
+      
+    } catch (e) {
+      AppLogger.error('❌ [EDIT MODE] Error saving profile changes: $e');
+      // No error snackbar as per requirements
+    } finally {
+      isLoading.value = false;
+    }
   }
   
   // Location
@@ -748,8 +885,7 @@ class ProfileEditController extends GetxController {
       );
       _userProfile.value = updatedProfile;
       
-      // Submit the update to the server
-      _submitUpdate({'photos': newPhotos});
+      // Changes will be saved when exiting edit mode
     }
   }
   
@@ -798,8 +934,7 @@ class ProfileEditController extends GetxController {
       );
       _userProfile.value = updatedProfile;
       
-      // Submit the update to the server
-      _submitUpdate({'personalTraitsInspire': newTraits});
+      // Changes will be saved when exiting edit mode
     }
   }
   
@@ -860,8 +995,7 @@ class ProfileEditController extends GetxController {
       );
       _userProfile.value = updatedProfile;
       
-      // Submit update to server
-      await _submitUpdate({'aboutMe': aboutMeText});
+      // Changes will be saved when exiting edit mode
       
       // Mark as clean (no unsaved changes)
       isAboutMeDirty.value = false;
@@ -918,8 +1052,7 @@ class ProfileEditController extends GetxController {
       );
       _userProfile.value = updatedProfile;
       
-      // Submit the update to the server  
-      _submitUpdate({'firstName': value});
+      // Changes will be saved when exiting edit mode
     }
   }
 
@@ -957,10 +1090,9 @@ class ProfileEditController extends GetxController {
           location: currProfile.location,
         );
         _userProfile.value = updatedProfile;
-        
-        // Submit update to server
-        _submitUpdate({'age': age});
       }
+
+      // Changes will be saved when exiting edit mode
     }
   }
 
@@ -996,9 +1128,8 @@ class ProfileEditController extends GetxController {
         location: currProfile.location,
       );
       _userProfile.value = updatedProfile;
-      
-      // Submit update to server
-      _submitUpdate({'gender': value});
+
+      // Changes will be saved when exiting edit mode
     }
   }
 
@@ -1034,9 +1165,8 @@ class ProfileEditController extends GetxController {
         location: currProfile.location,
       );
       _userProfile.value = updatedProfile;
-      
-      // Submit update to server
-      _submitUpdate({'religion': value});
+
+      // Changes will be saved when exiting edit mode
     }
   }
 
@@ -1072,9 +1202,8 @@ class ProfileEditController extends GetxController {
         location: currProfile.location,
       );
       _userProfile.value = updatedProfile;
-      
-      // Submit update to server
-      _submitUpdate({'zodiacSign': value});
+
+      // Changes will be saved when exiting edit mode
     }
   }
 
@@ -1091,7 +1220,8 @@ class ProfileEditController extends GetxController {
       );
 
       _updateUserProfileWithBody(updatedBody);
-      _submitUpdate({'body': {'heightCm': heightValue}});
+
+      // Changes will be saved when exiting edit mode
     }
   }
 
@@ -1107,7 +1237,8 @@ class ProfileEditController extends GetxController {
       );
 
       _updateUserProfileWithBody(updatedBody);
-      _submitUpdate({'body': {'weightKg': weightValue}});
+
+      // Changes will be saved when exiting edit mode
     }
   }
 
@@ -1373,8 +1504,8 @@ class ProfileEditController extends GetxController {
       );
       
       _updateUserProfileWithHabits(updatedHabits);
-      _submitUpdate({'habits': {'communicationStyle': communicationStyles}});
-      
+
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [HABITS] Communication style updated: $value');
     }
   }
@@ -1394,8 +1525,8 @@ class ProfileEditController extends GetxController {
       );
       
       _updateUserProfileWithHabits(updatedHabits);
-      _submitUpdate({'habits': {'workout': value}});
-      
+
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [HABITS] Workout frequency updated: $value');
     }
   }
@@ -1418,8 +1549,8 @@ class ProfileEditController extends GetxController {
       );
       
       _updateUserProfileWithHabits(updatedHabits);
-      _submitUpdate({'habits': {'eatingStyle': eatingStyles}});
-      
+
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [HABITS] Eating style updated: $value');
     }
   }
@@ -1439,8 +1570,8 @@ class ProfileEditController extends GetxController {
       );
       
       _updateUserProfileWithHabits(updatedHabits);
-      _submitUpdate({'habits': {'socialMedia': value}});
-      
+
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [HABITS] Social media usage updated: $value');
     }
   }
@@ -1460,8 +1591,8 @@ class ProfileEditController extends GetxController {
       );
       
       _updateUserProfileWithHabits(updatedHabits);
-      _submitUpdate({'habits': {'smokingOrDrinking': value}});
-      
+
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [HABITS] Smoke/drink habits updated: $value');
     }
   }
@@ -1481,8 +1612,8 @@ class ProfileEditController extends GetxController {
       );
       
       _updateUserProfileWithHabits(updatedHabits);
-      _submitUpdate({'habits': {'newExercise': value}});
-      
+
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [HABITS] New experiences preference updated: $value');
     }
   }
@@ -1535,8 +1666,7 @@ class ProfileEditController extends GetxController {
     if (_userProfile.value != null) {
       // For education, we need to update the profile's education field
       // This might be part of a more complex education/career structure
-      _submitUpdate({'education': value});
-      
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [EDUCATION] Education level updated: $value');
     }
   }
@@ -1544,8 +1674,7 @@ class ProfileEditController extends GetxController {
   void updateJobStatus(String value) {
     if (_userProfile.value != null) {
       // For job status, we need to update the profile's job status field
-      _submitUpdate({'jobStatus': value});
-      
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [CAREER] Job status updated: $value');
     }
   }
@@ -1566,8 +1695,8 @@ class ProfileEditController extends GetxController {
       );
       
       _updateUserProfileWithLifestyle(updatedLifestyle);
-      _submitUpdate({'lifestyle': {'sleepingStyle': value}});
-      
+
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [LIFESTYLE] Sleeping style updated: $value');
     }
   }
@@ -1587,8 +1716,8 @@ class ProfileEditController extends GetxController {
       );
       
       _updateUserProfileWithLifestyle(updatedLifestyle);
-      _submitUpdate({'lifestyle': {'loveStyle': value}});
-      
+
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [LIFESTYLE] Love style updated: $value');
     }
   }
@@ -1608,8 +1737,8 @@ class ProfileEditController extends GetxController {
       );
       
       _updateUserProfileWithLifestyle(updatedLifestyle);
-      _submitUpdate({'lifestyle': {'weekends': value}});
-      
+
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [LIFESTYLE] Weekend preference updated: $value');
     }
   }
@@ -1629,8 +1758,8 @@ class ProfileEditController extends GetxController {
       );
       
       _updateUserProfileWithLifestyle(updatedLifestyle);
-      _submitUpdate({'lifestyle': {'traveling': value}});
-      
+
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [LIFESTYLE] Traveling preference updated: $value');
     }
   }
@@ -1650,8 +1779,8 @@ class ProfileEditController extends GetxController {
       );
       
       _updateUserProfileWithLifestyle(updatedLifestyle);
-      _submitUpdate({'lifestyle': {'homeEnvironment': value}});
-      
+
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [LIFESTYLE] Home environment updated: $value');
     }
   }
@@ -1671,8 +1800,8 @@ class ProfileEditController extends GetxController {
       );
       
       _updateUserProfileWithLifestyle(updatedLifestyle);
-      _submitUpdate({'lifestyle': {'livingSpace': value}});
-      
+
+      // Changes will be saved when exiting edit mode
       AppLogger.info('✏️ [LIFESTYLE] Living space updated: $value');
     }
   }
