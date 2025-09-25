@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/modules/home/widget/nav_card.dart';
 import 'package:kindered_app/modules/profile_and_settings/controller/profile_view_controller.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -109,14 +110,27 @@ class _ProfileViewState extends State<ProfileView> {
               ),
             ),
             
-            // Loading overlay
+            // Loading overlay with skeletonizer
             Obx(() {
               if (controller.isLoading.value) {
                 return Container(
-                  color: Colors.black.withOpacity(0.5),
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFD4A373)),
+                  color: Colors.black.withOpacity(0.3),
+                  child: Center(
+                    child: Skeletonizer(
+                      enabled: true,
+                      effect: ShimmerEffect(
+                        baseColor: const Color(0xFF4A5568),
+                        highlightColor: const Color(0xFF718096),
+                      ),
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 0.9,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2E3A59),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: _buildSkeletonProfile(),
+                      ),
                     ),
                   ),
                 );
@@ -331,6 +345,76 @@ class _ProfileViewState extends State<ProfileView> {
         ),
         
         // Spacer for bottom space after the content
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  /// Build skeleton profile that matches the actual profile structure
+  Widget _buildSkeletonProfile() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Skeleton profile picture
+        Bone.circle(
+          size: 120,
+        ),
+        const SizedBox(height: 20),
+        
+        // Skeleton name
+        Bone(
+          height: 24,
+          width: 150,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        const SizedBox(height: 16),
+        
+        // Skeleton profile details button
+        Bone(
+          height: 40,
+          width: 180,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        const SizedBox(height: 12),
+        
+        // Skeleton completion text
+        Bone(
+          height: 16,
+          width: 120,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        const SizedBox(height: 32),
+        
+        // Skeleton list tiles
+        ...List.generate(6, (index) => _buildSkeletonListTile()),
+      ],
+    );
+  }
+
+  /// Build skeleton list tile that matches the actual list tile structure
+  Widget _buildSkeletonListTile() {
+    return Column(
+      children: [
+        const SizedBox(height: 10),
+        const Divider(height: 1, color: Color(0xFF755A3F)),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+          child: Row(
+            children: [
+              Bone.square(
+                size: 24,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Bone(
+                  height: 18,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 10),
       ],
     );

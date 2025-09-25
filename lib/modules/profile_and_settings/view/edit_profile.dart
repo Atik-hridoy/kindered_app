@@ -528,14 +528,14 @@ class EditProfile extends GetView<ProfileEditController> {
                       // Lifestyle Items
                       Obx(() => _buildInfoField(
                         'Sleeping Style',
-                        controller.userHeight,
+                        controller.userSleepingStyle,
                         dropdownItems: controller.sleepingStyles,
                         isEditable: true
                       )),
                       SizedBox(height: 16),
                       Obx(() => _buildInfoField(
                         'Love Style',
-                        controller.userWeight,
+                        controller.userLoveStyle,
                         dropdownItems: controller.loveStyles,
                         isEditable: true
                       )),

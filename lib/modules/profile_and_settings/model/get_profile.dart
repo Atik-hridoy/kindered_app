@@ -1,4 +1,3 @@
-
 class UserProfile {
   final String id;
   final String role;
@@ -13,6 +12,7 @@ class UserProfile {
   final String status;
   final int profileCompletionPercentage;
   final bool isDeleted;
+  final bool isVerified;
   final DateTime createdAt;
   final DateTime updatedAt;
   final Habits? habits;
@@ -22,9 +22,16 @@ class UserProfile {
   final List<String> personalTraitsInspire;
   final List<String> image;
   final String? bodyImage;
+  final String? headShotImage;
+  final String? personalityImage;
   final String? phone;
   final String? relationType;
   final Location? location;
+  final Body? body;
+  final EduJob? eduJob;
+  final String? beliefsOtherText;
+  final String? address;
+  final String? traitsOtherText;
 
   UserProfile({
     required this.id,
@@ -40,6 +47,7 @@ class UserProfile {
     required this.status,
     required this.profileCompletionPercentage,
     required this.isDeleted,
+    required this.isVerified,
     required this.createdAt,
     required this.updatedAt,
     this.habits,
@@ -49,9 +57,16 @@ class UserProfile {
     this.personalTraitsInspire = const [],
     this.image = const [],
     this.bodyImage,
+    this.headShotImage,
+    this.personalityImage,
     this.phone,
     this.relationType,
     this.location,
+    this.body,
+    this.eduJob,
+    this.beliefsOtherText,
+    this.address,
+    this.traitsOtherText,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -66,12 +81,13 @@ class UserProfile {
       gender: json['gender'] ?? '',
       firstName: json['firstName'] ?? '',
       lastName: json['lastName'] ?? '',
-      aboutMe: json['aboutMe'] ?? '',
+      aboutMe: json['aboutMe'],
       religion: json['religion'],
       zodiacSign: json['zodiacSign'],
       status: json['status'] ?? '',
       profileCompletionPercentage: json['profileCompletionPercentage'] ?? 0,
       isDeleted: json['isDeleted'] ?? false,
+      isVerified: json['isVerified'] ?? false,
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
       habits: json['habits'] != null ? Habits.fromJson(json['habits']) : null,
@@ -81,9 +97,16 @@ class UserProfile {
       personalTraitsInspire: List<String>.from(json['personalTraitsInspire'] ?? []),
       image: List<String>.from(json['image'] ?? []),
       bodyImage: json['bodyImage'],
+      headShotImage: json['headShotImage'],
+      personalityImage: json['personalityImage'],
       phone: json['phone'] ?? '',
       relationType: json['relationType'],
       location: json['location'] != null ? Location.fromJson(json['location']) : null,
+      body: json['body'] != null ? Body.fromJson(json['body']) : null,
+      eduJob: json['eduJob'] != null ? EduJob.fromJson(json['eduJob']) : null,
+      beliefsOtherText: json['beliefsOtherText'],
+      address: json['address'],
+      traitsOtherText: json['traitsOtherText'],
     );
     
 
@@ -105,6 +128,7 @@ class UserProfile {
       'status': status,
       'profileCompletionPercentage': profileCompletionPercentage,
       'isDeleted': isDeleted,
+      'isVerified': isVerified,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'habits': habits?.toJson(),
@@ -113,9 +137,17 @@ class UserProfile {
       'likeToMeet': likeToMeet,
       'personalTraitsInspire': personalTraitsInspire,
       'image': image,
+      'bodyImage': bodyImage,
+      'headShotImage': headShotImage,
+      'personalityImage': personalityImage,
       'phone': phone,
       'relationType': relationType,
       'location': location?.toJson(),
+      'body': body?.toJson(),
+      'eduJob': eduJob?.toJson(),
+      'beliefsOtherText': beliefsOtherText,
+      'address': address,
+      'traitsOtherText': traitsOtherText,
     };
   }
 }
@@ -252,6 +284,58 @@ class Lifestyle {
       'traveling': traveling,
       'homeEnvironment': homeEnvironment,
       'livingSpace': livingSpace,
+    };
+  }
+}
+
+class Body {
+  final double? heightCm;
+  final double? weightKg;
+
+  Body({
+    this.heightCm,
+    this.weightKg,
+  });
+
+  factory Body.fromJson(Map<String, dynamic> json) {
+    return Body(
+      heightCm: json['heightCm']?.toDouble(),
+      weightKg: json['weightKg']?.toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'heightCm': heightCm,
+      'weightKg': weightKg,
+    };
+  }
+}
+
+class EduJob {
+  final String? educationLevel;
+  final String? jobTitle;
+  final int? annualIncome;
+
+  EduJob({
+    this.educationLevel,
+    this.jobTitle,
+    this.annualIncome,
+  });
+
+  factory EduJob.fromJson(Map<String, dynamic> json) {
+    return EduJob(
+      educationLevel: json['educationLevel'],
+      jobTitle: json['jobTitle'],
+      annualIncome: json['annualIncome'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'educationLevel': educationLevel,
+      'jobTitle': jobTitle,
+      'annualIncome': annualIncome,
     };
   }
 }

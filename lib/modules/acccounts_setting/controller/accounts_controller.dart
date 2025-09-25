@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:dio/dio.dart' as dio;
 import 'package:kindered_app/config/app_routes.dart';
 import '../services/account_setup_service.dart';
 import 'package:kindered_app/local/storage_service.dart';
@@ -16,6 +17,111 @@ class AccountsController extends GetxController {
 
   // Profile completion percentage
   final RxInt profileCompletionPercentage = 0.obs;
+
+  // =========================================
+  // REUSABLE HELPER METHODS
+  // =========================================
+
+  /// Generic API call handler with common error handling and response processing
+  Future<Map<String, dynamic>> _handleApiCall(
+    String methodName,
+    Future<dio.Response> Function() apiCall, {
+    bool showSuccessSnackbar = true,
+    String? successMessage,
+    bool checkVerificationStatus = false,
+    bool navigateOnSuccess = false,
+    String? navigationRoute,
+  }) async {
+    try {
+      isLoading.value = true;
+      AppLogger.info('🚀 Starting $methodName');
+
+      final response = await apiCall();
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final result = response.data as Map<String, dynamic>;
+        
+        // Check for verification status changes if requested
+        if (checkVerificationStatus && result['message'] != null) {
+          _handleVerificationStatus(result['message'].toString());
+        }
+
+        if (result['success'] == true) {
+          AppLogger.success('✅ $methodName completed successfully');
+          
+          if (showSuccessSnackbar) {
+            Get.snackbar(
+              'Success',
+              successMessage ?? '$methodName completed successfully!',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+          }
+          
+          // Navigate if requested
+          if (navigateOnSuccess && navigationRoute != null) {
+            Get.offAllNamed(navigationRoute);
+          }
+        } else {
+          AppLogger.warning('⚠️ $methodName response not successful: ${result['message']}');
+          Get.snackbar(
+            'Error',
+            result['message'] ?? '$methodName failed',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        }
+        
+        return result;
+      } else {
+        final errorMessage = 'Failed to complete $methodName: ${response.statusCode}';
+        AppLogger.error(errorMessage);
+        Get.snackbar('Error', errorMessage, snackPosition: SnackPosition.BOTTOM);
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      final errorMessage = 'Exception during $methodName: $e';
+      AppLogger.error('❌ $errorMessage');
+      Get.snackbar('Error', errorMessage, snackPosition: SnackPosition.BOTTOM);
+      return {'success': false, 'message': errorMessage};
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Handle verification status detection and display appropriate message
+  void _handleVerificationStatus(String message) {
+    if (message.contains('not verified') || message.contains('verification')) {
+      AppLogger.warning('⚠️ Verification status change detected: $message');
+      
+      Get.snackbar(
+        'Verification Required',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5),
+      );
+    }
+  }
+
+
+  /// Log and handle file operations for image uploads
+  void _logImagePreparation(String operation, Map<String, String?> imagePaths) {
+    AppLogger.info('🖼️ $operation:');
+    AppLogger.info('  • Body Image: ${imagePaths['bodyImage'] ?? 'Not provided'}');
+    AppLogger.info('  • Head Shot Image: ${imagePaths['headShotImage'] ?? 'Not provided'}');
+    AppLogger.info('  • Personality Image: ${imagePaths['personalityImage'] ?? 'Not provided'}');
+  }
+
+  /// Validate image files exist before upload
+  Future<bool> _validateImageFiles(Map<String, File?> images) async {
+    for (final entry in images.entries) {
+      if (entry.value == null || !await entry.value!.exists()) {
+        AppLogger.warning('⚠️ ${entry.key} file does not exist or is missing');
+        return false;
+      }
+    }
+    return true;
+  }
 
   // =========================================
   // PERSONAL INFO SECTION (from IntroViewController)
@@ -320,179 +426,89 @@ class AccountsController extends GetxController {
 
   /// Submit complete profile with optional photos
   Future<Map<String, dynamic>> submitCompleteProfileWithPhotos(List<String> photoPaths) async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting complete profile WITH photos: count=${photoPaths.length}');
+    _ensureService();
+    AppLogger.info('🚀 Submitting complete profile WITH photos: count=${photoPaths.length}');
 
-      final profileData = _prepareCompleteProfileData(includeImageFields: false);
+    final profileData = _prepareCompleteProfileData(includeImageFields: false);
 
-      // Convert to File list for the service
-      final files = photoPaths.where((p) => p.isNotEmpty).map((p) => File(p)).toList();
-      AppLogger.info('🖼️ PHOTO PROCESSING:');
-      AppLogger.info('  • Valid Photo Paths: ${files.length}');
-      for (int i = 0; i <files.length; i++) {
-        AppLogger.info('  • Photo ${i + 1}: ${files[i].path}');
-      }
+    // Convert to File list for the service
+    final files = photoPaths.where((p) => p.isNotEmpty).map((p) => File(p)).toList();
+    AppLogger.info('🖼️ PHOTO PROCESSING: Valid Photo Paths: ${files.length}');
 
-      // Map first three images to named fields per backend: bodyImage, headShotImage, personalityImage
-      File? bodyImage;
-      File? headShotImage;
-      File? personalityImage;
-      final extraImages = <File>[];
-      if (files.isNotEmpty) bodyImage = files[0];
-      if (files.length > 1) headShotImage = files[1];
-      if (files.length > 2) personalityImage = files[2];
-      if (files.length > 3) extraImages.addAll(files.sublist(3));
+    // Map first three images to named fields per backend: bodyImage, headShotImage, personalityImage
+    File? bodyImage;
+    File? headShotImage;
+    File? personalityImage;
+    final extraImages = <File>[];
+    if (files.isNotEmpty) bodyImage = files[0];
+    if (files.length > 1) headShotImage = files[1];
+    if (files.length > 2) personalityImage = files[2];
+    if (files.length > 3) extraImages.addAll(files.sublist(3));
 
-      AppLogger.info('📤 IMAGE MAPPING:');
-      AppLogger.info('  • Body Image: ${bodyImage?.path ?? 'Not provided'}');
-      AppLogger.info('  • Head Shot Image: ${headShotImage?.path ?? 'Not provided'}');
-      AppLogger.info('  • Personality Image: ${personalityImage?.path ?? 'Not provided'}');
-      AppLogger.info('  • Extra Images Count: ${extraImages.length}');
+    // Log image mapping using helper function
+    _logImagePreparation('IMAGE MAPPING', {
+      'bodyImage': bodyImage?.path,
+      'headShotImage': headShotImage?.path,
+      'personalityImage': personalityImage?.path,
+    });
+    AppLogger.info('  • Extra Images Count: ${extraImages.length}');
 
-      AppLogger.info('🌐 SENDING TO BACKEND...');
-      final response = await _accountSetupService.completeProfileMultipart(
+    // Validate image files before upload
+    final imageFiles = {
+      'bodyImage': bodyImage,
+      'headShotImage': headShotImage,
+      'personalityImage': personalityImage,
+    };
+    
+    if (!await _validateImageFiles(imageFiles)) {
+      return {'success': false, 'message': 'Some image files are missing or invalid'};
+    }
+
+    // Use the helper function for API call
+    return _handleApiCall(
+      'Profile submission with photos',
+      () => _accountSetupService.completeProfileMultipart(
         data: profileData,
         bodyImage: bodyImage,
         headShotImage: headShotImage,
         personalityImage: personalityImage,
         extraImages: extraImages,
-      );
-
-      AppLogger.info('📡 BACKEND RESPONSE:');
-      AppLogger.info('  • Status Code: ${response.statusCode}');
-      AppLogger.info('  • Response Data: ${response.data}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final result = response.data as Map<String, dynamic>;
-        AppLogger.info('✅ SUCCESSFUL SUBMISSION:');
-        AppLogger.info('  • Success: ${result['success']}');
-        AppLogger.info('  • Message: ${result['message'] ?? 'No message'}');
-        AppLogger.info('  • Full Response: $result');
-        
-        // Check for verification status changes
-        if (result['message'] != null) {
-          final message = result['message'].toString();
-          if (message.contains('not verified') || message.contains('verification')) {
-            AppLogger.warning('⚠️ [ACCOUNTS CONTROLLER MULTIPART] Verification status change detected: $message');
-            
-            // Show verification required message
-            Get.snackbar(
-              'Verification Required',
-              message,
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.orange,
-              colorText: Colors.white,
-              duration: const Duration(seconds: 5),
-            );
-          }
-        }
-
-        if (result['success'] == true) {
-          AppLogger.success('🎉 Profile submitted successfully with photos!');
-          Get.snackbar('Success', 'Profile submitted successfully!',
-              snackPosition: SnackPosition.BOTTOM);
-          // Navigate to location view after successful submission
-          Get.offAllNamed(AppRoutes.locationView);
-        } else {
-          AppLogger.warning('⚠️ Profile submit response not successful: ${result['message']}');
-          Get.snackbar('Error', result['message'] ?? 'Profile submission failed',
-              snackPosition: SnackPosition.BOTTOM);
-        }
-        return result;
-      } else {
-        AppLogger.error('❌ PROFILE SUBMISSION FAILED:');
-        AppLogger.error('  • Status Code: ${response.statusCode}');
-        AppLogger.error('  • Response Data: ${response.data}');
-        AppLogger.error('  • Status Message: ${response.statusMessage}');
-        Get.snackbar('Error', 'Profile submission failed. Please try again.',
-            snackPosition: SnackPosition.BOTTOM);
-        return {'success': false, 'message': 'Profile submission failed'};
-      }
-    } catch (e, stackTrace) {
-      AppLogger.error('❌ EXCEPTION DURING PROFILE SUBMISSION:');
-      AppLogger.error('  • Error: $e');
-      AppLogger.error('  • Stack Trace: $stackTrace');
-      AppLogger.error('  • Error Type: ${e.runtimeType}');
-      Get.snackbar('Error', 'An error occurred. Please try again.',
-          snackPosition: SnackPosition.BOTTOM);
-      return {'success': false, 'message': 'An error occurred'};
-    } finally {
-      isLoading.value = false;
-      AppLogger.info('🔄 Loading state reset to false');
-    }
+      ),
+      successMessage: 'Profile submitted successfully!',
+      checkVerificationStatus: true,
+      navigateOnSuccess: true,
+      navigationRoute: AppRoutes.locationView,
+    );
   }
 
   /// Submit complete profile data using CompleteProfile model
   Future<Map<String, dynamic>> submitCompleteProfileUsingModel() async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting complete profile data using CompleteProfile model');
+    _ensureService();
+    AppLogger.info('🚀 Submitting complete profile data using CompleteProfile model');
 
-      // Create CompleteProfile instance using current controller data
-      final completeProfile = _createCompleteProfileInstance();
-      
-      // Use the model's toJson() method to get properly structured data
-      final profileData = completeProfile.toJson();
-      
-      AppLogger.info('📋 PROFILE DATA PREPARED:');
-      AppLogger.info('  • First Name: ${completeProfile.firstName}');
-      AppLogger.info('  • Last Name: ${completeProfile.lastName}');
-      AppLogger.info('  • Age: ${completeProfile.age}');
-      AppLogger.info('  • Gender: ${completeProfile.gender}');
-      AppLogger.info('  • Email: ${completeProfile.email}');
-      AppLogger.info('  • Profile Completion: ${completeProfile.profileCompletionPercentage}%');
+    // Create CompleteProfile instance using current controller data
+    final completeProfile = _createCompleteProfileInstance();
+    
+    // Use the model's toJson() method to get properly structured data
+    final profileData = completeProfile.toJson();
+    
+    // Log essential profile data (reduced logging)
+    AppLogger.info('📋 PROFILE DATA PREPARED:');
+    AppLogger.info('  • First Name: ${completeProfile.firstName}');
+    AppLogger.info('  • Last Name: ${completeProfile.lastName}');
+    AppLogger.info('  • Age: ${completeProfile.age}');
+    AppLogger.info('  • Gender: ${completeProfile.gender}');
+    AppLogger.info('  • Profile Completion: ${completeProfile.profileCompletionPercentage}%');
 
-      AppLogger.info('🌐 SENDING TO BACKEND...');
-      final response = await _accountSetupService.completeProfile(
-        data: profileData,
-      );
-      AppLogger.info('📡 BACKEND RESPONSE:');
-      AppLogger.info('  • Status Code: ${response.statusCode}');
-      AppLogger.info('  • Response Data: ${response.data}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final result = response.data as Map<String, dynamic>;
-        AppLogger.info('✅ SUCCESSFUL SUBMISSION:');
-        AppLogger.info('  • Success: ${result['success']}');
-        AppLogger.info('  • Message: ${result['message'] ?? 'No message'}');
-        AppLogger.info('  • Full Response: $result');
-
-        if (result['success'] == true) {
-          AppLogger.success('🎉 Profile submitted successfully using CompleteProfile model!');
-          Get.snackbar('Success', 'Profile submitted successfully!',
-              snackPosition: SnackPosition.BOTTOM);
-          // Navigate to location view after successful submission
-          Get.offAllNamed(AppRoutes.locationView);
-        } else {
-          AppLogger.warning('⚠️ Profile submit response not successful: ${result['message']}');
-          Get.snackbar('Error', result['message'] ?? 'Profile submission failed',
-              snackPosition: SnackPosition.BOTTOM);
-        }
-        return result;
-      } else {
-        AppLogger.error('❌ PROFILE SUBMISSION FAILED:');
-        AppLogger.error('  • Status Code: ${response.statusCode}');
-        AppLogger.error('  • Response Data: ${response.data}');
-        AppLogger.error('  • Status Message: ${response.statusMessage}');
-        Get.snackbar('Error', 'Profile submission failed. Please try again.',
-            snackPosition: SnackPosition.BOTTOM);
-        return {'success': false, 'message': 'Profile submission failed'};
-      }
-    } catch (e, stackTrace) {
-      AppLogger.error('❌ EXCEPTION DURING PROFILE SUBMISSION:');
-      AppLogger.error('  • Error: $e');
-      AppLogger.error('  • Stack Trace: $stackTrace');
-      AppLogger.error('  • Error Type: ${e.runtimeType}');
-      Get.snackbar('Error', 'An error occurred. Please try again.',
-          snackPosition: SnackPosition.BOTTOM);
-      return {'success': false, 'message': 'An error occurred'};
-    } finally {
-      isLoading.value = false;
-      AppLogger.info('🔄 Loading state reset to false');
-    }
+    // Use the helper function for API call
+    return _handleApiCall(
+      'Profile submission using CompleteProfile model',
+      () => _accountSetupService.completeProfile(data: profileData),
+      successMessage: 'Profile submitted successfully!',
+      checkVerificationStatus: true,
+      navigateOnSuccess: true,
+      navigationRoute: AppRoutes.locationView,
+    );
   }
 
   /// Create a CompleteProfile instance from current controller data
@@ -958,91 +974,20 @@ class AccountsController extends GetxController {
 
   /// Submit complete profile data without photos
   Future<Map<String, dynamic>> submitCompleteProfile() async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting complete profile (without photos)');
+    _ensureService();
+    AppLogger.info('🚀 Submitting complete profile (without photos)');
 
-      // Prepare complete profile data
-      final profileData = _prepareCompleteProfileData(includeImageFields: true);
-      AppLogger.debug('🧾 Payload keys: ${profileData.keys.toList()}');
+    // Prepare complete profile data
+    final profileData = _prepareCompleteProfileData(includeImageFields: true);
+    AppLogger.debug('🧾 Payload keys: ${profileData.keys.toList()}');
 
-      final response = await _accountSetupService.completeProfile(data: profileData);
-
-      // Check if the response is successful
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final result = response.data as Map<String, dynamic>;
-        
-        // Check for verification status changes
-        if (result['message'] != null) {
-          final message = result['message'].toString();
-          if (message.contains('not verified') || message.contains('verification')) {
-            AppLogger.warning('⚠️ [ACCOUNTS CONTROLLER] Verification status change detected: $message');
-            
-            // Show verification required message
-            Get.snackbar(
-              'Verification Required',
-              message,
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.orange,
-              colorText: Colors.white,
-              duration: const Duration(seconds: 5),
-            );
-          }
-        }
-
-        if (result['success'] == true) {
-          AppLogger.success('✅ Profile completed successfully');
-          Get.snackbar('Success', 'Profile completed successfully!',
-              snackPosition: SnackPosition.BOTTOM);
-        } else {
-          AppLogger.warning('⚠️ Profile completion response not successful: ${result['message']}');
-          Get.snackbar('Error', result['message'] ?? 'Profile completion failed',
-              snackPosition: SnackPosition.BOTTOM);
-        }
-
-        return result;
-      } else {
-        final result = response.data as Map<String, dynamic>;
-        
-        // Check for verification status changes in error responses
-        if (result['message'] != null) {
-          final message = result['message'].toString();
-          if (message.contains('not verified') || message.contains('verification')) {
-            AppLogger.warning('⚠️ [ACCOUNTS CONTROLLER] Verification status change detected in error response: $message');
-            
-            // Show verification required message
-            Get.snackbar(
-              'Verification Required',
-              message,
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.orange,
-              colorText: Colors.white,
-              duration: const Duration(seconds: 5),
-            );
-            
-            return result; // Return the original error response
-          }
-        }
-        
-        final errorMessage = result['message'] ?? 'Failed to complete profile: ${response.statusCode}';
-        AppLogger.error(errorMessage);
-        Get.snackbar('Error', errorMessage,
-            snackPosition: SnackPosition.BOTTOM);
-        return result;
-      }
-    } catch (e) {
-      AppLogger.error('❌ Exception during submitCompleteProfile: $e');
-      Get.snackbar('Error', 'Failed to complete profile: $e',
-          snackPosition: SnackPosition.BOTTOM);
-      return {
-        'success': false,
-        'message': 'Failed to complete profile: $e',
-      };
-    } finally {
-      isLoading.value = false;
-      AppLogger.info('🛑 submitCompleteProfile finished');
-    }
+    // Use the helper function for API call
+    return _handleApiCall(
+      'Profile completion',
+      () => _accountSetupService.completeProfile(data: profileData),
+      successMessage: 'Profile completed successfully!',
+      checkVerificationStatus: true,
+    );
   }
 
   // =========================================
@@ -1051,307 +996,146 @@ class AccountsController extends GetxController {
 
   /// Submit personal info (intro view)
   Future<Map<String, dynamic>> submitPersonalInfo() async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting personal info');
+    _ensureService();
+    AppLogger.info('🚀 Submitting personal info');
 
-      final personalInfoData = {
-        'first_name': firstName.value,
-        'last_name': lastName.value,
-        'age': age.value,
-      };
+    final personalInfoData = {
+      'first_name': firstName.value,
+      'last_name': lastName.value,
+      'age': age.value,
+    };
 
-      final response = await _accountSetupService.completeProfile(data: personalInfoData);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.success('✅ Personal info submitted successfully');
-        return response.data as Map<String, dynamic>;
-      } else {
-        final errorMessage = 'Failed to submit personal info: ${response.statusCode}';
-        AppLogger.error(errorMessage);
-        return {'success': false, 'message': errorMessage};
-      }
-    } catch (e) {
-      AppLogger.error('❌ Exception during submitPersonalInfo: $e');
-      return {'success': false, 'message': 'Failed to submit personal info: $e'};
-    } finally {
-      isLoading.value = false;
-    }
+    // Use the helper function for API call
+    return _handleApiCall(
+      'Personal info submission',
+      () => _accountSetupService.completeProfile(data: personalInfoData),
+      showSuccessSnackbar: false,
+    );
   }
 
   /// Submit gender selection
   Future<Map<String, dynamic>> submitGenderSelection() async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting gender selection');
+    _ensureService();
+    AppLogger.info('🚀 Submitting gender selection');
 
-      final genderData = {
-        'gender': selectedGender.value,
-        'like_to_meet': selectedGenders,
-      };
+    final genderData = {
+      'gender': selectedGender.value,
+      'like_to_meet': selectedGenders,
+    };
 
-      final response = await _accountSetupService.completeProfile(data: genderData);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.success('✅ Gender selection submitted successfully');
-        return response.data as Map<String, dynamic>;
-      } else {
-        final errorMessage = 'Failed to submit gender selection: ${response.statusCode}';
-        AppLogger.error(errorMessage);
-        return {'success': false, 'message': errorMessage};
-      }
-    } catch (e) {
-      AppLogger.error('❌ Exception during submitGenderSelection: $e');
-      return {'success': false, 'message': 'Failed to submit gender selection: $e'};
-    } finally {
-      isLoading.value = false;
-    }
+    // Use the helper function for API call
+    return _handleApiCall(
+      'Gender selection submission',
+      () => _accountSetupService.completeProfile(data: genderData),
+      showSuccessSnackbar: false,
+    );
   }
 
   /// Submit height and weight
   Future<Map<String, dynamic>> submitHeightWeight() async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting height and weight');
+    _ensureService();
+    AppLogger.info('🚀 Submitting height and weight');
 
-      final heightWeightData = {
-        'height': heightController.text,
-        'weight': weightController.text,
-      };
+    final heightWeightData = {
+      'height': heightController.text,
+      'weight': weightController.text,
+    };
 
-      final response = await _accountSetupService.completeProfile(data: heightWeightData);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.success('✅ Height and weight submitted successfully');
-        return response.data as Map<String, dynamic>;
-      } else {
-        final errorMessage = 'Failed to submit height and weight: ${response.statusCode}';
-        AppLogger.error(errorMessage);
-        return {'success': false, 'message': errorMessage};
-      }
-    } catch (e) {
-      AppLogger.error('❌ Exception during submitHeightWeight: $e');
-      return {'success': false, 'message': 'Failed to submit height and weight: $e'};
-    } finally {
-      isLoading.value = false;
-    }
+    // Use the helper function for API call
+    return _handleApiCall(
+      'Height and weight submission',
+      () => _accountSetupService.completeProfile(data: heightWeightData),
+      showSuccessSnackbar: false,
+    );
   }
 
   /// Submit education information
   Future<Map<String, dynamic>> submitEducation() async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting education information');
+    _ensureService();
+    AppLogger.info('🚀 Submitting education information');
 
-      final educationData = getEducationFormData();
+    final educationData = getEducationFormData();
 
-      final response = await _accountSetupService.completeProfile(data: educationData);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.success('✅ Education information submitted successfully');
-        return response.data as Map<String, dynamic>;
-      } else {
-        final errorMessage = 'Failed to submit education information: ${response.statusCode}';
-        AppLogger.error(errorMessage);
-        return {'success': false, 'message': errorMessage};
-      }
-    } catch (e) {
-      AppLogger.error('❌ Exception during submitEducation: $e');
-      return {'success': false, 'message': 'Failed to submit education information: $e'};
-    } finally {
-      isLoading.value = false;
-    }
+    // Use the helper function for API call
+    return _handleApiCall(
+      'Education information submission',
+      () => _accountSetupService.completeProfile(data: educationData),
+      showSuccessSnackbar: false,
+    );
   }
 
   /// Submit faith and belief information
   Future<Map<String, dynamic>> submitFaithBelief() async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting faith and belief information');
+    _ensureService();
+    AppLogger.info('🚀 Submitting faith and belief information');
 
-      final faithData = {
-        'religion': selectedReligion ?? '',
-        'zodiac': selectedZodiac ?? '',
-        'communication_style': selectedCommunicationStyle.value != null ? communicationStyles[selectedCommunicationStyle.value!] : '',
-      };
+    final faithData = {
+      'religion': selectedReligion ?? '',
+      'zodiac': selectedZodiac ?? '',
+      'communication_style': selectedCommunicationStyle.value != null ? communicationStyles[selectedCommunicationStyle.value!] : '',
+    };
 
-      final response = await _accountSetupService.completeProfile(data: faithData);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.success('✅ Faith and belief information submitted successfully');
-        return response.data as Map<String, dynamic>;
-      } else {
-        final errorMessage = 'Failed to submit faith and belief information: ${response.statusCode}';
-        AppLogger.error(errorMessage);
-        return {'success': false, 'message': errorMessage};
-      }
-    } catch (e) {
-      AppLogger.error('❌ Exception during submitFaithBelief: $e');
-      return {'success': false, 'message': 'Failed to submit faith and belief information: $e'};
-    } finally {
-      isLoading.value = false;
-    }
+    // Use the helper function for API call
+    return _handleApiCall(
+      'Faith and belief information submission',
+      () => _accountSetupService.completeProfile(data: faithData),
+      showSuccessSnackbar: false,
+    );
   }
 
   /// Submit habits information
   Future<Map<String, dynamic>> submitHabits() async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting habits information');
+    _ensureService();
+    AppLogger.info('🚀 Submitting habits information');
 
-      final habitsData = {
-        'exercise_frequency': selectedExerciseFrequency.value != null ? exerciseFrequencies[selectedExerciseFrequency.value!] : '',
-        'food_preference': selectedFoodPreference.value != null ? foodPreferences[selectedFoodPreference.value!] : '',
-        'social_media_usage': selectedSocialMediaUsage.value != null ? socialMediaUsage[selectedSocialMediaUsage.value!] : '',
-        'smoking_drinking': selectedSmokingDrinking.value != null ? smokingDrinking[selectedSmokingDrinking.value!] : '',
-        'try_new_experiences': selectedTryNewExperiences.value != null ? tryNewExperiences[selectedTryNewExperiences.value!] : '',
-      };
+    final habitsData = {
+      'exercise_frequency': selectedExerciseFrequency.value != null ? exerciseFrequencies[selectedExerciseFrequency.value!] : '',
+      'food_preference': selectedFoodPreference.value != null ? foodPreferences[selectedFoodPreference.value!] : '',
+      'social_media_usage': selectedSocialMediaUsage.value != null ? socialMediaUsage[selectedSocialMediaUsage.value!] : '',
+      'smoking_drinking': selectedSmokingDrinking.value != null ? smokingDrinking[selectedSmokingDrinking.value!] : '',
+      'try_new_experiences': selectedTryNewExperiences.value != null ? tryNewExperiences[selectedTryNewExperiences.value!] : '',
+    };
 
-      final response = await _accountSetupService.completeProfile(data: habitsData);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.success('✅ Habits information submitted successfully');
-        return response.data as Map<String, dynamic>;
-      } else {
-        final errorMessage = 'Failed to submit habits information: ${response.statusCode}';
-        AppLogger.error(errorMessage);
-        return {'success': false, 'message': errorMessage};
-      }
-    } catch (e) {
-      AppLogger.error('❌ Exception during submitHabits: $e');
-      return {'success': false, 'message': 'Failed to submit habits information: $e'};
-    } finally {
-      isLoading.value = false;
-    }
+    // Use the helper function for API call
+    return _handleApiCall(
+      'Habits information submission',
+      () => _accountSetupService.completeProfile(data: habitsData),
+      showSuccessSnackbar: false,
+    );
   }
 
   /// Submit personality traits
   Future<Map<String, dynamic>> submitTraits() async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting personality traits');
+    _ensureService();
+    AppLogger.info('🚀 Submitting personality traits');
 
-      final traitsData = {
-        'personality_traits': selectedTraitIndices.map((index) => traits[index]).toList(),
-      };
+    final traitsData = {
+      'personality_traits': selectedTraitIndices.map((index) => traits[index]).toList(),
+    };
 
-      final response = await _accountSetupService.completeProfile(data: traitsData);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.success('✅ Personality traits submitted successfully');
-        return response.data as Map<String, dynamic>;
-      } else {
-        final errorMessage = 'Failed to submit personality traits: ${response.statusCode}';
-        AppLogger.error(errorMessage);
-        return {'success': false, 'message': errorMessage};
-      }
-    } catch (e) {
-      AppLogger.error('❌ Exception during submitTraits: $e');
-      return {'success': false, 'message': 'Failed to submit personality traits: $e'};
-    } finally {
-      isLoading.value = false;
-    }
+    // Use the helper function for API call
+    return _handleApiCall(
+      'Personality traits submission',
+      () => _accountSetupService.completeProfile(data: traitsData),
+      showSuccessSnackbar: false,
+    );
   }
 
   /// Submit interests
   Future<Map<String, dynamic>> submitInterests() async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting interests');
+    _ensureService();
+    AppLogger.info('🚀 Submitting interests');
 
-      final interestsData = {
-        'interests': selectedInterestIndices.map((index) => interestOptions[index]['title']).toList(),
-      };
+    final interestsData = {
+      'interests': selectedInterestIndices.map((index) => interestOptions[index]['title']).toList(),
+    };
 
-      final response = await _accountSetupService.completeProfile(data: interestsData);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.success('✅ Interests submitted successfully');
-        return response.data as Map<String, dynamic>;
-      } else {
-        final errorMessage = 'Failed to submit interests: ${response.statusCode}';
-        AppLogger.error(errorMessage);
-        return {'success': false, 'message': errorMessage};
-      }
-    } catch (e) {
-      AppLogger.error('❌ Exception during submitInterests: $e');
-      return {'success': false, 'message': 'Failed to submit interests: $e'};
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  /// Submit lifestyle preferences
-  Future<Map<String, dynamic>> submitLifestyle() async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting lifestyle preferences');
-
-      final lifestyleData = {
-        'day_preference': selectedDayPreference.value != null ? dayPreferences[selectedDayPreference.value!] : '',
-        'love_language': selectedLoveLanguage.value != null ? loveLanguages[selectedLoveLanguage.value!] : '',
-        'weekend_activity': selectedWeekendActivity.value != null ? weekendActivities[selectedWeekendActivity.value!] : '',
-        'travel_preference': selectedTravelPreference.value != null ? travelPreferences[selectedTravelPreference.value!] : '',
-      };
-
-      final response = await _accountSetupService.completeProfile(data: lifestyleData);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.success('✅ Lifestyle preferences submitted successfully');
-        return response.data as Map<String, dynamic>;
-      } else {
-        final errorMessage = 'Failed to submit lifestyle preferences: ${response.statusCode}';
-        AppLogger.error(errorMessage);
-        return {'success': false, 'message': errorMessage};
-      }
-    } catch (e) {
-      AppLogger.error('❌ Exception during submitLifestyle: $e');
-      return {'success': false, 'message': 'Failed to submit lifestyle preferences: $e'};
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  /// Submit "like to do" preferences
-  Future<Map<String, dynamic>> submitLikeToDo() async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Submitting "like to do" preferences');
-
-      final likeToDoData = <String, List<String>>{};
-
-      selectedLikeToDoOptions.forEach((category, indices) {
-        if (indices.isNotEmpty) {
-          likeToDoData[category] = indices.map((index) => likeToDoOptions[category]![index]).toList();
-        }
-      });
-
-      final response = await _accountSetupService.completeProfile(data: likeToDoData);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.success('✅ "Like to do" preferences submitted successfully');
-        return response.data as Map<String, dynamic>;
-      } else {
-        final errorMessage = 'Failed to submit "like to do" preferences: ${response.statusCode}';
-        AppLogger.error(errorMessage);
-        return {'success': false, 'message': errorMessage};
-      }
-    } catch (e) {
-      AppLogger.error('❌ Exception during submitLikeToDo: $e');
-      return {'success': false, 'message': 'Failed to submit "like to do" preferences: $e'};
-    } finally {
-      isLoading.value = false;
-    }
+    // Use the helper function for API call
+    return _handleApiCall(
+      'Interests submission',
+      () => _accountSetupService.completeProfile(data: interestsData),
+      showSuccessSnackbar: false,
+    );
   }
 
   // =========================================
@@ -1466,100 +1250,54 @@ class AccountsController extends GetxController {
     required String headShotImagePath,
     required String personalityImagePath,
   }) async {
-    try {
-      isLoading.value = true;
-      _ensureService();
-      AppLogger.info('🚀 Uploading 3 specific images separately');
+    _ensureService();
+    AppLogger.info('🚀 Uploading 3 specific images separately');
 
-      // Convert to File objects
-      final bodyImage = bodyImagePath.isNotEmpty ? File(bodyImagePath) : null;
-      final headShotImage = headShotImagePath.isNotEmpty ? File(headShotImagePath) : null;
-      final personalityImage = personalityImagePath.isNotEmpty ? File(personalityImagePath) : null;
+    // Convert to File objects
+    final bodyImage = bodyImagePath.isNotEmpty ? File(bodyImagePath) : null;
+    final headShotImage = headShotImagePath.isNotEmpty ? File(headShotImagePath) : null;
+    final personalityImage = personalityImagePath.isNotEmpty ? File(personalityImagePath) : null;
 
-      AppLogger.info('🖼️ PREPARING IMAGES FOR UPLOAD:');
-      AppLogger.info('  • Body Image: ${bodyImage?.path ?? 'Not provided'}');
-      AppLogger.info('  • Head Shot Image: ${headShotImage?.path ?? 'Not provided'}');
-      AppLogger.info('  • Personality Image: ${personalityImage?.path ?? 'Not provided'}');
+    // Log image preparation using helper function
+    _logImagePreparation('PREPARING IMAGES FOR UPLOAD', {
+      'bodyImage': bodyImage?.path,
+      'headShotImage': headShotImage?.path,
+      'personalityImage': personalityImage?.path,
+    });
 
-      // Validate that all 3 images are provided
-      if (bodyImage == null || headShotImage == null || personalityImage == null) {
-        AppLogger.warning('⚠️ Missing required images for upload');
-        return {
-          'success': false,
-          'message': 'All 3 images (body, headshot, personality) are required',
-        };
-      }
+    // Validate that all 3 images are provided
+    if (bodyImage == null || headShotImage == null || personalityImage == null) {
+      AppLogger.warning('⚠️ Missing required images for upload');
+      return {
+        'success': false,
+        'message': 'All 3 images (body, headshot, personality) are required',
+      };
+    }
 
-      // Validate that files exist
-      if (!await bodyImage.exists() || !await headShotImage.exists() || !await personalityImage.exists()) {
-        AppLogger.warning('⚠️ One or more image files do not exist');
-        return {
-          'success': false,
-          'message': 'One or more image files are missing or invalid',
-        };
-      }
+    // Validate that files exist using helper function
+    final imageFiles = {
+      'bodyImage': bodyImage,
+      'headShotImage': headShotImage,
+      'personalityImage': personalityImage,
+    };
+    
+    if (!await _validateImageFiles(imageFiles)) {
+      return {
+        'success': false,
+        'message': 'One or more image files are missing or invalid',
+      };
+    }
 
-      AppLogger.info('🌐 SENDING IMAGES TO BACKEND...');
-      final response = await _accountSetupService.uploadSpecificImages(
+    // Use the helper function for API call
+    return _handleApiCall(
+      '3 specific images upload',
+      () => _accountSetupService.uploadSpecificImages(
         bodyImage: bodyImage,
         headShotImage: headShotImage,
         personalityImage: personalityImage,
-      );
-
-      AppLogger.info('📡 BACKEND RESPONSE:');
-      AppLogger.info('  • Status Code: ${response.statusCode}');
-      AppLogger.info('  • Response Data: ${response.data}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final result = response.data as Map<String, dynamic>;
-        AppLogger.info('✅ SUCCESSFUL IMAGE UPLOAD:');
-        AppLogger.info('  • Success: ${result['success']}');
-        AppLogger.info('  • Message: ${result['message'] ?? 'No message'}');
-        AppLogger.info('  • Full Response: $result');
-
-        if (result['success'] == true) {
-          AppLogger.success('🎉 3 specific images uploaded successfully!');
-          Get.snackbar(
-            'Success',
-            'Images uploaded successfully!',
-            snackPosition: SnackPosition.BOTTOM,
-          );
-        } else {
-          AppLogger.warning('⚠️ Image upload response not successful: ${result['message']}');
-          Get.snackbar(
-            'Error',
-            result['message'] ?? 'Image upload failed',
-            snackPosition: SnackPosition.BOTTOM,
-          );
-        }
-        return result;
-      } else {
-        AppLogger.error('❌ IMAGE UPLOAD FAILED:');
-        AppLogger.error('  • Status Code: ${response.statusCode}');
-        AppLogger.error('  • Response Data: ${response.data}');
-        AppLogger.error('  • Status Message: ${response.statusMessage}');
-        Get.snackbar(
-          'Error',
-          'Image upload failed. Please try again.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return {'success': false, 'message': 'Image upload failed'};
-      }
-    } catch (e, stackTrace) {
-      AppLogger.error('❌ EXCEPTION DURING IMAGE UPLOAD:');
-      AppLogger.error('  • Error: $e');
-      AppLogger.error('  • Stack Trace: $stackTrace');
-      AppLogger.error('  • Error Type: ${e.runtimeType}');
-      Get.snackbar(
-        'Error',
-        'An error occurred during image upload. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return {'success': false, 'message': 'An error occurred during image upload'};
-    } finally {
-      isLoading.value = false;
-      AppLogger.info('🔄 Loading state reset to false');
-    }
+      ),
+      successMessage: 'Images uploaded successfully!',
+    );
   }
 
   void clearAllData() {
