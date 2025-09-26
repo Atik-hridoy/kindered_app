@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:io';
+import 'package:kindered_app/core/logger/app_logger.dart';
 
 class CustomPhotoCard extends StatelessWidget {
   final String imageUrl;
@@ -43,66 +45,7 @@ class CustomPhotoCard extends StatelessWidget {
             Container(
               width: double.infinity,
               height: double.infinity,
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  // Handle 404 errors and other image loading failures
-                  print('Image loading error: $error');
-                  return Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.grey[300]!,
-                          Colors.grey[400]!,
-                        ],
-                      ),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.person,
-                            size: 80,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Image not available',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              color: Colors.grey[700],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    color: Colors.grey[200],
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                            : null,
-                        strokeWidth: 2,
-                      ),
-                    ),
-                  );
-                },
-              ),
+              child: _buildImage(),
             ),
             
             // Gradient Overlay
@@ -270,6 +213,103 @@ class CustomPhotoCard extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImage() {
+    // Handle empty or invalid image URLs
+    if (imageUrl.isEmpty || imageUrl == 'file:///') {
+      AppLogger.warning('Empty or invalid image URL provided: $imageUrl');
+      return _buildErrorPlaceholder();
+    }
+    
+    if (imageUrl.startsWith('file://')) {
+      // Handle file URI - convert to file path
+      try {
+        final filePath = imageUrl.replaceFirst('file://', '');
+        final file = File(filePath);
+        
+        if (file.existsSync()) {
+          return Image.file(
+            file,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              AppLogger.error('File image loading error: $error');
+              return _buildErrorPlaceholder();
+            },
+          );
+        } else {
+          AppLogger.warning('File does not exist: $filePath');
+          return _buildErrorPlaceholder();
+        }
+      } catch (e) {
+        AppLogger.error('Error processing file URI: $e');
+        return _buildErrorPlaceholder();
+      }
+    } else {
+      // Handle network URL
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          AppLogger.error('Network image loading error: $error');
+          return _buildErrorPlaceholder();
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: Colors.grey[200],
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+                strokeWidth: 2,
+              ),
+            ),
+          );
+        },
+      );
+    }
+  }
+  Widget _buildErrorPlaceholder() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF4A5568),
+            Color(0xFF2D3748),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.person,
+              size: 80,
+              color: Colors.grey[600],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No Image Available',
+              style: TextStyle(
+                color: Colors.grey[400],
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],

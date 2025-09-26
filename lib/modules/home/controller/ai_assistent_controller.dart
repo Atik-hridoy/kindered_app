@@ -5,77 +5,39 @@ import 'package:kindered_app/core/logger/app_logger.dart';
 import '../services/ai_assistent_service.dart';
 import '../models/ai_assistent_get_model.dart';
 
+
 class AiAssistentController extends GetxController {
-  // Text controller for message input
-  final TextEditingController messageController = TextEditingController();
-  
-  // Focus node for the text field
-  final FocusNode messageFocusNode = FocusNode();
-  
-  // Observable for messages
-  final RxList<Map<String, dynamic>> messages = <Map<String, dynamic>>[].obs;
-  
-  // Observable for loading state
-  final RxBool isLoading = false.obs;
-  
-  // Observable for send button enabled state
+  final TextEditingController messageController = TextEditingController(); 
+  final FocusNode messageFocusNode = FocusNode();  
+  final RxList<Map<String, dynamic>> messages = <Map<String, dynamic>>[].obs; 
+  final RxBool isLoading = false.obs;  
   final RxBool isSendButtonEnabled = false.obs;
-  
-  // AI Assistant Service
-  late AiAssistentService _aiService;
-  
-  // Observable for matchmaking data
+
+
+  late AiAssistentService _aiService; 
   final Rx<MatchmakingResponse?> matchmakingData = Rx<MatchmakingResponse?>(null);
-  
-  // Observable for API error state
-  final RxString errorMessage = ''.obs;
-  
-  // Session ID for chat continuity
-  final RxString sessionId = ''.obs;
-  
-  // Connection status observable
-  final RxBool isConnected = true.obs;
-  
-  // Retry count for failed requests
-  final RxInt retryCount = 0.obs;
-  
-  // Maximum retry attempts
+  final RxString errorMessage = ''.obs; 
+  final RxString sessionId = ''.obs;  
+  final RxBool isConnected = true.obs;  
+  final RxInt retryCount = 0.obs; 
   static const int maxRetryAttempts = 3;
   
-  // Typing indicator for AI responses
   final RxBool isAiTyping = false.obs;
-  
-  // Last activity timestamp
   final Rx<DateTime> lastActivity = DateTime.now().obs;
-
-  // Quick questions observable
   final RxList<String> quickQuestions = <String>[].obs;
-
-  // Quick questions loading state
   final RxBool isQuickQuestionsLoading = false.obs;
-
-  // Quick questions error state
   final RxString quickQuestionsError = ''.obs;
   
   @override
   void onInit() {
     super.onInit();
     
-    // Initialize AI service
     _aiService = AiAssistentService();
-    
-    // Add listener to text controller to enable/disable send button
     messageController.addListener(() {
       isSendButtonEnabled.value = messageController.text.trim().isNotEmpty;
     });
     
-    // Initialize with welcome message
-    _addWelcomeMessage();
-    
-    // Load initial matchmaking data
     _loadMatchmakingData();
-    
-    // Load quick questions
     _loadQuickQuestions();
   }
   
@@ -86,33 +48,22 @@ class AiAssistentController extends GetxController {
     super.onClose();
   }
   
-  void _addWelcomeMessage() {
-    messages.add({
-      'text': 'Looking for someone who loves to cook and enjoy new things',
-      'isMe': false,
-      'timestamp': DateTime.now(),
-    });
-  }
-  
+
   void sendMessage() {
     final messageText = messageController.text.trim();
     if (messageText.isEmpty) return;
     
-    // Add user message
     messages.add({
       'text': messageText,
       'isMe': true,
       'timestamp': DateTime.now(),
     });
     
-    // Clear input field
     messageController.clear();
     
-    // Send message to AI API
     _sendAIMessage(messageText);
   }
   
-  /// Load initial matchmaking data from API
   Future<void> _loadMatchmakingData() async {
     try {
       isLoading.value = true;
@@ -122,25 +73,21 @@ class AiAssistentController extends GetxController {
       final response = await _aiService.getMatchmakingData();
       matchmakingData.value = response;
       
-      // Set session ID from response
       if (response.data?.sessionId != null) {
         sessionId.value = response.data!.sessionId;
       }
       
-      // Update last activity
       updateLastActivity();
       
-      // Reset retry count on success
       resetRetryCount();
       
-      // Add greeting message if available
       final data = response.data;
-      if (data != null && data.greeting.isNotEmpty) {
-        _addAIMessage(data.greeting);
+      if (data != null && data.messages.isNotEmpty) {
+        final firstMessage = data.messages.first;
+        _addAIMessage(firstMessage.message, matchData: firstMessage.matchData);
       }
       
     } on DioException catch (e) {
-      // Handle network errors specifically
       if (e.type == DioExceptionType.connectionError || 
           e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
@@ -164,7 +111,6 @@ class AiAssistentController extends GetxController {
     }
     
     if (!isSessionValid) {
-      // Session expired, create new session
       await _loadMatchmakingData();
     }
     
@@ -216,18 +162,18 @@ class AiAssistentController extends GetxController {
   }
   
   /// Add AI message to chat
-  void _addAIMessage(String text) {
+  void _addAIMessage(String text, {MatchData? matchData}) {
     messages.add({
       'text': text,
       'isMe': false,
       'timestamp': DateTime.now(),
+      'matchData': matchData,
     });
   }
   
   
   void clearMessages() {
     messages.clear();
-    _addWelcomeMessage();
   }
   
   String formatTime(DateTime timestamp) {
@@ -262,7 +208,7 @@ class AiAssistentController extends GetxController {
   List<String> get matchReasons => currentMatch?.reasons ?? [];
   
   /// Get match distance
-  int get matchDistance => currentMatch?.distance ?? 0;
+  int get matchDistance => currentMatch?.distance.toInt() ?? 0;
   
   /// Get match user info
   MatchUser? get matchUser => currentMatch?.user;
@@ -536,6 +482,16 @@ class AiAssistentController extends GetxController {
       // Update last activity
       updateLastActivity();
       resetRetryCount();
+
+      // Check if response contains new match data
+      if (response['data'] != null && response['data']['currentMatch'] != null) {
+        // Update matchmaking data with the new match from response
+        final newMatchmakingData = MatchmakingResponse.fromJson(response);
+        matchmakingData.value = newMatchmakingData;
+      } else {
+        // Refresh matchmaking data to get the next match
+        await refreshMatchmakingData();
+      }
 
       AppLogger.success('✅ Pass action processed successfully');
 

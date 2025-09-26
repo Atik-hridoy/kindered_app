@@ -1,24 +1,25 @@
-// ai_assistent_get_model.dart
+import 'dart:convert';
 
-class MatchmakingResponse {
+/// Top-level response
+class CurrentMatchResponse {
   final bool success;
   final String message;
   final int statusCode;
-  final MatchmakingData? data;
+  final MatchData data;
 
-  MatchmakingResponse({
+  CurrentMatchResponse({
     required this.success,
     required this.message,
     required this.statusCode,
-    this.data,
+    required this.data,
   });
 
-  factory MatchmakingResponse.fromJson(Map<String, dynamic> json) {
-    return MatchmakingResponse(
+  factory CurrentMatchResponse.fromJson(Map<String, dynamic> json) {
+    return CurrentMatchResponse(
       success: json['success'] ?? false,
       message: json['message'] ?? '',
       statusCode: json['statusCode'] ?? 0,
-      data: json['data'] != null ? MatchmakingData.fromJson(json['data']) : null,
+      data: MatchData.fromJson(json['data']),
     );
   }
 
@@ -26,184 +27,37 @@ class MatchmakingResponse {
         'success': success,
         'message': message,
         'statusCode': statusCode,
-        'data': data?.toJson(),
-      };
-}
-
-class MatchmakingData {
-  final List<ChatMessage> messages;
-  final CurrentMatch currentMatch;
-  final String sessionId;
-  final bool hasMoreMatches;
-
-  MatchmakingData({
-    required this.messages,
-    required this.currentMatch,
-    required this.sessionId,
-    required this.hasMoreMatches,
-  });
-
-  factory MatchmakingData.fromJson(Map<String, dynamic> json) {
-    return MatchmakingData(
-      messages: (json['messages'] as List?)
-              ?.map((msg) => ChatMessage.fromJson(msg))
-              .toList() ??
-          [],
-      currentMatch: CurrentMatch.fromJson(json['currentMatch'] ?? {}),
-      sessionId: json['sessionId'] ?? '',
-      hasMoreMatches: json['hasMoreMatches'] ?? false,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        'messages': messages.map((msg) => msg.toJson()).toList(),
-        'currentMatch': currentMatch.toJson(),
-        'sessionId': sessionId,
-        'hasMoreMatches': hasMoreMatches,
-      };
-}
-
-class ChatMessage {
-  final String id;
-  final String sessionId;
-  final MessageUser userId;
-  final String message;
-  final String messageType;
-  final MatchData? matchData;
-  final String createdAt;
-  final String updatedAt;
-
-  ChatMessage({
-    required this.id,
-    required this.sessionId,
-    required this.userId,
-    required this.message,
-    required this.messageType,
-    this.matchData,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-
-  factory ChatMessage.fromJson(Map<String, dynamic> json) {
-    return ChatMessage(
-      id: json['_id'] ?? '',
-      sessionId: json['session_id'] ?? '',
-      userId: MessageUser.fromJson(json['user_id'] ?? {}),
-      message: json['message'] ?? '',
-      messageType: json['message_type'] ?? '',
-      matchData: json['match_data'] != null
-          ? MatchData.fromJson(json['match_data'])
-          : null,
-      createdAt: json['createdAt'] ?? '',
-      updatedAt: json['updatedAt'] ?? '',
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        '_id': id,
-        'session_id': sessionId,
-        'user_id': userId.toJson(),
-        'message': message,
-        'message_type': messageType,
-        'match_data': matchData?.toJson(),
-        'createdAt': createdAt,
-        'updatedAt': updatedAt,
-      };
-}
-
-
-class MessageUser {
-  final String id;
-  final String firstName;
-  final String lastName;
-
-  MessageUser({
-    required this.id,
-    required this.firstName,
-    required this.lastName,
-  });
-
-  factory MessageUser.fromJson(dynamic json) {
-    // Handle case where user_id is a String (just the ID)
-    if (json is String) {
-      return MessageUser(
-        id: json,
-        firstName: '',
-        lastName: '',
-      );
-    }
-    
-    // Handle case where user_id is a Map with user details
-    if (json is Map<String, dynamic>) {
-      return MessageUser(
-        id: json['_id'] ?? json['id'] ?? '',
-        firstName: json['firstName'] ?? json['first_name'] ?? '',
-        lastName: json['lastName'] ?? json['last_name'] ?? '',
-      );
-    }
-    
-    // Fallback for null or invalid data
-    return MessageUser(
-      id: '',
-      firstName: '',
-      lastName: '',
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        '_id': id,
-        'firstName': firstName,
-        'lastName': lastName,
+        'data': data.toJson(),
       };
 }
 
 class MatchData {
-  final String userId;
-  final String? userFirstName;
-  final String? userLastName;
-  final String? userGender;
-  final List<String> userImage;
-  final int userAge;
-  final int matchScore;
-  final List<String> commonInterests;
-  final double distance;
+  final CurrentMatch currentMatch;
+  final bool hasMoreMatches;
+  final String sessionId;
+  final String message;
 
   MatchData({
-    required this.userId,
-    this.userFirstName,
-    this.userLastName,
-    this.userGender,
-    required this.userImage,
-    required this.userAge,
-    required this.matchScore,
-    required this.commonInterests,
-    required this.distance,
+    required this.currentMatch,
+    required this.hasMoreMatches,
+    required this.sessionId,
+    required this.message,
   });
 
   factory MatchData.fromJson(Map<String, dynamic> json) {
     return MatchData(
-      userId: json['user_id'] ?? '',
-      userFirstName: json['user_firstName'],
-      userLastName: json['user_lastName'],
-      userGender: json['user_gender'],
-      userImage: List<String>.from(json['user_image'] ?? []),
-      userAge: (json['user_age'] ?? 0).toInt(),
-      matchScore: (json['match_score'] ?? 0).toInt(),
-      commonInterests: List<String>.from(json['common_interests'] ?? []),
-      distance: (json['distance'] ?? 0).toDouble(),
+      currentMatch: CurrentMatch.fromJson(json['currentMatch']),
+      hasMoreMatches: json['hasMoreMatches'] ?? false,
+      sessionId: json['sessionId'] ?? '',
+      message: json['message'] ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'user_id': userId,
-        'user_firstName': userFirstName,
-        'user_lastName': userLastName,
-        'user_gender': userGender,
-        'user_image': userImage,
-        'user_age': userAge,
-        'match_score': matchScore,
-        'common_interests': commonInterests,
-        'distance': distance,
+        'currentMatch': currentMatch.toJson(),
+        'hasMoreMatches': hasMoreMatches,
+        'sessionId': sessionId,
+        'message': message,
       };
 }
 
@@ -224,8 +78,8 @@ class CurrentMatch {
 
   factory CurrentMatch.fromJson(Map<String, dynamic> json) {
     return CurrentMatch(
-      user: MatchUser.fromJson(json['user'] ?? {}),
-      matchScore: (json['matchScore'] ?? 0).toInt(),
+      user: MatchUser.fromJson(json['user']),
+      matchScore: json['matchScore'] ?? 0,
       commonInterests: List<String>.from(json['commonInterests'] ?? []),
       reasons: List<String>.from(json['reasons'] ?? []),
       distance: (json['distance'] ?? 0).toDouble(),
@@ -247,32 +101,33 @@ class MatchUser {
   final String lastName;
   final String role;
   final String email;
-  final String? phone;
+  final String phone;
   final int age;
   final String gender;
-  final Location? location;
+  final Location location;
   final String bodyImage;
   final String headShotImage;
   final String personalityImage;
-  final List<dynamic> image;
-  final List<dynamic> likeToMeet;
-  final String? relationType;
-  final Body? body;
-  final EduJob? eduJob;
+  final List<String> image;
+  final List<String> likeToMeet;
+  final String relationType;
+  final Body body;
+  final EduJob eduJob;
   final Interests interests;
-  final List<dynamic> personalTraitsInspire;
+  final List<String> personalTraitsInspire;
   final String religion;
   final String zodiacSign;
   final Lifestyle lifestyle;
   final Habits habits;
-  final String? beliefsOtherText;
+  final String beliefsOtherText;
   final String address;
-  final String? traitsOtherText;
-  final String? aboutMe;
+  final String traitsOtherText;
+  final String aboutMe;
   final String status;
   final bool isVerified;
   final int profileCompletionPercentage;
   final bool isDeleted;
+  final String updatedAt;
 
   MatchUser({
     required this.id,
@@ -280,32 +135,33 @@ class MatchUser {
     required this.lastName,
     required this.role,
     required this.email,
-    this.phone,
+    required this.phone,
     required this.age,
     required this.gender,
-    this.location,
+    required this.location,
     required this.bodyImage,
     required this.headShotImage,
     required this.personalityImage,
     required this.image,
     required this.likeToMeet,
-    this.relationType,
-    this.body,
-    this.eduJob,
+    required this.relationType,
+    required this.body,
+    required this.eduJob,
     required this.interests,
     required this.personalTraitsInspire,
     required this.religion,
     required this.zodiacSign,
     required this.lifestyle,
     required this.habits,
-    this.beliefsOtherText,
+    required this.beliefsOtherText,
     required this.address,
-    this.traitsOtherText,
-    this.aboutMe,
+    required this.traitsOtherText,
+    required this.aboutMe,
     required this.status,
     required this.isVerified,
     required this.profileCompletionPercentage,
     required this.isDeleted,
+    required this.updatedAt,
   });
 
   factory MatchUser.fromJson(Map<String, dynamic> json) {
@@ -315,32 +171,34 @@ class MatchUser {
       lastName: json['lastName'] ?? '',
       role: json['role'] ?? '',
       email: json['email'] ?? '',
-      phone: json['phone'],
-      age: (json['age'] ?? 0).toInt(),
+      phone: json['phone'] ?? '',
+      age: json['age'] ?? 0,
       gender: json['gender'] ?? '',
-      location: json['location'] != null ? Location.fromJson(json['location']) : null,
+      location: Location.fromJson(json['location']),
       bodyImage: json['bodyImage'] ?? '',
       headShotImage: json['headShotImage'] ?? '',
       personalityImage: json['personalityImage'] ?? '',
-      image: json['image'] ?? [],
-      likeToMeet: json['likeToMeet'] ?? [],
-      relationType: json['relationType'],
-      body: json['body'] != null ? Body.fromJson(json['body']) : null,
-      eduJob: json['eduJob'] != null ? EduJob.fromJson(json['eduJob']) : null,
-      interests: Interests.fromJson(json['interests'] ?? {}),
-      personalTraitsInspire: json['personalTraitsInspire'] ?? [],
+      image: List<String>.from(json['image'] ?? []),
+      likeToMeet: List<String>.from(json['likeToMeet'] ?? []),
+      relationType: json['relationType'] ?? '',
+      body: Body.fromJson(json['body']),
+      eduJob: EduJob.fromJson(json['eduJob']),
+      interests: Interests.fromJson(json['interests']),
+      personalTraitsInspire:
+          List<String>.from(json['personalTraitsInspire'] ?? []),
       religion: json['religion'] ?? '',
       zodiacSign: json['zodiacSign'] ?? '',
-      lifestyle: Lifestyle.fromJson(json['lifestyle'] ?? {}),
-      habits: Habits.fromJson(json['habits'] ?? {}),
-      beliefsOtherText: json['beliefsOtherText'],
+      lifestyle: Lifestyle.fromJson(json['lifestyle']),
+      habits: Habits.fromJson(json['habits']),
+      beliefsOtherText: json['beliefsOtherText'] ?? '',
       address: json['address'] ?? '',
-      traitsOtherText: json['traitsOtherText'],
-      aboutMe: json['aboutMe'],
+      traitsOtherText: json['traitsOtherText'] ?? '',
+      aboutMe: json['aboutMe'] ?? '',
       status: json['status'] ?? '',
       isVerified: json['isVerified'] ?? false,
-      profileCompletionPercentage: (json['profileCompletionPercentage'] ?? 0).toInt(),
+      profileCompletionPercentage: json['profileCompletionPercentage'] ?? 0,
       isDeleted: json['isDeleted'] ?? false,
+      updatedAt: json['updatedAt'] ?? '',
     );
   }
 
@@ -353,15 +211,15 @@ class MatchUser {
         'phone': phone,
         'age': age,
         'gender': gender,
-        'location': location?.toJson(),
+        'location': location.toJson(),
         'bodyImage': bodyImage,
         'headShotImage': headShotImage,
         'personalityImage': personalityImage,
         'image': image,
         'likeToMeet': likeToMeet,
         'relationType': relationType,
-        'body': body?.toJson(),
-        'eduJob': eduJob?.toJson(),
+        'body': body.toJson(),
+        'eduJob': eduJob.toJson(),
         'interests': interests.toJson(),
         'personalTraitsInspire': personalTraitsInspire,
         'religion': religion,
@@ -376,6 +234,7 @@ class MatchUser {
         'isVerified': isVerified,
         'profileCompletionPercentage': profileCompletionPercentage,
         'isDeleted': isDeleted,
+        'updatedAt': updatedAt,
       };
 }
 
@@ -383,15 +242,14 @@ class Location {
   final String type;
   final List<double> coordinates;
 
-  Location({
-    required this.type,
-    required this.coordinates,
-  });
+  Location({required this.type, required this.coordinates});
 
   factory Location.fromJson(Map<String, dynamic> json) {
     return Location(
       type: json['type'] ?? '',
-      coordinates: List<double>.from(json['coordinates']?.map((x) => x?.toDouble()) ?? []),
+      coordinates: (json['coordinates'] as List<dynamic>)
+          .map((e) => (e as num).toDouble())
+          .toList(),
     );
   }
 
@@ -405,15 +263,12 @@ class Body {
   final int heightCm;
   final int weightKg;
 
-  Body({
-    required this.heightCm,
-    required this.weightKg,
-  });
+  Body({required this.heightCm, required this.weightKg});
 
   factory Body.fromJson(Map<String, dynamic> json) {
     return Body(
-      heightCm: (json['heightCm'] ?? 0).toInt(),
-      weightKg: (json['weightKg'] ?? 0).toInt(),
+      heightCm: json['heightCm'] ?? 0,
+      weightKg: json['weightKg'] ?? 0,
     );
   }
 
@@ -438,7 +293,7 @@ class EduJob {
     return EduJob(
       educationLevel: json['educationLevel'] ?? '',
       jobTitle: json['jobTitle'] ?? '',
-      annualIncome: (json['annualIncome'] ?? 0).toInt(),
+      annualIncome: json['annualIncome'] ?? 0,
     );
   }
 
@@ -570,3 +425,4 @@ class Habits {
         'newExercise': newExercise,
       };
 }
+

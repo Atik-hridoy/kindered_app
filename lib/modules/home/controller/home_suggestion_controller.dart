@@ -2,15 +2,20 @@ import 'package:get/get.dart';
 import 'package:kindered_app/modules/home/models/user_suggestion_model.dart';
 import 'package:kindered_app/modules/home/services/user_suggestion_service.dart';
 import 'package:kindered_app/core/logger/app_logger.dart';
+import '../models/ai_assistent_get_model.dart' as ai_models;
+import '../controller/ai_assistent_controller.dart';
+import 'package:kindered_app/core/app_urls.dart';
 
 class HomeSuggestionController extends GetxController {
   final UserSuggestionService _suggestionService = UserSuggestionService();
+  late AiAssistentController _aiController;
   
   // Reactive variables
   final Rx<UserSuggestion?> currentSuggestion = Rx<UserSuggestion?>(null);
   final Rx<UserSuggestionResponse?> currentSuggestionResponse = Rx<UserSuggestionResponse?>(null);
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
+  final RxBool isUsingAiData = false.obs;
   
   // Getters for UI - Backward compatibility
   UserSuggestion? get suggestion => currentSuggestion.value;
@@ -78,30 +83,47 @@ class HomeSuggestionController extends GetxController {
   String getValidImageUrl() {
     // Try body image first
     if (bodyImage.isNotEmpty && _isValidImageUrl(bodyImage)) {
-      return bodyImage;
+      final url = _prependBaseUrlIfNeeded(bodyImage);
+      AppLogger.info('=== HOME SUGGESTION - Using body image: $url ===');
+      return url;
     }
     
     // Try primary image
     if (primaryImage.isNotEmpty && _isValidImageUrl(primaryImage)) {
-      return primaryImage;
+      final url = _prependBaseUrlIfNeeded(primaryImage);
+      AppLogger.info('=== HOME SUGGESTION - Using primary image: $url ===');
+      return url;
     }
     
     // Try regular image URL from backward compatibility
     if (imageUrl.isNotEmpty && _isValidImageUrl(imageUrl)) {
-      return imageUrl;
+      final url = _prependBaseUrlIfNeeded(imageUrl);
+      AppLogger.info('=== HOME SUGGESTION - Using legacy image URL: $url ===');
+      return url;
     }
     
     // Try any image from the images list
     if (userImages != null && userImages!.isNotEmpty) {
       for (String img in userImages!) {
         if (_isValidImageUrl(img)) {
-          return img;
+          final url = _prependBaseUrlIfNeeded(img);
+          AppLogger.info('=== HOME SUGGESTION - Using image from list: $url ===');
+          return url;
         }
       }
     }
     
-    // Fallback to empty string for dynamic views
+    // Return empty string - CustomPhotoCard will handle the placeholder
+    AppLogger.info('=== HOME SUGGESTION - No valid image found, returning empty string ===');
     return '';
+  }
+  
+  // Prepend base URL for relative paths
+  String _prependBaseUrlIfNeeded(String url) {
+    if (url.startsWith('/')) {
+      return '${AppUrls.imageUrl}$url';
+    }
+    return url;
   }
   
   // Validate if URL is not a placeholder/invalid URL
@@ -139,17 +161,67 @@ class HomeSuggestionController extends GetxController {
       }
     }
     
-    // Basic URL validation
-    return url.startsWith('http://') || url.startsWith('https://');
+    // Basic URL validation - accept both network URLs and file URIs
+    return url.startsWith('http://') || 
+           url.startsWith('https://') || 
+           url.startsWith('file://');
   }
   
   @override
   void onInit() {
     super.onInit();
+    
+    // Get AiAssistentController instance
+    _aiController = Get.find<AiAssistentController>();
+    
+    // Listen to AI controller changes
+    ever(_aiController.matchmakingData, _updateFromAiData);
+    
+    // Load initial data
     _loadCurrentMatch();
   }
   
-  /// Load current match from API
+  /// Update data from AiAssistentController
+  void _updateFromAiData(ai_models.MatchmakingResponse? aiData) {
+    if (aiData == null || aiData.data?.currentMatch == null) {
+      AppLogger.info('=== HOME SUGGESTION - AI DATA UPDATE: No AI data available ===');
+      isUsingAiData.value = false;
+      return;
+    }
+    
+    AppLogger.info('=== HOME SUGGESTION - AI DATA UPDATE: Syncing from AI Assistant ===');
+    
+    try {
+      final aiCurrentMatch = aiData.data!.currentMatch;
+      final aiUser = aiCurrentMatch.user;
+      
+      // Convert AI data to UserSuggestion format for backward compatibility
+      final userSuggestion = UserSuggestion(
+        id: aiUser.id,
+        name: '${aiUser.firstName} ${aiUser.lastName}',
+        age: aiUser.age,
+        imageUrl: aiUser.headShotImage.isNotEmpty ? aiUser.headShotImage : 
+                 (aiUser.image.isNotEmpty ? aiUser.image.first : ''),
+        matchPercentage: '${aiCurrentMatch.matchScore}%',
+        location: 'Distance: ${aiCurrentMatch.distance}km',
+        images: aiUser.image.cast<String>(),
+      );
+      
+      // Update reactive variables
+      currentSuggestion.value = userSuggestion;
+      isUsingAiData.value = true;
+      
+      AppLogger.info('=== HOME SUGGESTION - AI DATA SYNC COMPLETED ===');
+      AppLogger.info('Synced user: ${userSuggestion.name}, Age: ${userSuggestion.age}');
+      AppLogger.info('Match Score: ${aiCurrentMatch.matchScore}%, Distance: ${aiCurrentMatch.distance}km');
+      
+    } catch (e, stackTrace) {
+      AppLogger.error('Error syncing AI data to HomeSuggestionController', e, stackTrace);
+      isUsingAiData.value = false;
+    }
+  }
+  
+  /// Load current match from API (fallback when AI data is not available)
   Future<void> _loadCurrentMatch() async {
     if (isLoading.value) return;
     
@@ -168,9 +240,7 @@ class HomeSuggestionController extends GetxController {
       
       if (currentMatch != null) {
         currentSuggestion.value = currentMatch;
-        
-       
-        
+        isUsingAiData.value = false;
       } else {
         errorMessage.value = 'No match available';
         AppLogger.warning('No match available from API');

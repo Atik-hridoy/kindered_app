@@ -261,7 +261,7 @@ class AppRoutes {
    
     GetPage(
       name: termsAndConditions,
-      page: () => const TermsAndConditions(),
+      page: () => const TermsConditionView(),
       binding: ProfileAndStettings(),
     ),
     GetPage(
@@ -269,7 +269,6 @@ class AppRoutes {
       page: () => const LocationView(),
       binding: ProfileAndStettings(),
     ),
-    
     GetPage(
       name: aboutUsView,
       page: () => const AboutUsView(),

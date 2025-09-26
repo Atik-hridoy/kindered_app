@@ -30,4 +30,9 @@ abstract class AppUrls {
 
   //location
   static const String userLocation = '/users/update-location';
+
+
+  //settings
+  static const String privacyPolicy = '/settings?key=privacyPolicy';
+  static const String termsOfService = '/settings?key=termsOfService';
 }

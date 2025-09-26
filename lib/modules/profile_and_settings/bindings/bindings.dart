@@ -25,7 +25,7 @@ class ProfileAndStettings extends Bindings {
     Get.lazyPut<NumberVerifyController>(() => NumberVerifyController());
     Get.lazyPut<DisplayProfileController>(() => DisplayProfileController());
     Get.lazyPut<ProfileEditController>(() => ProfileEditController());
-    Get.lazyPut<TermsAndConditionsController>(() => TermsAndConditionsController());
+    Get.lazyPut<TermsConditionController>(() => TermsConditionController());
     Get.lazyPut<LocationViewController>(() => LocationViewController());
     Get.lazyPut<LocationController>(() => LocationController());
     Get.lazyPut<AboutUsController>(() => AboutUsController());

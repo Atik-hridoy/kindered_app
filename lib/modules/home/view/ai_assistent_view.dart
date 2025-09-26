@@ -5,6 +5,7 @@ import '../widget/nav_card.dart';
 import '../controller/ai_assistent_controller.dart';
 import '../models/ai_assistent_get_model.dart';
 import '../../../config/app_routes.dart';
+import '../../../core/app_urls.dart';
 
 class AiAssistantView extends GetView<AiAssistentController> {
   const AiAssistantView({super.key});
@@ -209,12 +210,56 @@ class AiAssistantView extends GetView<AiAssistentController> {
         return _buildErrorCard(errorMessage);
       }
       
-      if (matchmakingData?.data?.currentMatch == null) {
-        return _buildNoMatchCard();
+      // Get match data from the latest AI message
+      MatchData? matchData;
+      MatchUser? user;
+      
+      // Find the latest AI message with match data
+      for (int i = controller.messages.length - 1; i >= 0; i--) {
+        final message = controller.messages[i];
+        if (!message['isMe'] && message['matchData'] != null) {
+          matchData = message['matchData'] as MatchData?;
+          break;
+        }
       }
       
-      final currentMatch = matchmakingData!.data!.currentMatch!;
-      final user = currentMatch.user;
+      // Prioritize currentMatch from matchmakingData over message-based match data
+      CurrentMatch? currentMatch;
+      if (matchmakingData?.data?.currentMatch != null) {
+        currentMatch = matchmakingData!.data!.currentMatch;
+        user = currentMatch.user;
+      } else if (matchData != null) {
+        // Fallback: Create a MatchUser from the match data in messages
+        user = MatchUser(
+          id: matchData.userId,
+          firstName: matchData.userFirstName ?? '',
+          lastName: matchData.userLastName ?? '',
+          role: 'USER',
+          email: '',
+          age: matchData.userAge,
+          gender: matchData.userGender ?? '',
+          bodyImage: '',
+          headShotImage: matchData.userImage.isNotEmpty ? matchData.userImage.first : '',
+          personalityImage: '',
+          image: matchData.userImage,
+          likeToMeet: [],
+          interests: Interests.fromJson({}),
+          personalTraitsInspire: [],
+          religion: '',
+          zodiacSign: '',
+          lifestyle: Lifestyle.fromJson({}),
+          habits: Habits.fromJson({}),
+          address: '',
+          status: 'active',
+          isVerified: false,
+          profileCompletionPercentage: 0,
+          isDeleted: false,
+        );
+      }
+      
+      if (user == null) {
+        return _buildNoMatchCard();
+      }
       
       return Align(
         alignment: Alignment.centerLeft,
@@ -239,16 +284,16 @@ class AiAssistantView extends GetView<AiAssistentController> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-                _buildProfileImage(user?.headShotImage),
+                _buildProfileImage(user.headShotImage, user),
                 const SizedBox(height: 16),
                 const SizedBox(height: 8),
                 Text(
-                  '${user?.firstName ?? ''}, ${user?.age ?? ''}', 
+                  '${user.firstName}, ${user.age}', 
                   style: const TextStyle(color: Color(0xFF2E3A59), fontSize: 18, fontWeight: FontWeight.w700)
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _buildUserDescription(currentMatch), 
+                  currentMatch != null ? _buildUserDescription(currentMatch) : 'Great match based on your preferences', 
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Color(0xFF2E3A59), fontSize: 12)
                 ),
@@ -256,7 +301,7 @@ class AiAssistantView extends GetView<AiAssistentController> {
                 _buildActionButtons(),
                 const SizedBox(height: 12),
                 Text(
-                  matchmakingData.data?.hasMoreMatches == true 
+                  (matchmakingData?.data?.hasMoreMatches ?? false) 
                       ? 'If pass, your next curated match will arrive soon'
                       : 'This is your last curated match for today', 
                   style: const TextStyle(color: Color(0xFF2E3A59), fontSize: 10, fontWeight: FontWeight.w500),
@@ -270,11 +315,43 @@ class AiAssistantView extends GetView<AiAssistentController> {
     });
   }
 
-  Widget _buildProfileImage([String? imageUrl]) {
+  Widget _buildProfileImage([String? imageUrl, MatchUser? user]) {
     final defaultImage = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80';
-    final imageProvider = imageUrl != null && imageUrl.isNotEmpty 
-        ? NetworkImage(imageUrl) 
+    
+    // Debug: Print the image URL to see what we're getting
+    print('DEBUG: Image URL received: $imageUrl');
+    print('DEBUG: Image URL is null: ${imageUrl == null}');
+    print('DEBUG: Image URL is empty: ${imageUrl?.isEmpty ?? true}');
+    
+    // Try to get image from different possible sources
+    String? finalImageUrl;
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      finalImageUrl = imageUrl;
+    } else if (user != null) {
+      // Try alternative image fields from the user object
+      if (user.image.isNotEmpty) {
+        finalImageUrl = user.image.first;
+        print('DEBUG: Using first image from user.image list: $finalImageUrl');
+      } else if (user.bodyImage.isNotEmpty) {
+        finalImageUrl = user.bodyImage;
+        print('DEBUG: Using bodyImage: $finalImageUrl');
+      } else if (user.personalityImage.isNotEmpty) {
+        finalImageUrl = user.personalityImage;
+        print('DEBUG: Using personalityImage: $finalImageUrl');
+      }
+    }
+    
+    // If the image URL is relative (starts with /), prepend the base URL
+    if (finalImageUrl != null && finalImageUrl.isNotEmpty && finalImageUrl.startsWith('/')) {
+      finalImageUrl = '${AppUrls.imageUrl}$finalImageUrl';
+      print('DEBUG: Converted relative URL to absolute: $finalImageUrl');
+    }
+    
+    final imageProvider = (finalImageUrl != null && finalImageUrl.isNotEmpty) 
+        ? NetworkImage(finalImageUrl) 
         : NetworkImage(defaultImage) as ImageProvider;
+    
+    print('DEBUG: Final image URL being used: ${finalImageUrl ?? defaultImage}');
     
     return Container(
       width: 120, height: 140,
@@ -606,7 +683,7 @@ class AiAssistantView extends GetView<AiAssistentController> {
     }
     
     // Add personality traits if available
-    if (user?.personalTraitsInspire != null && user!.personalTraitsInspire.isNotEmpty) {
+    if (user.personalTraitsInspire.isNotEmpty) {
       final traits = user.personalTraitsInspire.take(2).join(', ');
       descriptionParts.add('Values $traits');
     }

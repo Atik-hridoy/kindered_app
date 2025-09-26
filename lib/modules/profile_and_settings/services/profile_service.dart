@@ -4,6 +4,7 @@ import 'package:kindered_app/core/app_urls.dart';
 import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:kindered_app/local/storage_service.dart';
 import 'package:kindered_app/modules/profile_and_settings/model/get_profile.dart';
+import 'package:kindered_app/modules/profile_and_settings/model/display_profile.dart';
 
 class ProfileService {
   final Dio _dio;
@@ -185,6 +186,46 @@ class ProfileService {
     } catch (e) {
       AppLogger.error('❌ [PROFILE SERVICE] Error creating UserProfile: $e');
       rethrow;
+    }
+  }
+
+  /// Fetch current match data from AI matchmaking
+  Future<CurrentMatchResponse> getCurrentMatch() async {
+    try {
+      AppLogger.info('🔄 [PROFILE SERVICE] Fetching current match data...');
+      AppLogger.info('📋 [PROFILE SERVICE] Endpoint: ${AppUrls.aiCurrentMatch}');
+      
+      final response = await _dio.get(
+        AppUrls.aiCurrentMatch,
+      );
+
+      AppLogger.api('GET', AppUrls.aiCurrentMatch, statusCode: response.statusCode);
+      AppLogger.info('📊 [PROFILE SERVICE] Response status: ${response.statusCode}');
+      AppLogger.info('📝 [PROFILE SERVICE] Response data: ${response.data}');
+      
+      if (response.statusCode == 200 && response.data != null) {
+        final currentMatchResponse = CurrentMatchResponse.fromJson(response.data);
+        AppLogger.success('✅ [PROFILE SERVICE] Current match data fetched successfully');
+        return currentMatchResponse;
+      } else {
+        throw Exception('Failed to create CurrentMatchResponse from API response');
+      }
+    } on DioException catch (e) {
+      AppLogger.error('❌ [PROFILE SERVICE] Failed to fetch current match data: ${e.message}', e, e.stackTrace);
+      
+      String errorMessage = 'Failed to fetch current match data';
+      if (e.response?.data != null) {
+        if (e.response?.data is Map) {
+          errorMessage = e.response?.data['message'] ?? e.response?.data['error'] ?? errorMessage;
+        } else {
+          errorMessage = e.response?.data.toString() ?? errorMessage;
+        }
+      }
+      
+      throw Exception(errorMessage);
+    } catch (e) {
+      AppLogger.error('❌ [PROFILE SERVICE] Unexpected error fetching current match: $e');
+      throw Exception('An unexpected error occurred while fetching current match');
     }
   }
 }
