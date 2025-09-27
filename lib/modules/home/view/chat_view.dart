@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controller/chat_controller.dart';
+import '../../../core/logger/app_logger.dart';
 
 class ChatConversationView extends StatefulWidget {
   const ChatConversationView({super.key});
@@ -9,6 +11,7 @@ class ChatConversationView extends StatefulWidget {
 }
 
 class _ChatConversationViewState extends State<ChatConversationView> {
+  final ChatController _chatController = Get.put(ChatController());
   final TextEditingController _messageController = TextEditingController();
 
   @override
@@ -19,9 +22,9 @@ class _ChatConversationViewState extends State<ChatConversationView> {
 
   void _handleSendMessage() {
     final message = _messageController.text.trim();
-    if (message.isNotEmpty) {
-      // TODO: Implement actual message sending logic
-      print('Sending message: $message');
+    if (message.isNotEmpty && _chatController.hasChat) {
+      // TODO: Implement actual message sending logic using chat ID
+      AppLogger.info('Sending message: $message to chat: ${_chatController.chatId}');
       _messageController.clear();
       // Update UI if needed
       setState(() {});
@@ -67,29 +70,35 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                   
                   const SizedBox(width: 12),
                   
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Marvin McKinney',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'PlayfairDisplay',
+                  // Chat display name
+                  Expanded(
+                    child: Obx(() {
+                      final displayName = _chatController.getChatDisplayName();
+                      final hasChat = _chatController.hasChat;
+                      
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            displayName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'PlayfairDisplay',
+                            ),
                           ),
-                        ),
-                        Text(
-                          'Online',
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
+                          Text(
+                            hasChat ? 'Online' : 'Creating chat...',
+                            style: TextStyle(
+                              color: hasChat ? Colors.green : Colors.orange,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      );
+                    }),
                   ),
                   
                   const Icon(
@@ -103,46 +112,110 @@ class _ChatConversationViewState extends State<ChatConversationView> {
             
             // Chat messages
             Expanded(
-              child: ListView(
-                reverse: true,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                children: [
-                  // First message (received)
-                  _buildReceivedMessage(
-                    message: 'Glad you liked it! It\'s called "Midnight Pulse." I can send you the stems if you\'re ready.',
-                    time: '10:39 AM',
-                    showAvatar: true,
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Second message (sent)
-                  _buildSentMessage(
-                    message: 'Glad you liked it! It\'s called "Midnight Pulse." I can send you the stems if you\'re ready.',
-                    time: '10:39 AM',
-                    showAvatar: false,
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Third message (received)
-                  _buildReceivedMessage(
-                    message: 'Glad you liked it! It\'s called "Midnight Pulse." I can send you the stems if you\'re ready.',
-                    time: '10:39 AM',
-                    showAvatar: true,
-                    showDeliveryStatus: true,
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Fourth message (sent)
-                  _buildSentMessage(
-                    message: 'Glad you liked it! It\'s called "Midnight Pulse." I can send you the stems if you\'re ready.',
-                    time: '10:39 AM',
-                    showAvatar: false,
-                  ),
-                ],
-              ),
+              child: Obx(() {
+                if (_chatController.isLoading.value) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF5D7AFF)),
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Creating chat...',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                if (_chatController.errorMessage.value.isNotEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Failed to create chat',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _chatController.errorMessage.value,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: _chatController.retryCreateChat,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF5D7AFF),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                          ),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                if (!_chatController.hasChat) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.chat_outlined,
+                          color: Colors.white54,
+                          size: 48,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'No chat available',
+                          style: TextStyle(
+                            color: Colors.white54,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                // Show placeholder messages when chat is created
+                return ListView(
+                  reverse: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  children: [
+                    _buildReceivedMessage(
+                      message: 'Chat created successfully! Start your conversation now.',
+                      time: 'Just now',
+                      showAvatar: true,
+                    ),
+                  ],
+                );
+              }),
             ),
             
             // Message input
@@ -285,73 +358,6 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                 ),
               ),
             ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSentMessage({
-    required String message,
-    required String time,
-    bool showAvatar = false,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Flexible(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(left: 60),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF21293F),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      message,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w400,
-                        height: 1.3,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      time,
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
-            if (showAvatar)
-              Container(
-                width: 32,
-                height: 32,
-                margin: const EdgeInsets.only(left: 8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  image: const DecorationImage(
-                    image: NetworkImage(
-                      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face'
-                    ),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
           ],
         ),
       ],

@@ -40,4 +40,5 @@ abstract class AppUrls {
   //message
 
   static const String getChatList = '/chats';
+  static const String createChat = '/chats/create';
 }

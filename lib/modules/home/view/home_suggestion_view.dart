@@ -317,7 +317,7 @@ class _HomeSuggestionViewState extends State<HomeSuggestionView> {
                         age: _controller.age,
                         location: _controller.location.isNotEmpty ? _controller.location : 'Unknown location',
                         onChatPressed: () {
-                          // Handle chat action
+                          _controller.navigateToChat();
                         },
                         onSharePressed: () {
                           Get.toNamed(AppRoutes.displayProfile);

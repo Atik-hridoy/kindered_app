@@ -6,6 +6,7 @@ import '../models/ai_assistent_get_model.dart' as ai_models;
 import '../controller/ai_assistent_controller.dart';
 import 'package:kindered_app/core/app_urls.dart';
 import 'package:kindered_app/local/storage_service.dart';
+import 'package:kindered_app/config/app_routes.dart';
 
 class HomeSuggestionController extends GetxController {
   final UserSuggestionService _suggestionService = UserSuggestionService();
@@ -136,7 +137,7 @@ class HomeSuggestionController extends GetxController {
       'https://via.placeholder.com',
       'https://placeholder.com',
       'http://placeholder.com',
-      'data:image', // base64 placeholder
+      'data:image', 
       'null',
       'undefined',
     ];
@@ -306,5 +307,32 @@ class HomeSuggestionController extends GetxController {
       AppLogger.error('=== HOME SUGGESTION - Error retrieving saved user ID: $e ===');
       return '';
     }
+  }
+
+  /// Navigate to chat view with current user data
+  void navigateToChat({String? chatId, String? participantName, String? participantId}) {
+    // Get current user ID from LocalStorage
+    final currentUserId = LocalStorage.userId;
+    
+    // Get suggested user data from current suggestion
+    final suggestedUserId = userData?.id ?? currentSuggestion.value?.id ?? '';
+    final suggestedUserName = fullName.isNotEmpty ? fullName : (name.isNotEmpty ? name : 'Unknown');
+    final suggestedUserAge = userAge > 0 ? userAge.toString() : (age.isNotEmpty ? age : '0');
+    
+    AppLogger.info('=== HOME SUGGESTION - NAVIGATE TO CHAT ===');
+    AppLogger.info('Current User ID: $currentUserId');
+    AppLogger.info('Suggested User ID: $suggestedUserId');
+    AppLogger.info('Suggested User Name: $suggestedUserName');
+    AppLogger.info('Suggested User Age: $suggestedUserAge');
+    
+    // Navigate to chat view with both user IDs and suggested user data
+    // The ChatController will automatically create the chat using CreateChatService
+    Get.toNamed(AppRoutes.chat, arguments: {
+      'chatId': chatId ?? suggestedUserId,
+      'currentUserId': currentUserId,
+      'suggestedUserId': suggestedUserId,
+      'participantName': participantName ?? suggestedUserName,
+      'participantId': participantId ?? suggestedUserId,
+    });
   }
 }
