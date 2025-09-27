@@ -35,4 +35,9 @@ abstract class AppUrls {
   //settings
   static const String privacyPolicy = '/settings?key=privacyPolicy';
   static const String termsOfService = '/settings?key=termsOfService';
+
+
+  //message
+
+  static const String getChatList = '/chats';
 }

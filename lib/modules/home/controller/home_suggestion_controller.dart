@@ -5,6 +5,7 @@ import 'package:kindered_app/core/logger/app_logger.dart';
 import '../models/ai_assistent_get_model.dart' as ai_models;
 import '../controller/ai_assistent_controller.dart';
 import 'package:kindered_app/core/app_urls.dart';
+import 'package:kindered_app/local/storage_service.dart';
 
 class HomeSuggestionController extends GetxController {
   final UserSuggestionService _suggestionService = UserSuggestionService();
@@ -182,7 +183,7 @@ class HomeSuggestionController extends GetxController {
   }
   
   /// Update data from AiAssistentController
-  void _updateFromAiData(ai_models.MatchmakingResponse? aiData) {
+  Future<void> _updateFromAiData(ai_models.MatchmakingResponse? aiData) async {
     if (aiData == null || aiData.data?.currentMatch == null) {
       AppLogger.info('=== HOME SUGGESTION - AI DATA UPDATE: No AI data available ===');
       isUsingAiData.value = false;
@@ -210,6 +211,9 @@ class HomeSuggestionController extends GetxController {
       // Update reactive variables
       currentSuggestion.value = userSuggestion;
       isUsingAiData.value = true;
+      
+      // Save current user ID to local storage
+      await _saveCurrentUserIdToStorage();
       
       AppLogger.info('=== HOME SUGGESTION - AI DATA SYNC COMPLETED ===');
       AppLogger.info('Synced user: ${userSuggestion.name}, Age: ${userSuggestion.age}');
@@ -241,6 +245,9 @@ class HomeSuggestionController extends GetxController {
       if (currentMatch != null) {
         currentSuggestion.value = currentMatch;
         isUsingAiData.value = false;
+        
+        // Save current user ID to local storage
+        await _saveCurrentUserIdToStorage();
       } else {
         errorMessage.value = 'No match available';
         AppLogger.warning('No match available from API');
@@ -262,5 +269,42 @@ class HomeSuggestionController extends GetxController {
   /// Legacy method for backward compatibility
   Future<void> refreshSuggestions() async {
     await refreshCurrentMatch();
+  }
+
+  /// Save current suggestion user ID to local storage
+  Future<void> _saveCurrentUserIdToStorage() async {
+    try {
+      String currentUserId = '';
+      
+      // Try to get user ID from comprehensive data structure first
+      if (hasComprehensiveData && userData?.id.isNotEmpty == true) {
+        currentUserId = userData!.id;
+      } 
+      // Fallback to backward compatibility structure
+      else if (hasSuggestion && currentSuggestion.value?.id.isNotEmpty == true) {
+        currentUserId = currentSuggestion.value!.id;
+      }
+      
+      if (currentUserId.isNotEmpty) {
+        await LocalStorage.setString('current_suggestion_user_id', currentUserId);
+        AppLogger.info('=== HOME SUGGESTION - Saved current user ID to storage: $currentUserId ===');
+      } else {
+        AppLogger.info('=== HOME SUGGESTION - No user ID available to save ===');
+      }
+    } catch (e) {
+      AppLogger.error('=== HOME SUGGESTION - Error saving user ID to storage: $e ===');
+    }
+  }
+
+  /// Get saved current user ID from local storage (for testing)
+  Future<String> getSavedUserId() async {
+    try {
+      final savedUserId = await LocalStorage.getString('current_suggestion_user_id');
+      AppLogger.info('=== HOME SUGGESTION - Retrieved saved user ID: $savedUserId ===');
+      return savedUserId;
+    } catch (e) {
+      AppLogger.error('=== HOME SUGGESTION - Error retrieving saved user ID: $e ===');
+      return '';
+    }
   }
 }
