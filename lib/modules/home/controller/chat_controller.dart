@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'dart:io';
 import 'package:kindered_app/core/app_urls.dart';
 import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:kindered_app/local/storage_service.dart';
@@ -50,10 +51,16 @@ class ChatController extends GetxController {
   final RxBool isImageUploading = false.obs;
   final RxString imageUploadError = ''.obs;
   
+  // Pending message data (for UI preview)
+  final RxString draftMessage = ''.obs;
+  final RxList<String> pendingImages = <String>[].obs;
+  final RxBool hasPendingContent = false.obs;
+  
   // Getters
   bool get hasChat => chatResponse.value != null;
   String get chatId => chatResponse.value?.data.id ?? '';
   List<String> get participants => chatResponse.value?.data.participants ?? [];
+  bool get hasPendingMessage => draftMessage.value.isNotEmpty || pendingImages.isNotEmpty;
   
   @override
   void onInit() {
@@ -309,6 +316,162 @@ class ChatController extends GetxController {
     }
   }
 
+  /// Update draft message
+  void updateDraftMessage(String text) {
+    draftMessage.value = text;
+    _updateHasPendingContent();
+  }
+
+  /// Add pending image
+  void addPendingImage(String imagePath) {
+    pendingImages.add(imagePath);
+    _updateHasPendingContent();
+  }
+
+  /// Remove pending image
+  void removePendingImage(String imagePath) {
+    pendingImages.remove(imagePath);
+    _updateHasPendingContent();
+  }
+
+  /// Clear all pending content
+  void clearPendingContent() {
+    draftMessage.value = '';
+    pendingImages.clear();
+    _updateHasPendingContent();
+  }
+
+  /// Update hasPendingContent flag
+  void _updateHasPendingContent() {
+    hasPendingContent.value = hasPendingMessage;
+  }
+
+  /// Send image from file path
+  Future<void> sendImageFromPath(String imagePath) async {
+    if (!hasChat) {
+      AppLogger.warning('[CHAT CONTROLLER] Cannot send image - no chat');
+      return;
+    }
+
+    if (isImageUploading.value) {
+      AppLogger.warning('[CHAT CONTROLLER] Already uploading an image');
+      return;
+    }
+
+    try {
+      isImageUploading.value = true;
+      imageUploadError.value = '';
+      // Create File object from the image path
+      final imageFile = File(imagePath);
+      
+      // Enhanced logging for image sending
+      AppLogger.info('🚀 [CHAT CONTROLLER] SENDING IMAGE (Direct Form-Data)');
+      AppLogger.info('📁 [CHAT CONTROLLER] Original image path: $imagePath');
+      AppLogger.info('💬 [CHAT CONTROLLER] Chat ID: $chatId');
+
+      AppLogger.info('📤 [CHAT CONTROLLER] Sending image with form-data...');
+      final SendMessageResponse response = await _sendMessageService.sendMessageWithImage(
+        chatId: chatId,
+        imageFile: imageFile,
+        content: '', // You can add caption functionality later
+      );
+
+      AppLogger.info('✅ [CHAT CONTROLLER] Image message sent successfully');
+      AppLogger.info('📊 [CHAT CONTROLLER] Response success: ${response.success}');
+      AppLogger.info('🆔 [CHAT CONTROLLER] Message ID: ${response.data.id}');
+      AppLogger.info('📝 [CHAT CONTROLLER] Message text: ${response.data.text}');
+      AppLogger.info('🏷️ [CHAT CONTROLLER] Message type: ${response.data.type}');
+      AppLogger.info('🖼️ [CHAT CONTROLLER] Response images: ${response.data.images}');
+
+      // Add the sent image message to the messages list
+      messages.add({
+        'id': response.data.id,
+        'text': response.data.text,
+        'type': response.data.type,
+        'sender': response.data.sender,
+        'createdAt': response.data.createdAt,
+        'isSentByMe': true,
+      });
+
+      // Also add to chatMessages for reactive UI
+      try {
+        final senderId = response.data.sender;
+        
+        // Log the processed image URLs
+        final processedImages = _processImageUrls(response.data.images);
+        AppLogger.info('🔄 [CHAT CONTROLLER] Processed image URLs: $processedImages');
+        
+        final imageMessage = Message(
+          id: response.data.id,
+          chatId: chatId,
+          sender: MessageSender(
+            id: senderId,
+            email: '',
+            image: [],
+            firstName: '',
+            lastName: '',
+          ),
+          text: response.data.text,
+          type: response.data.type,
+          images: processedImages,
+          read: false,
+          isDeleted: false,
+          isPinned: false,
+          replyTo: null,
+          iconViewed: [],
+          createdAt: response.data.createdAt,
+          pinnedByUsers: [],
+          deletedForUsers: [],
+          reactions: [],
+          updatedAt: response.data.createdAt,
+          v: 0,
+          isPinnedByCurrentUser: false,
+        );
+        
+        chatMessages.add(imageMessage);
+        chatMessages.refresh();
+        
+        AppLogger.info('[CHAT CONTROLLER] Image message added to reactive UI');
+      } catch (e) {
+        AppLogger.error('[CHAT CONTROLLER] Error creating image Message object: $e');
+      }
+
+    } catch (e) {
+      AppLogger.error('[CHAT CONTROLLER] Error sending image message: $e');
+      imageUploadError.value = 'Failed to send image: $e';
+    } finally {
+      isImageUploading.value = false;
+    }
+  }
+
+  /// Send pending message (text + images)
+  Future<void> sendPendingMessage() async {
+    if (!hasPendingMessage) return;
+    
+    final text = draftMessage.value;
+    final images = List<String>.from(pendingImages);
+    
+    // Clear pending content first
+    clearPendingContent();
+    
+    if (images.isNotEmpty) {
+      if (text.isNotEmpty) {
+        // Send mixed message (text + images)
+        await sendMixedMessage(
+          text: text,
+          imageUrl: images.first, // For now, send first image
+          messageType: 'both',
+        );
+      } else {
+        // Send image only
+        await sendImageFromPath(images.first);
+      }
+    } else if (text.isNotEmpty) {
+      // Send text only
+      await sendTextMessage(text);
+    }
+  }
+
   /// Send a text message
   Future<void> sendTextMessage(String content) async {
     
@@ -459,6 +622,47 @@ class ChatController extends GetxController {
         'isSentByMe': true,
       });
       
+      // Also add to chatMessages for reactive UI
+      try {
+        // The sender is a String (sender ID) from the API response
+        final senderId = response.data.sender;
+        
+        final mixedMessage = Message(
+          id: response.data.id,
+          chatId: chatId,
+          sender: MessageSender(
+            id: senderId,
+            email: '', // API doesn't provide email in response
+            image: [], // API doesn't provide image list in response
+            firstName: '', // API doesn't provide firstName in response
+            lastName: '', // API doesn't provide lastName in response
+          ),
+          text: response.data.text,
+          type: response.data.type,
+          images: _processImageUrls(response.data.images), // Add the images from the response
+          read: false,
+          isDeleted: false,
+          isPinned: false,
+          replyTo: null,
+          iconViewed: [],
+          createdAt: response.data.createdAt,
+          pinnedByUsers: [],
+          deletedForUsers: [],
+          reactions: [],
+          updatedAt: response.data.createdAt,
+          v: 0,
+          isPinnedByCurrentUser: false,
+        );
+        
+        chatMessages.add(mixedMessage);
+        
+        // Force UI update
+        chatMessages.refresh();
+        
+        AppLogger.info('[CHAT CONTROLLER] Mixed message added to reactive UI');
+      } catch (e) {
+        AppLogger.error('[CHAT CONTROLLER] Error creating mixed Message object: $e');
+      }
 
     } catch (e) {
       AppLogger.error('[CHAT CONTROLLER] Error sending mixed message: $e');
@@ -527,6 +731,47 @@ class ChatController extends GetxController {
         'isSentByMe': true,
       });
       
+      // Also add to chatMessages for reactive UI
+      try {
+        // The sender is a String (sender ID) from the API response
+        final senderId = response.data.sender;
+        
+        final customMessage = Message(
+          id: response.data.id,
+          chatId: chatId,
+          sender: MessageSender(
+            id: senderId,
+            email: '', // API doesn't provide email in response
+            image: [], // API doesn't provide image list in response
+            firstName: '', // API doesn't provide firstName in response
+            lastName: '', // API doesn't provide lastName in response
+          ),
+          text: response.data.text,
+          type: response.data.type,
+          images: _processImageUrls(response.data.images), // Add the images from the response
+          read: false,
+          isDeleted: false,
+          isPinned: false,
+          replyTo: null,
+          iconViewed: [],
+          createdAt: response.data.createdAt,
+          pinnedByUsers: [],
+          deletedForUsers: [],
+          reactions: [],
+          updatedAt: response.data.createdAt,
+          v: 0,
+          isPinnedByCurrentUser: false,
+        );
+        
+        chatMessages.add(customMessage);
+        
+        // Force UI update
+        chatMessages.refresh();
+        
+        AppLogger.info('[CHAT CONTROLLER] Custom message added to reactive UI');
+      } catch (e) {
+        AppLogger.error('[CHAT CONTROLLER] Error creating custom Message object: $e');
+      }
 
     } catch (e) {
       AppLogger.error('[CHAT CONTROLLER] Error sending custom message: $e');
@@ -545,7 +790,61 @@ class ChatController extends GetxController {
     }
   }
 
-  /// Pick and send an image message
+  /// Pick image and add to pending list
+  Future<void> pickImageForPreview() async {
+    if (!hasChat) {
+      AppLogger.warning('[CHAT CONTROLLER] Cannot pick image - no chat');
+      return;
+    }
+
+    try {
+      final XFile? imageFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+
+      if (imageFile == null) {
+        return;
+      }
+
+      // Add image to pending list for preview
+      addPendingImage(imageFile.path);
+      AppLogger.info('[CHAT CONTROLLER] Image added to pending list: ${imageFile.path}');
+    } catch (e) {
+      AppLogger.error('[CHAT CONTROLLER] Error picking image: $e');
+    }
+  }
+
+  /// Take photo and add to pending list
+  Future<void> takePhotoForPreview() async {
+    if (!hasChat) {
+      AppLogger.warning('[CHAT CONTROLLER] Cannot take photo - no chat');
+      return;
+    }
+
+    try {
+      final XFile? imageFile = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 70,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+
+      if (imageFile == null) {
+        return;
+      }
+
+      // Add image to pending list for preview
+      addPendingImage(imageFile.path);
+      AppLogger.info('[CHAT CONTROLLER] Photo added to pending list: ${imageFile.path}');
+    } catch (e) {
+      AppLogger.error('[CHAT CONTROLLER] Error taking photo: $e');
+    }
+  }
+
+  /// Pick and send an image message (legacy method)
   Future<void> pickAndSendImage() async {
     if (!hasChat) {
       AppLogger.warning('[CHAT CONTROLLER] Cannot send image - no chat');
@@ -573,25 +872,27 @@ class ChatController extends GetxController {
       isImageUploading.value = true;
       imageUploadError.value = '';
 
-
-      // For now, we'll use a placeholder URL since we don't have image upload functionality
-      // In a real app, you would upload the image to a server and get the URL
-      final imageUrl = 'file://${imageFile.path}';
+      // Create File object from the picked file
+      final file = File(imageFile.path);
       
+      // Enhanced logging for image sending
+      AppLogger.info('🚀 [CHAT CONTROLLER] SENDING IMAGE (Direct Form-Data)');
+      AppLogger.info('📁 [CHAT CONTROLLER] Original image path: ${imageFile.path}');
+      AppLogger.info('💬 [CHAT CONTROLLER] Chat ID: $chatId');
 
-      final SendMessageResponse response = await _sendMessageService.sendImageMessage(
+      AppLogger.info('📤 [CHAT CONTROLLER] Sending image with form-data...');
+      final SendMessageResponse response = await _sendMessageService.sendMessageWithImage(
         chatId: chatId,
-        imageUrl: imageUrl,
-        caption: '', // You can add caption functionality later
+        imageFile: file,
+        content: '', // You can add caption functionality later
       );
 
-      AppLogger.info('[CHAT CONTROLLER] Image message sent successfully');
-      AppLogger.info('[CHAT CONTROLLER] Response success: ${response.success}');
-      AppLogger.info('[CHAT CONTROLLER] Response message: ${response.message}');
-      AppLogger.info('[CHAT CONTROLLER] Message ID: ${response.data.id}');
-      AppLogger.info('[CHAT CONTROLLER] Message type: ${response.data.type}');
-      AppLogger.info('[CHAT CONTROLLER] Message text: ${response.data.text}');
-      AppLogger.info('[CHAT CONTROLLER] Message created at: ${response.data.createdAt}');
+      AppLogger.info('✅ [CHAT CONTROLLER] Image message sent successfully');
+      AppLogger.info('📊 [CHAT CONTROLLER] Response success: ${response.success}');
+      AppLogger.info('🆔 [CHAT CONTROLLER] Message ID: ${response.data.id}');
+      AppLogger.info('📝 [CHAT CONTROLLER] Message text: ${response.data.text}');
+      AppLogger.info('🏷️ [CHAT CONTROLLER] Message type: ${response.data.type}');
+      AppLogger.info('🖼️ [CHAT CONTROLLER] Response images: ${response.data.images}');
 
       // Add the sent image message to the messages list
       messages.add({
@@ -605,22 +906,26 @@ class ChatController extends GetxController {
       
       // Also add to chatMessages for reactive UI
       try {
-        final senderData = response.data.sender as Map<String, dynamic>;
+        // The sender is a String (sender ID) from the API response
+        final senderId = response.data.sender;
+        
+        // Log the processed image URLs
+        final processedImages = _processImageUrls(response.data.images);
+        AppLogger.info('🔄 [CHAT CONTROLLER] Processed image URLs: $processedImages');
         
         final imageMessage = Message(
           id: response.data.id,
           chatId: chatId,
           sender: MessageSender(
-            id: senderData['_id']?.toString() ?? senderData['id']?.toString() ?? '',
-            email: senderData['email']?.toString() ?? '',
-            image: senderData['image'] != null 
-                ? List<String>.from(senderData['image'].map((e) => e.toString())) 
-                : [],
-            firstName: senderData['firstName']?.toString() ?? '',
-            lastName: senderData['lastName']?.toString() ?? '',
+            id: senderId,
+            email: '', // API doesn't provide email in response
+            image: [], // API doesn't provide image list in response
+            firstName: '', // API doesn't provide firstName in response
+            lastName: '', // API doesn't provide lastName in response
           ),
           text: response.data.text,
           type: response.data.type,
+          images: processedImages,
           read: false,
           isDeleted: false,
           isPinned: false,
@@ -640,7 +945,7 @@ class ChatController extends GetxController {
         // Force UI update
         chatMessages.refresh();
         
-        AppLogger.info('[CHAT CONTROLLER] Image message added to reactive UI');
+        AppLogger.info('✅ [CHAT CONTROLLER] Image message added to reactive UI');
       } catch (e) {
         AppLogger.error('[CHAT CONTROLLER] Error creating image Message object: $e');
       }
@@ -689,21 +994,27 @@ class ChatController extends GetxController {
         return;
       }
 
-      isImageUploading.value = true;
-      imageUploadError.value = '';
-
-
-      // For now, we'll use a placeholder URL since we don't have image upload functionality
-      // In a real app, you would upload the image to a server and get the URL
-      final photoUrl = 'file://${photoFile.path}';
+      // Create File object from the photo
+      final file = File(photoFile.path);
       
+      // Enhanced logging for image sending
+      AppLogger.info('🚀 [CHAT CONTROLLER] SENDING IMAGE (Camera Form-Data)');
+      AppLogger.info('📁 [CHAT CONTROLLER] Original photo path: ${photoFile.path}');
+      AppLogger.info('💬 [CHAT CONTROLLER] Chat ID: $chatId');
 
-      final SendMessageResponse response = await _sendMessageService.sendImageMessage(
+      AppLogger.info('📤 [CHAT CONTROLLER] Sending photo with form-data...');
+      final SendMessageResponse response = await _sendMessageService.sendMessageWithImage(
         chatId: chatId,
-        imageUrl: photoUrl,
-        caption: '', // You can add caption functionality later
+        imageFile: file,
+        content: '', // You can add caption functionality later
       );
 
+      AppLogger.info('✅ [CHAT CONTROLLER] Photo message sent successfully');
+      AppLogger.info('📊 [CHAT CONTROLLER] Response success: ${response.success}');
+      AppLogger.info('🆔 [CHAT CONTROLLER] Message ID: ${response.data.id}');
+      AppLogger.info('📝 [CHAT CONTROLLER] Message text: ${response.data.text}');
+      AppLogger.info('🏷️ [CHAT CONTROLLER] Message type: ${response.data.type}');
+      AppLogger.info('🖼️ [CHAT CONTROLLER] Response images: ${response.data.images}');
 
       // Add the sent photo message to the messages list
       messages.add({
@@ -717,22 +1028,26 @@ class ChatController extends GetxController {
       
       // Also add to chatMessages for reactive UI
       try {
-        final senderData = response.data.sender as Map<String, dynamic>;
+        // The sender is a String (sender ID) from the API response
+        final senderId = response.data.sender;
+        
+        // Log the processed image URLs
+        final processedImages = _processImageUrls(response.data.images);
+        AppLogger.info('🔄 [CHAT CONTROLLER] Processed photo URLs: $processedImages');
         
         final photoMessage = Message(
           id: response.data.id,
           chatId: chatId,
           sender: MessageSender(
-            id: senderData['_id']?.toString() ?? senderData['id']?.toString() ?? '',
-            email: senderData['email']?.toString() ?? '',
-            image: senderData['image'] != null 
-                ? List<String>.from(senderData['image'].map((e) => e.toString())) 
-                : [],
-            firstName: senderData['firstName']?.toString() ?? '',
-            lastName: senderData['lastName']?.toString() ?? '',
+            id: senderId,
+            email: '', // API doesn't provide email in response
+            image: [], // API doesn't provide image list in response
+            firstName: '', // API doesn't provide firstName in response
+            lastName: '', // API doesn't provide lastName in response
           ),
           text: response.data.text,
           type: response.data.type,
+          images: processedImages,
           read: false,
           isDeleted: false,
           isPinned: false,
@@ -752,7 +1067,7 @@ class ChatController extends GetxController {
         // Force UI update
         chatMessages.refresh();
         
-        AppLogger.info('[CHAT CONTROLLER] Photo message added to reactive UI');
+        AppLogger.info('✅ [CHAT CONTROLLER] Photo message added to reactive UI');
       } catch (e) {
         AppLogger.error('[CHAT CONTROLLER] Error creating photo Message object: $e');
       }
@@ -1215,9 +1530,7 @@ class ChatController extends GetxController {
   void _handleNewChat(dynamic data) {
     try {
       AppLogger.info('🆕 [SOCKET] Handling new chat event: $data');
-      // TODO: Handle new chat creation/update
-      // This could refresh the chat list or update the current chat
-      // For now, just log the event for debugging
+      
       if (data is Map<String, dynamic>) {
         final chatId = data['chatId']?.toString() ?? '';
         final chatName = data['chatName']?.toString() ?? '';
@@ -1308,5 +1621,22 @@ class ChatController extends GetxController {
     } catch (e) {
       AppLogger.error('❌ [SOCKET] Error handling user block status: $e');
     }
+  }
+  
+  /// Process image URLs - returns relative URLs as-is for backend processing
+  List<String> _processImageUrls(List<String>? images) {
+    if (images == null || images.isEmpty) {
+      return [];
+    }
+    
+    return images.map((imageUrl) {
+      // If the URL already starts with http, return it as-is
+      if (imageUrl.startsWith('http')) {
+        return imageUrl;
+      }
+      
+      // Otherwise, return the relative URL as-is (backend will handle full URL construction)
+      return imageUrl;
+    }).toList();
   }
 }

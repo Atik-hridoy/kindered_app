@@ -3,6 +3,7 @@ import 'package:kindered_app/core/app_urls.dart';
 import 'package:kindered_app/local/storage_service.dart';
 import 'package:kindered_app/core/logger/app_logger.dart';
 import '../models/send_message_model.dart';
+import 'dart:io';
 
 class SendMessageService {
   final Dio _dio = Dio();
@@ -57,7 +58,7 @@ class SendMessageService {
           break;
           
         case 'both':
-        case 'mixed':
+        
           // For mixed messages (text + image)
           final lines = content.split('\n');
           final imageUrl = lines.last;
@@ -160,6 +161,106 @@ class SendMessageService {
     }
   }
 
+  /// Send a message with image using form-data (matches Postman setup)
+  /// 
+  /// Parameters:
+  /// - [chatId]: The ID of the chat to send the message to
+  /// - [imageFile]: The image file to send
+  /// - [content]: Optional text content to send with the image
+  /// 
+  /// Returns a SendMessageResponse containing the server response
+  Future<SendMessageResponse> sendMessageWithImage({
+    required String chatId,
+    required File imageFile,
+    String content = '',
+  }) async {
+    try {
+      // Get authentication token
+      final token = LocalStorage.token;
+      
+      if (token.isEmpty) {
+        AppLogger.error('[SEND MESSAGE SERVICE] No authentication token found');
+        throw Exception('Authentication required. Please login again.');
+      }
+      
+      // Prepare the multipart request with 'images' field as per Postman
+      final formData = FormData.fromMap({
+        'images': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: imageFile.path.split('/').last,
+        ),
+        if (content.isNotEmpty) 'content': content,
+      });
+      
+      AppLogger.info('[SEND MESSAGE SERVICE] Sending message with image to chat: $chatId');
+      AppLogger.info('[SEND MESSAGE SERVICE] Image file: ${imageFile.path}');
+      AppLogger.info('[SEND MESSAGE SERVICE] Content: $content');
+      
+      // Make the request to the send message endpoint
+      final response = await _dio.post(
+        '${AppUrls.baseUrl}${AppUrls.sentMessage.replaceFirst(':chatId', chatId)}',
+        data: formData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AppLogger.info('[SEND MESSAGE SERVICE] Message with image sent successfully');
+        return SendMessageResponse.fromJson(response.data);
+      } else {
+        AppLogger.error('[SEND MESSAGE SERVICE] Failed to send message with image: ${response.data}');
+        throw Exception('Failed to send message: ${response.data['message'] ?? 'Unknown error'}');
+      }
+    } on DioException catch (e) {
+      AppLogger.error('[SEND MESSAGE SERVICE] DioException sending message with image: ${e.message}');
+      AppLogger.error('[SEND MESSAGE SERVICE] Response data: ${e.response?.data}');
+      
+      if (e.response != null) {
+        final statusCode = e.response?.statusCode;
+        final responseData = e.response?.data as Map<String, dynamic>;
+        
+        switch (statusCode) {
+          case 400:
+            throw Exception('Bad request: ${responseData['message'] ?? 'Invalid message data'}');
+          case 401:
+            throw Exception('Authentication failed. Please login again.');
+          case 403:
+            throw Exception('Permission denied. You cannot send messages to this chat.');
+          case 404:
+            throw Exception('Chat not found.');
+          case 413:
+            throw Exception('Image file too large. Please choose a smaller image.');
+          case 429:
+            throw Exception('Too many requests. Please wait before sending another message.');
+          case 500:
+            throw Exception('Server error. Please try again later.');
+          default:
+            throw Exception('Failed to send message: ${responseData['message'] ?? 'Unknown error occurred'}');
+        }
+      } else {
+        // Network error or no response from server
+        AppLogger.error('[SEND MESSAGE SERVICE] Network error: ${e.message}');
+        
+        if (e.type == DioExceptionType.connectionTimeout || 
+            e.type == DioExceptionType.sendTimeout || 
+            e.type == DioExceptionType.receiveTimeout) {
+          throw Exception('Request timeout. Please check your internet connection and try again.');
+        } else if (e.type == DioExceptionType.connectionError) {
+          throw Exception('Network connection error. Please check your internet connection.');
+        } else {
+          throw Exception('Network error: ${e.message ?? 'Unknown network error occurred'}');
+        }
+      }
+    } catch (e) {
+      // Handle any other unexpected errors
+      AppLogger.error('[SEND MESSAGE SERVICE] Unexpected error sending message with image: $e');
+      throw Exception('Failed to send message: ${e.toString()}');
+    }
+  }
+
   /// Convenience method to send a text message (most common use case)
   Future<SendMessageResponse> sendTextMessage({
     required String chatId,
@@ -258,4 +359,5 @@ class SendMessageService {
     final objectIdRegex = RegExp(r'^[a-fA-F0-9]{24}$');
     return objectIdRegex.hasMatch(chatId);
   }
+
 }

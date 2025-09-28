@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_navigation/src/snackbar/snackbar_controller.dart';
 import 'dart:async';
+import 'dart:io';
+import '../../../core/app_urls.dart';
 import '../controller/chat_controller.dart';
 
 class ChatConversationView extends StatefulWidget {
@@ -15,6 +16,95 @@ class _ChatConversationViewState extends State<ChatConversationView> {
   final ChatController _chatController = Get.put(ChatController());
   final TextEditingController _messageController = TextEditingController();
   Timer? _typingTimer;
+  
+  void _showFullScreenImage(String imageUrl) {
+    // Preprocess URL the same way as message display
+    final processedImageUrl = imageUrl.startsWith('http') ? imageUrl : '${AppUrls.imageUrl}$imageUrl';
+    
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            // Full screen image
+            SizedBox(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                  child: Image.network(
+                    processedImageUrl,
+                    fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height,
+                      color: Colors.black,
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.broken_image,
+                            color: Colors.white70,
+                            size: 80,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Failed to load image',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height,
+                      color: Colors.black,
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            // Close button
+            Positioned(
+              top: 40,
+              right: 20,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -31,31 +121,15 @@ class _ChatConversationViewState extends State<ChatConversationView> {
   }
   
   void _handleSendMessage() {
-    final message = _messageController.text.trim();
-    
     // Send stopped typing indicator when message is sent
     _chatController.sendStoppedTypingIndicator();
     _typingTimer?.cancel();
     
     // Debug logging
     print('🚀 [CHAT VIEW] Send button pressed');
-    print('📝 [CHAT VIEW] Message content: "$message"');
+    print('📝 [CHAT VIEW] Has pending content: ${_chatController.hasPendingMessage}');
     print('💬 [CHAT VIEW] Has chat: ${_chatController.hasChat}');
     print('🆔 [CHAT VIEW] Chat ID: "${_chatController.chatId}"');
-    print('👥 [CHAT VIEW] Participants: ${_chatController.participants}');
-    
-    if (message.isEmpty) {
-      print('⚠️ [CHAT VIEW] Cannot send - message is empty');
-      Get.snackbar(
-        'Empty Message',
-        'Please type a message before sending',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
-      return;
-    }
     
     if (!_chatController.hasChat) {
       print('⚠️ [CHAT VIEW] Cannot send - no chat available');
@@ -70,39 +144,93 @@ class _ChatConversationViewState extends State<ChatConversationView> {
       return;
     }
     
-    print('✅ [CHAT VIEW] Sending message...');
-    _chatController.sendTextMessage(message);
+    if (!_chatController.hasPendingMessage) {
+      print('⚠️ [CHAT VIEW] Cannot send - no content to send');
+      return;
+    }
+    
+    print('✅ [CHAT VIEW] Sending pending message...');
+    _chatController.sendPendingMessage();
     _messageController.clear();
+  }
+
+  void _handleTextChanged(String text) {
+    _chatController.updateDraftMessage(text);
+    
+    // Handle typing indicator
+    if (text.isNotEmpty) {
+      _chatController.sendTypingIndicator();
+      _startTypingTimer();
+    } else {
+      _chatController.sendStoppedTypingIndicator();
+    }
   }
 
   void _handleImageAttachment() {
     _showImageSourceDialog();
   }
+  
+  void _handleSendImageDirectly() {
+    _showImageSourceDialog(forDirectSend: true);
+  }
 
-  void _showImageSourceDialog() {
+  void _showImageSourceDialog({bool forDirectSend = false}) {
     Get.dialog(
       AlertDialog(
-        title: const Text('Select Image Source',
-            style: TextStyle(color: Colors.white)),
+        title: Text(
+          forDirectSend ? 'Send Image' : 'Select Image Source',
+          style: const TextStyle(color: Colors.white)
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: Colors.blue),
-              title: const Text('Gallery', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Get.back();
-                _chatController.pickAndSendImage();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.green),
-              title: const Text('Camera', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Get.back();
-                _chatController.takeAndSendPhoto();
-              },
-            ),
+            if (forDirectSend) ...[
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Colors.blue),
+                title: const Text('Gallery & Send', style: TextStyle(color: Colors.white)),
+                subtitle: const Text('Pick from gallery and send immediately', style: TextStyle(color: Colors.white70)),
+                onTap: () async {
+                  Get.back();
+                  await _chatController.pickAndSendImage();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Colors.green),
+                title: const Text('Camera & Send', style: TextStyle(color: Colors.white)),
+                subtitle: const Text('Take photo and send immediately', style: TextStyle(color: Colors.white70)),
+                onTap: () async {
+                  Get.back();
+                  await _chatController.takeAndSendPhoto();
+                },
+              ),
+              const Divider(color: Colors.white30),
+              ListTile(
+                leading: const Icon(Icons.preview, color: Colors.orange),
+                title: const Text('Preview First', style: TextStyle(color: Colors.white)),
+                subtitle: const Text('Add to message preview before sending', style: TextStyle(color: Colors.white70)),
+                onTap: () {
+                  Get.back();
+                  _chatController.pickImageForPreview();
+                },
+              ),
+            ] else ...[
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Colors.blue),
+                title: const Text('Gallery', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Get.back();
+                  _chatController.pickImageForPreview();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Colors.green),
+                title: const Text('Camera', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Get.back();
+                  _chatController.takePhotoForPreview();
+                },
+              ),
+            ],
           ],
         ),
         backgroundColor: const Color(0xFF2E3A59),
@@ -406,6 +534,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                       final isSentByMe = message.sender.id == _chatController.currentUserId.value;
                       final messageText = message.text;
                       final messageType = message.type;
+                      final messageImages = message.images;
                       
                       // Format time using the message's formattedTime getter
                       String timeString = message.formattedTime;
@@ -426,6 +555,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                                 message: messageText,
                                 time: timeString,
                                 messageType: messageType,
+                                images: messageImages,
                               ),
                             ),
                           ),
@@ -447,6 +577,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                                 time: timeString,
                                 showAvatar: true, // Show avatar for received messages
                                 messageType: messageType,
+                                images: messageImages,
                               ),
                             ),
                           ),
@@ -457,6 +588,113 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                 );
               }),
             ),
+            
+            // Pending message preview
+            Obx(() {
+              if (_chatController.hasPendingContent.value) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E3A59),
+                    border: Border(
+                      top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                      bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Text preview
+                      if (_chatController.draftMessage.value.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            _chatController.draftMessage.value,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                      
+                      // Images preview
+                      if (_chatController.pendingImages.isNotEmpty)
+                        Container(
+                          height: 100,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _chatController.pendingImages.length,
+                            itemBuilder: (context, index) {
+                              final imagePath = _chatController.pendingImages[index];
+                              return Container(
+                                width: 80,
+                                height: 80,
+                                margin: const EdgeInsets.only(right: 8),
+                                child: Stack(
+                                  children: [
+                                    // Image preview
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.file(
+                                        File(imagePath),
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            width: 80,
+                                            height: 80,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(alpha: 0.1),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: const Icon(
+                                              Icons.broken_image,
+                                              color: Colors.white54,
+                                              size: 24,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    
+                                    // Remove button
+                                    Positioned(
+                                      top: 4,
+                                      right: 4,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          _chatController.removePendingImage(imagePath);
+                                        },
+                                        child: Container(
+                                          width: 20,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: Colors.white, width: 1),
+                                          ),
+                                          child: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            }),
             
             // Message input
             Container(
@@ -469,14 +707,18 @@ class _ChatConversationViewState extends State<ChatConversationView> {
               ),
               child: Row(
                 children: [
-                  // Image attachment button
-                  IconButton(
-                    icon: const Icon(
-                      Icons.image,
-                      color: Colors.white70,
-                      size: 24,
+                  // Image attachment button with long press for direct send
+                  GestureDetector(
+                    onLongPress: _handleSendImageDirectly,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.image,
+                        color: Colors.white70,
+                        size: 24,
+                      ),
+                      onPressed: _handleImageAttachment,
+                      tooltip: 'Tap to preview, Long press to send directly',
                     ),
-                    onPressed: _handleImageAttachment,
                   ),
                   const SizedBox(width: 8),
                   
@@ -499,12 +741,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                         ),
                         textCapitalization: TextCapitalization.sentences,
                         maxLines: null,
-                        onChanged: (text) {
-                          if (text.trim().isNotEmpty) {
-                            _chatController.sendTypingIndicator();
-                            _startTypingTimer();
-                          }
-                        },
+                        onChanged: _handleTextChanged,
                         onSubmitted: (_) => _handleSendMessage(),
                       ),
                     ),
@@ -533,11 +770,13 @@ class _ChatConversationViewState extends State<ChatConversationView> {
         required String time,
         bool showDeliveryStatus = true,
         String messageType = 'text',
+        List<String>? images,
       }) {
         final isImageMessage = messageType == 'image' || messageType == 'mixed' || messageType == 'custom';
+        final hasImages = images != null && images.isNotEmpty;
         
         return Container(
-          padding: isImageMessage ? const EdgeInsets.all(8) : const EdgeInsets.all(16),
+          padding: (hasImages || isImageMessage) ? const EdgeInsets.all(8) : const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: const Color(0xFF5D7AFF),
             borderRadius: const BorderRadius.only(
@@ -556,8 +795,76 @@ class _ChatConversationViewState extends State<ChatConversationView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (isImageMessage && message.isNotEmpty) ...[
-                // Image placeholder
+              // Display images if available
+              if (hasImages) ...[
+                // Show first image (can be extended to show multiple images)
+                Container(
+                  width: 200,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white.withOpacity(0.1),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: GestureDetector(
+                      onTap: () => _showFullScreenImage(images.first),
+                      child: Image.network(
+                        images.first.startsWith('http') ? images.first : '${AppUrls.imageUrl}${images.first}',
+                        width: 200,
+                        height: 150,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 200,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.broken_image,
+                              color: Colors.white70,
+                              size: 40,
+                            ),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            width: 200,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                // Show image count if multiple images
+                if (images.length > 1) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '+${images.length - 1} more image${images.length > 2 ? 's' : ''}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+                if (message.isNotEmpty) const SizedBox(height: 8),
+              ] else if (isImageMessage && message.isNotEmpty) ...[
+                // Fallback for image type messages without image URLs
                 Container(
                   width: 200,
                   height: 150,
@@ -615,8 +922,10 @@ class _ChatConversationViewState extends State<ChatConversationView> {
         required String time,
         bool showAvatar = false,
         String messageType = 'text',
+        List<String>? images,
       }) {
         final isImageMessage = messageType == 'image' || messageType == 'mixed' || messageType == 'custom';
+        final hasImages = images != null && images.isNotEmpty;
         
         return Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -640,7 +949,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
             
             Flexible(
               child: Container(
-                padding: isImageMessage ? const EdgeInsets.all(8) : const EdgeInsets.all(16),
+                padding: (hasImages || isImageMessage) ? const EdgeInsets.all(8) : const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: const Color(0xFF3A4A6B),
                   borderRadius: const BorderRadius.only(
@@ -659,8 +968,76 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (isImageMessage && message.isNotEmpty) ...[
-                      // Image placeholder
+                    // Display images if available
+                    if (hasImages) ...[
+                      // Show first image (can be extended to show multiple images)
+                      Container(
+                        width: 200,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: GestureDetector(
+                            onTap: () => _showFullScreenImage(images.first),
+                            child: Image.network(
+                              images.first.startsWith('http') ? images.first : '${AppUrls.imageUrl}${images.first}',
+                              width: 200,
+                              height: 150,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 200,
+                                  height: 150,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.broken_image,
+                                    color: Colors.white70,
+                                    size: 40,
+                                  ),
+                                );
+                              },
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  width: 200,
+                                  height: 150,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white54),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Show image count if multiple images
+                      if (images.length > 1) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          '+${images.length - 1} more image${images.length > 2 ? 's' : ''}',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                      if (message.isNotEmpty) const SizedBox(height: 8),
+                    ] else if (isImageMessage && message.isNotEmpty) ...[
+                      // Fallback for image type messages without image URLs
                       Container(
                         width: 200,
                         height: 150,
