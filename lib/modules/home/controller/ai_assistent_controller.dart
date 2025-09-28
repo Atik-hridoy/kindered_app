@@ -24,18 +24,12 @@ class AiAssistentController extends GetxController {
 
   // Connection and retry
   final RxBool isConnected = true.obs;
-  final RxInt retryCount = 0.obs;
   static const int maxRetryAttempts = 3;
 
   // Errors
   final RxString errorMessage = ''.obs;
 
-  // Quick questions
-  final RxList<String> quickQuestions = <String>[].obs;
-  final RxBool isQuickQuestionsLoading = false.obs;
-  final RxString quickQuestionsError = ''.obs;
-
-  @override
+  // Connection and retry
   void onInit() {
     super.onInit();
     _aiService = AiAssistentService();
@@ -251,10 +245,15 @@ class AiAssistentController extends GetxController {
       final response = await apiCall();
 
       if (response['data'] != null) {
-        final msg = response['data']['message'] ?? response['data'];
-        _addAIMessage(msg.toString());
+        String msg;
+        if (response['data'] is Map<String, dynamic>) {
+          msg = response['data']['message']?.toString() ?? response['data'].toString();
+        } else {
+          msg = response['data'].toString();
+        }
+        _addAIMessage(msg);
       } else if (response['message'] != null) {
-        _addAIMessage(response['message']);
+        _addAIMessage(response['message'].toString());
       } else {
         _addAIMessage(defaultResponse);
       }

@@ -7,14 +7,28 @@ import '../models/ai_assistent_get_model.dart';
 import '../../../config/app_routes.dart';
 import '../../../core/app_urls.dart';
 
-class AiAssistantView extends GetView<AiAssistentController> {
+class AiAssistantView extends StatefulWidget {
   const AiAssistantView({super.key});
 
   @override
+  State<AiAssistantView> createState() => _AiAssistantViewState();
+}
+
+class _AiAssistantViewState extends State<AiAssistantView> {
+  // Get the controller instance
+  final AiAssistentController controller = Get.find<AiAssistentController>();
+  
+  // Local FocusNode to prevent disposal issues
+  final FocusNode _messageFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _messageFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Initialize controller with proper tag to avoid disposal issues
-    final controller = Get.put(AiAssistentController(), tag: 'ai_assistant');
-    
     return Scaffold(
       backgroundColor: const Color(0xFF2E3A59),
       body: SafeArea(
@@ -33,7 +47,7 @@ class AiAssistantView extends GetView<AiAssistentController> {
                 // Scrollable Content
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.only(bottom: 100), // Space for input and navigation
+                    padding: const EdgeInsets.only(bottom: 180), // Increased space for input and navigation
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
@@ -77,12 +91,12 @@ class AiAssistantView extends GetView<AiAssistentController> {
                     ),
                   ),
                 ),
-                // Message input fixed above navigation
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 100, left: 20, right: 20, top: 12),
-                  child: _buildMessageInput(),
-                ),
               ],
+            ),
+            // Message input positioned above navigation
+            Positioned(
+              left: 20, right: 20, bottom: 90,
+              child: _buildMessageInput(),
             ),
             Positioned(
               left: 16, right: 16, bottom: 20,
@@ -524,7 +538,7 @@ class AiAssistantView extends GetView<AiAssistentController> {
           Expanded(
             child: TextField(
               controller: controller.messageController,
-              focusNode: controller.messageFocusNode,
+              focusNode: _messageFocusNode,
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Ask about your love journey...',

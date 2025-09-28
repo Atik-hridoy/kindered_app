@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/message_controller.dart';
-import '../widget/nav_card.dart';  
+import '../models/message_view_getChat_list.dart';
+import '../widget/nav_card.dart';
 
 class MessageView extends GetView<MessageController> {
   const MessageView({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,6 +43,16 @@ class MessageView extends GetView<MessageController> {
                             onPressed: controller.isLoading.value ? null : () => controller.refreshChatList(),
                           )
                           ),
+                          const SizedBox(width: 8),
+                          Obx(() => Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: controller.isSocketConnected.value ? Colors.green : Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          )
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -63,17 +73,23 @@ class MessageView extends GetView<MessageController> {
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: TextField(
-                                controller: controller.searchController,
-                                style: const TextStyle(color: Colors.white, fontSize: 16),
-                                decoration: const InputDecoration(
-                                  hintText: 'Search messages...',
-                                  hintStyle: TextStyle(color: Colors.white54),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.symmetric(vertical: 10),
-                                ),
-                              ),
+                              child: Obx(() {
+                                // Check if controller is disposed
+                                if (controller.isDisposed.value) {
+                                  return const SizedBox();
+                                }
+                                return TextField(
+                                  controller: controller.searchController,
+                                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                                  decoration: const InputDecoration(
+                                    hintText: 'Search messages...',
+                                    hintStyle: TextStyle(color: Colors.white54),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(vertical: 10),
+                                  ),
+                                );
+                              }),
                             ),
                             Obx(() => controller.searchQuery.value.isNotEmpty
                                 ? IconButton(
@@ -205,11 +221,14 @@ class MessageView extends GetView<MessageController> {
                       itemBuilder: (context, index) {
                         final chat = controller.filteredChatList[index];
                         return _buildChatItem(
+                          chat: chat,
                           profileImage: controller.getProfileImage(chat),
                           name: chat.participantName,
                           message: controller.getLastMessageText(chat),
                           time: controller.formatTime(chat.updatedAt),
-                          unreadCount: chat.unreadCount,
+                          unreadCount: controller.getUnreadCountText(chat),
+                          hasUnread: controller.hasUnreadMessages(chat),
+                          status: controller.getChatStatus(chat),
                           onTap: () => controller.navigateToChat(
                             chatId: chat.id,
                             participantName: chat.participantName,
@@ -246,11 +265,14 @@ class MessageView extends GetView<MessageController> {
 
   /// Build a chat item widget
   Widget _buildChatItem({
+    required Chat chat,
     required String profileImage,
     required String name,
     required String message,
     required String time,
-    required int unreadCount,
+    required String unreadCount,
+    required bool hasUnread,
+    required String status,
     VoidCallback? onTap,
   }) {
     return GestureDetector(
@@ -264,17 +286,38 @@ class MessageView extends GetView<MessageController> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Profile image
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                image: DecorationImage(
-                  image: NetworkImage(profileImage),
-                  fit: BoxFit.cover,
+            // Profile image with online status
+            Stack(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                    image: DecorationImage(
+                      image: NetworkImage(profileImage),
+                      fit: BoxFit.cover,
+                    ),
+                    border: hasUnread 
+                      ? Border.all(color: const Color(0xFFD4A373), width: 2)
+                      : null,
+                  ),
                 ),
-              ),
+                // Online status indicator (can be enhanced with real status)
+                Positioned(
+                  bottom: 2,
+                  right: 2,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      border: Border.all(color: const Color(0xFF2E3A59), width: 2),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
             ),
             
             const SizedBox(width: 16),
@@ -289,32 +332,46 @@ class MessageView extends GetView<MessageController> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
-                        child: Text(
-                          name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'PlayfairDisplay',
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                name,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
+                                  fontFamily: 'PlayfairDisplay',
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (status.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              Text(
+                                status,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                       Text(
                         time,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: .7),
+                          color: hasUnread ? const Color(0xFFD4A373) : Colors.white.withValues(alpha: .7),
                           fontSize: 13,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),
                     ],
                   ),
                   
-
                   const SizedBox(height: 6),
                   
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -323,15 +380,15 @@ class MessageView extends GetView<MessageController> {
                         child: Text(
                           message,
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: .8),
+                            color: hasUnread ? Colors.white : Colors.white.withValues(alpha: .8),
                             fontSize: 15,
-                            fontWeight: FontWeight.w400,
+                            fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (unreadCount > 0) ...[
+                      if (unreadCount.isNotEmpty) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -339,11 +396,11 @@ class MessageView extends GetView<MessageController> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF171E38),
+                            color: const Color(0xFFD4A373),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            unreadCount.toString(),
+                            unreadCount,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 13,

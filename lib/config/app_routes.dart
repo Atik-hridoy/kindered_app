@@ -220,7 +220,7 @@ class AppRoutes {
     ),
     GetPage(
       name: aiAssistantView,
-      page: () => const AiAssistantView(),
+      page: () => AiAssistantView(),
       binding: HomeBinding(),
     ),
     GetPage(

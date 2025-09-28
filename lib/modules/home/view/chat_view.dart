@@ -6,7 +6,12 @@ import '../../../core/app_urls.dart';
 import '../controller/chat_controller.dart';
 
 class ChatConversationView extends StatefulWidget {
-  const ChatConversationView({super.key});
+  final Map<String, dynamic>? arguments;
+  
+  const ChatConversationView({
+    super.key,
+    this.arguments,
+  });
 
   @override
   State<ChatConversationView> createState() => _ChatConversationViewState();
@@ -141,14 +146,14 @@ class _ChatConversationViewState extends State<ChatConversationView> {
         colorText: Colors.white,
         duration: const Duration(seconds: 3),
       );
-      return;
     }
     
     if (!_chatController.hasPendingMessage) {
       print('⚠️ [CHAT VIEW] Cannot send - no content to send');
       return;
     }
-    
+      
+    // Send the actual message
     print('✅ [CHAT VIEW] Sending pending message...');
     _chatController.sendPendingMessage();
     _messageController.clear();

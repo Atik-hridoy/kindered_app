@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kindered_app/core/app_urls.dart';
 import 'dart:math' as math;
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../services/message_view_getChat_list_service.dart';
 import '../models/message_view_getChat_list.dart';
 import '../../../core/logger/app_logger.dart';
@@ -11,9 +13,16 @@ class MessageController extends GetxController {
   // Services
   final MessageViewGetChatListService _chatService = MessageViewGetChatListService();
   
+  // Socket.io client
+  IO.Socket? _socket;
+  final RxBool isSocketConnected = false.obs;
+  
   // Load chat list from API
   final TextEditingController searchController = TextEditingController();
   final RxString searchQuery = ''.obs;
+  
+  // Controller state
+  final RxBool isDisposed = false.obs;
   
   // Chat data
   final RxList<Chat> chatList = <Chat>[].obs;
@@ -31,6 +40,7 @@ class MessageController extends GetxController {
     super.onInit();
     _initializeStorage();
     _setupSearchListener();
+    _initializeSocket();
     _loadChatList();
   }
 
@@ -47,6 +57,8 @@ class MessageController extends GetxController {
 
   @override
   void onClose() {
+    isDisposed.value = true;
+    _disconnectSocket();
     searchController.dispose();
     super.onClose();
   }
@@ -188,21 +200,80 @@ class MessageController extends GetxController {
     return chat.participantImage.isNotEmpty ? chat.participantImage.first : defaultProfileImage;
   }
 
-  /// Get last message text for display
+  /// Get last message text for display (truncated like other messaging apps)
   String getLastMessageText(Chat chat) {
     if (chat.lastMessage == null) {
       return 'No messages yet';
     }
     
+    String messageText = '';
+    String messageType = '';
+    
     // Handle different types of lastMessage
     if (chat.lastMessage is Map<String, dynamic>) {
       final messageData = chat.lastMessage as Map<String, dynamic>;
-      return messageData['content']?.toString() ?? 'No messages yet';
+      messageText = messageData['content']?.toString() ?? '';
+      messageType = messageData['type']?.toString() ?? 'text';
     } else if (chat.lastMessage is String) {
-      return chat.lastMessage.toString();
+      messageText = chat.lastMessage.toString();
+      messageType = 'text';
     } else {
       return 'No messages yet';
     }
+    
+    // Handle different message types
+    if (messageText.isEmpty) {
+      switch (messageType.toLowerCase()) {
+        case 'image':
+          return '📷 Photo';
+        case 'video':
+          return '🎥 Video';
+        case 'audio':
+          return '🎵 Audio';
+        case 'file':
+          return '📎 File';
+        case 'voice':
+          return '🎤 Voice message';
+        default:
+          return 'Message';
+      }
+    }
+    
+    // Truncate text messages like other messaging apps
+    if (messageText.length > 30) {
+      return '${messageText.substring(0, 30)}...';
+    }
+    
+    return messageText;
+  }
+
+  /// Get unread message count for display
+  String getUnreadCountText(Chat chat) {
+    if (chat.unreadCount <= 0) {
+      return '';
+    }
+    
+    if (chat.unreadCount > 99) {
+      return '99+';
+    }
+    
+    return chat.unreadCount.toString();
+  }
+
+  /// Check if chat has unread messages
+  bool hasUnreadMessages(Chat chat) {
+    return chat.unreadCount > 0;
+  }
+
+  /// Get chat display status (online, offline, etc.)
+  String getChatStatus(Chat chat) {
+    // This could be enhanced with real online status from socket
+    if (chat.isMuted) {
+      return '🔇 Muted';
+    }
+    
+    // Return empty string for now, can be enhanced with online status
+    return '';
   }
   
   /// Format timestamp for display
@@ -265,6 +336,134 @@ class MessageController extends GetxController {
       case 3: // Profile tab
         Get.toNamed(AppRoutes.profileView);
         break;
+    }
+  }
+
+  /// Initialize Socket.io connection
+  void _initializeSocket() {
+    try {
+      final token = LocalStorage.token;
+      if (token.isEmpty) {
+        AppLogger.warning('[MESSAGE CONTROLLER] No token available for socket connection');
+        return;
+      }
+
+      // Configure socket connection
+      _socket = IO.io(AppUrls.socketUrl, <String, dynamic>{
+        'transports': ['websocket'],
+        'autoConnect': false,
+        'auth': {
+          'token': token,
+          'userId': LocalStorage.userId,
+        },
+      });
+
+      // Set up socket event listeners
+      _setupSocketListeners();
+
+      // Connect to socket
+      _socket?.connect();
+      AppLogger.info('[MESSAGE CONTROLLER] Socket connection initialized');
+    } catch (e) {
+      AppLogger.error('[MESSAGE CONTROLLER] Error initializing socket: $e');
+    }
+  }
+
+  /// Set up socket event listeners
+  void _setupSocketListeners() {
+    if (_socket == null) return;
+
+    _socket!.onConnect((_) {
+      AppLogger.info('[MESSAGE CONTROLLER] Socket connected successfully');
+      isSocketConnected.value = true;
+      
+      // Join user-specific room
+      final userId = LocalStorage.userId;
+      if (userId.isNotEmpty) {
+        _socket!.emit('joinUserRoom', {'userId': userId});
+        AppLogger.info('[MESSAGE CONTROLLER] Joined user room: $userId');
+      }
+    });
+
+    _socket!.onDisconnect((_) {
+      AppLogger.info('[MESSAGE CONTROLLER] Socket disconnected');
+      isSocketConnected.value = false;
+    });
+
+    _socket!.onConnectError((data) {
+      AppLogger.error('[MESSAGE CONTROLLER] Socket connection error: $data');
+      isSocketConnected.value = false;
+    });
+
+    _socket!.on('chatListUpdate', (data) {
+      AppLogger.info('[MESSAGE CONTROLLER] Received chatListUpdate event: $data');
+      _handleChatListUpdate(data);
+    });
+
+    _socket!.on('error', (data) {
+      AppLogger.error('[MESSAGE CONTROLLER] Socket error: $data');
+    });
+  }
+
+  /// Handle chat list update from socket
+  void _handleChatListUpdate(dynamic data) {
+    try {
+      final userId = LocalStorage.userId;
+      if (userId.isEmpty) return;
+
+      // Check if the update is for the current user
+      if (data is Map<String, dynamic> && data.containsKey('userId')) {
+        final eventUserId = data['userId'].toString();
+        if (eventUserId == userId) {
+          AppLogger.info('[MESSAGE CONTROLLER] Chat list update received for current user');
+          
+          // Sort chat list based on the update
+          _sortChatList();
+          
+          // Optionally refresh the chat list if needed
+          if (data['refresh'] == true) {
+            _loadChatList();
+          }
+        }
+      }
+    } catch (e) {
+      AppLogger.error('[MESSAGE CONTROLLER] Error handling chat list update: $e');
+    }
+  }
+
+  /// Sort chat list based on last message timestamp
+  void _sortChatList() {
+    try {
+      // Sort chat list by updatedAt timestamp (most recent first)
+      chatList.sort((a, b) {
+        try {
+          final dateA = DateTime.parse(a.updatedAt);
+          final dateB = DateTime.parse(b.updatedAt);
+          return dateB.compareTo(dateA); // Descending order (newest first)
+        } catch (e) {
+          AppLogger.error('[MESSAGE CONTROLLER] Error parsing date for sorting: $e');
+          return 0;
+        }
+      });
+      
+      // Update filtered list as well
+      _filterChats();
+      
+      AppLogger.info('[MESSAGE CONTROLLER] Chat list sorted successfully');
+    } catch (e) {
+      AppLogger.error('[MESSAGE CONTROLLER] Error sorting chat list: $e');
+    }
+  }
+
+  /// Disconnect socket connection
+  void _disconnectSocket() {
+    try {
+      _socket?.disconnect();
+      _socket = null;
+      isSocketConnected.value = false;
+      AppLogger.info('[MESSAGE CONTROLLER] Socket disconnected');
+    } catch (e) {
+      AppLogger.error('[MESSAGE CONTROLLER] Error disconnecting socket: $e');
     }
   }
 }
