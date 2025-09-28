@@ -1,21 +1,21 @@
 import 'dart:convert';
 
 /// Top-level response
-class CurrentMatchResponse {
+class CurrentMatchsResponse {
   final bool success;
   final String message;
   final int statusCode;
   final MatchData data;
 
-  CurrentMatchResponse({
+  CurrentMatchsResponse({
     required this.success,
     required this.message,
     required this.statusCode,
     required this.data,
   });
 
-  factory CurrentMatchResponse.fromJson(Map<String, dynamic> json) {
-    return CurrentMatchResponse(
+  factory CurrentMatchsResponse.fromJson(Map<String, dynamic> json) {
+    return CurrentMatchsResponse(
       success: json['success'] ?? false,
       message: json['message'] ?? '',
       statusCode: json['statusCode'] ?? 0,

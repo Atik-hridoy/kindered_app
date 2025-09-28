@@ -12,7 +12,7 @@ class DisplayProfileController extends GetxController {
   final RxString errorMessage = ''.obs;
   
   // Current match data
-  final Rx<CurrentMatchResponse?> currentMatchResponse = Rx<CurrentMatchResponse?>(null);
+  final Rx<CurrentMatchsResponse?> currentMatchResponse = Rx<CurrentMatchsResponse?>(null);
   final Rx<MatchUser?> currentUser = Rx<MatchUser?>(null);
   final Rx<CurrentMatch?> currentMatch = Rx<CurrentMatch?>(null);
   
@@ -136,6 +136,22 @@ class DisplayProfileController extends GetxController {
   void onInit() {
     super.onInit();
     _initializeProfileService();
+    
+    // Check if we received arguments from AI assistant view
+    if (Get.arguments != null) {
+      final arguments = Get.arguments as Map<String, dynamic>;
+      if (arguments['currentMatch'] != null && arguments['user'] != null) {
+        // Use the passed data instead of fetching from API
+        currentMatch.value = arguments['currentMatch'];
+        currentUser.value = arguments['user'];
+        AppLogger.info('✅ [DISPLAY PROFILE] Using data from AI assistant view');
+        AppLogger.info('👤 [DISPLAY PROFILE] User: $fullName, Age: $age');
+        AppLogger.info('💯 [DISPLAY PROFILE] Match Score: $matchScore%');
+        return;
+      }
+    }
+    
+    // Fallback to fetching from API if no arguments provided
     fetchCurrentMatch();
   }
   

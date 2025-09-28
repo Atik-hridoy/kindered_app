@@ -145,14 +145,57 @@ class DisplayProfileView extends GetView<DisplayProfileController> {
                           offset: const Offset(0, 10),
                         )
                       ],
-                      image: DecorationImage(
-                        image: NetworkImage(controller.galleryImages.isNotEmpty 
-                            ? controller.galleryImages.first 
-                            : 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=600&fit=crop&crop=face'),
-                        fit: BoxFit.cover,
-                      ),
                     ),
+                    child: Obx(() {
+                      if (controller.galleryImages.isEmpty) {
+                        // Empty state - no image available
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF3A4A6B),
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.image_not_supported_outlined,
+                                  color: Colors.white54,
+                                  size: 64,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'No photo available',
+                                  style: TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      } else {
+                        // Show the first image from gallery
+                        return Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            image: DecorationImage(
+                              image: NetworkImage(controller.galleryImages.first),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      }
+                    }),
                   ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Photo Gallery Section
+                  if (controller.galleryImages.length > 1) _buildPhotoGallery(),
+                  
+                  const SizedBox(height: 24),
                   
                   // Name - under the image
                   Padding(
@@ -645,6 +688,130 @@ class DisplayProfileView extends GetView<DisplayProfileController> {
       ),
     );
   }
+  
+  Widget _buildPhotoGallery() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF21293F),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFD4A373).withValues(alpha: 0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Card header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD4A373).withValues(alpha: 0.1),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.photo_library,
+                    size: 18,
+                    color: const Color(0xFFD4A373),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Photos',
+                    style: TextStyle(
+                      color: Color(0xFFD4A373),
+                      fontSize: 18,
+                      fontFamily: 'PlayfairDisplay',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  Obx(() => Text(
+                    '${controller.galleryImages.length} photos',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontFamily: 'Inter',
+                    ),
+                  )),
+                ],
+              ),
+            ),
+            // Card content - Photo grid
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Obx(() => GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 1,
+                ),
+                itemCount: controller.galleryImages.length > 6 ? 6 : controller.galleryImages.length,
+                itemBuilder: (context, index) {
+                  // Skip the first image since it's already shown as the main profile image
+                  final imageIndex = index + 1;
+                  if (imageIndex >= controller.galleryImages.length) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3A4A6B),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.add_photo_alternate_outlined,
+                          color: Colors.white54,
+                          size: 24,
+                        ),
+                      ),
+                    );
+                  }
+                  
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      controller.galleryImages[imageIndex],
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF3A4A6B),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              color: Colors.white54,
+                              size: 24,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              )),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _InfoSection extends StatelessWidget {
@@ -691,42 +858,3 @@ class _InfoSection extends StatelessWidget {
   }
 }
 
-class _InfoWithIcon extends StatelessWidget {
-  final String title;
-  final String value;
-  final String iconPath;
-
-  const _InfoWithIcon({
-    required this.title,
-    required this.value,
-    required this.iconPath,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SvgPicture.asset(
-          iconPath,
-          width: 20,
-          height: 20,
-          colorFilter: const ColorFilter.mode(
-            Color(0xFFD4A373),
-            BlendMode.srcIn,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            '$title: $value',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontFamily: 'Inter',
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}

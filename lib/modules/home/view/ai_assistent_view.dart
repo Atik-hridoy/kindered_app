@@ -15,11 +15,21 @@ class AiAssistantView extends StatefulWidget {
 }
 
 class _AiAssistantViewState extends State<AiAssistantView> {
-  // Get the controller instance
-  final AiAssistentController controller = Get.find<AiAssistentController>();
+  late final AiAssistentController controller;
   
   // Local FocusNode to prevent disposal issues
   final FocusNode _messageFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controller properly
+    if (Get.isRegistered<AiAssistentController>()) {
+      controller = Get.find<AiAssistentController>();
+    } else {
+      controller = Get.put<AiAssistentController>(AiAssistentController());
+    }
+  }
 
   @override
   void dispose() {

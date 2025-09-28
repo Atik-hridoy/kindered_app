@@ -4,11 +4,12 @@ import 'package:dio/dio.dart';
 import 'package:kindered_app/core/logger/app_logger.dart';
 import '../services/ai_assistent_service.dart';
 import '../models/ai_assistent_get_model.dart';
+import '../../../config/app_routes.dart';
+import '../../../modules/profile_and_settings/model/display_profile.dart' as profile_models;
 
 class AiAssistentController extends GetxController {
   // UI controllers
   final TextEditingController messageController = TextEditingController();
-  final FocusNode messageFocusNode = FocusNode();
 
   // Chat state
   final RxList<Map<String, dynamic>> messages = <Map<String, dynamic>>[].obs;
@@ -24,12 +25,23 @@ class AiAssistentController extends GetxController {
 
   // Connection and retry
   final RxBool isConnected = true.obs;
+  final RxInt retryCount = 0.obs;
   static const int maxRetryAttempts = 3;
 
   // Errors
   final RxString errorMessage = ''.obs;
 
-  // Connection and retry
+  // Quick questions (static)
+  final RxList<String> quickQuestions = <String>[
+    'Give me a romantic date idea!',
+    "What's my love compatibility?",
+    'How can I improve my relationship?',
+    'What are good conversation starters?',
+  ].obs;
+  final RxBool isQuickQuestionsLoading = false.obs;
+  final RxString quickQuestionsError = ''.obs;
+
+  @override
   void onInit() {
     super.onInit();
     _aiService = AiAssistentService();
@@ -39,13 +51,11 @@ class AiAssistentController extends GetxController {
     });
 
     _loadMatchmakingData();
-    _loadQuickQuestions();
   }
 
   @override
   void onClose() {
-    messageController.dispose();
-    messageFocusNode.dispose();
+    // Don't dispose messageController here as it might be reused
     super.onClose();
   }
 
@@ -64,7 +74,11 @@ class AiAssistentController extends GetxController {
   void clearMessages() => messages.clear();
 
   Future<void> refreshMatchmakingData() => _loadMatchmakingData();
-  Future<void> refreshQuickQuestions() => _loadQuickQuestions();
+  Future<void> refreshQuickQuestions() async {
+    // Since questions are static, just clear any error and reset
+    quickQuestionsError.value = '';
+    quickQuestions.refresh();
+  }
 
   void clearError() => errorMessage.value = '';
   void clearQuickQuestionsError() => quickQuestionsError.value = '';
@@ -72,20 +86,180 @@ class AiAssistentController extends GetxController {
   Future<void> processQuickQuestion(String question) async {
     await _handleUserAction(
       userMessage: question,
-      apiCall: () => _aiService.processQuickQuestion(question: question),
+      apiCall: () async {
+        // Just return a simple response, no API call needed
+        return {'response': 'Processing your question about: $question'};
+      },
       defaultResponse: 'Quick question processed successfully!',
       errorContext: 'quick question',
     );
   }
 
-  Future<void> discoverMatch() async {
-    await _handleUserAction(
-      userMessage: 'I want to discover more about this match!',
-      apiCall: () => _aiService.processDiscoverAction(),
-      defaultResponse:
-          'Great! Here are more details about your match. Let me know what you think!',
-      errorContext: 'discover action',
+  /// Convert home CurrentMatch to profile CurrentMatch using direct mapping
+  profile_models.CurrentMatch _convertToProfileCurrentMatch(CurrentMatch currentMatch) {
+    try {
+      // Convert user first
+      final profileUser = _convertToProfileMatchUser(currentMatch.user);
+      
+      // Create profile CurrentMatch
+      return profile_models.CurrentMatch(
+        user: profileUser,
+        matchScore: currentMatch.matchScore,
+        commonInterests: List<String>.from(currentMatch.commonInterests),
+        reasons: List<String>.from(currentMatch.reasons),
+        distance: currentMatch.distance,
+      );
+    } catch (e) {
+      AppLogger.error('❌ [AI ASSISTANT] Error converting CurrentMatch: $e');
+      rethrow;
+    }
+  }
+  
+  /// Convert home MatchUser to profile MatchUser using direct mapping
+  profile_models.MatchUser _convertToProfileMatchUser(MatchUser user) {
+    try {
+      return profile_models.MatchUser(
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        email: user.email,
+        phone: user.phone ?? '',
+        age: user.age,
+        gender: user.gender,
+        location: _convertToProfileLocation(user.location),
+        bodyImage: user.bodyImage,
+        headShotImage: user.headShotImage,
+        personalityImage: user.personalityImage,
+        image: List<String>.from(user.image),
+        likeToMeet: List<String>.from(user.likeToMeet),
+        relationType: user.relationType ?? '',
+        body: _convertToProfileBody(user.body),
+        eduJob: _convertToProfileEduJob(user.eduJob),
+        interests: _convertToProfileInterests(user.interests),
+        personalTraitsInspire: List<String>.from(user.personalTraitsInspire),
+        religion: user.religion,
+        zodiacSign: user.zodiacSign,
+        lifestyle: _convertToProfileLifestyle(user.lifestyle),
+        habits: _convertToProfileHabits(user.habits),
+        beliefsOtherText: user.beliefsOtherText ?? '',
+        address: user.address,
+        traitsOtherText: user.traitsOtherText ?? '',
+        aboutMe: user.aboutMe ?? '',
+        status: user.status,
+        isVerified: user.isVerified,
+        profileCompletionPercentage: user.profileCompletionPercentage,
+        isDeleted: user.isDeleted,
+        updatedAt: '', // Field not available in home model
+      );
+    } catch (e) {
+      AppLogger.error('❌ [AI ASSISTANT] Error converting MatchUser: $e');
+      rethrow;
+    }
+  }
+  
+  /// Convert home Location to profile Location
+  profile_models.Location _convertToProfileLocation(Location? location) {
+    if (location == null) {
+      return profile_models.Location(type: '', coordinates: []);
+    }
+    return profile_models.Location(
+      type: location.type,
+      coordinates: List<double>.from(location.coordinates),
     );
+  }
+  
+  /// Convert home Body to profile Body
+  profile_models.Body _convertToProfileBody(Body? body) {
+    if (body == null) {
+      return profile_models.Body(heightCm: 0, weightKg: 0);
+    }
+    return profile_models.Body(
+      heightCm: body.heightCm,
+      weightKg: body.weightKg,
+    );
+  }
+  
+  /// Convert home EduJob to profile EduJob
+  profile_models.EduJob _convertToProfileEduJob(EduJob? eduJob) {
+    if (eduJob == null) {
+      return profile_models.EduJob(
+        educationLevel: '',
+        jobTitle: '',
+        annualIncome: 0,
+      );
+    }
+    return profile_models.EduJob(
+      educationLevel: eduJob.educationLevel,
+      jobTitle: eduJob.jobTitle,
+      annualIncome: eduJob.annualIncome,
+    );
+  }
+  
+  /// Convert home Interests to profile Interests
+  profile_models.Interests _convertToProfileInterests(Interests interests) {
+    return profile_models.Interests(
+      hobbies: List<String>.from(interests.hobbies),
+      creativeOutlets: List<String>.from(interests.creativeOutlets),
+      fitnessAndSports: List<String>.from(interests.fitnessAndSports),
+      entertainment: List<String>.from(interests.entertainment),
+      leisureActivities: List<String>.from(interests.leisureActivities),
+      musicGenres: List<String>.from(interests.musicGenres),
+      healthAndWellness: List<String>.from(interests.healthAndWellness),
+      readingAndContent: List<String>.from(interests.readingAndContent),
+    );
+  }
+  
+  /// Convert home Lifestyle to profile Lifestyle
+  profile_models.Lifestyle _convertToProfileLifestyle(Lifestyle lifestyle) {
+    return profile_models.Lifestyle(
+      sleepingStyle: lifestyle.sleepingStyle,
+      loveStyle: lifestyle.loveStyle,
+      weekends: lifestyle.weekends,
+      traveling: lifestyle.traveling,
+      homeEnvironment: lifestyle.homeEnvironment,
+      livingSpace: lifestyle.livingSpace,
+    );
+  }
+  
+  /// Convert home Habits to profile Habits
+  profile_models.Habits _convertToProfileHabits(Habits habits) {
+    return profile_models.Habits(
+      communicationStyle: List<String>.from(habits.communicationStyle),
+      workout: habits.workout,
+      eatingStyle: List<String>.from(habits.eatingStyle),
+      socialMedia: habits.socialMedia,
+      smokeOrDrink: habits.smokeOrDrink,
+      newExercise: habits.newExercise,
+    );
+  }
+  
+  Future<void> discoverMatch() async {
+    // Check if we have current match data
+    if (matchmakingData.value?.data?.currentMatch != null) {
+      final currentMatch = matchmakingData.value!.data!.currentMatch;
+      
+      // Convert to profile model type
+      final profileCurrentMatch = _convertToProfileCurrentMatch(currentMatch);
+      
+      // Navigate to display profile view with match data
+      Get.toNamed(
+        AppRoutes.displayProfile,
+        arguments: {
+          'currentMatch': profileCurrentMatch,
+          'user': profileCurrentMatch.user,
+        },
+      );
+    } else {
+      // Fallback to original behavior if no match data
+      await _handleUserAction(
+        userMessage: 'I want to discover more about this match!',
+        apiCall: () => _aiService.processDiscoverAction(),
+        defaultResponse:
+            'Great! Here are more details about your match. Let me know what you think!',
+        errorContext: 'discover action',
+      );
+    }
   }
 
   Future<void> passMatch() async {
@@ -182,34 +356,6 @@ class AiAssistentController extends GetxController {
     } finally {
       isLoading.value = false;
       stopAiTyping();
-    }
-  }
-
-  Future<void> _loadQuickQuestions() async {
-    try {
-      isQuickQuestionsLoading.value = true;
-      quickQuestionsError.value = '';
-      updateConnectionStatus(true);
-
-      final questions = await _aiService.getQuickQuestions();
-      quickQuestions.value = questions.isNotEmpty
-          ? questions
-          : [
-              'Give me a romantic date idea!',
-              "What's my love compatibility?",
-            ];
-
-      AppLogger.success('✅ Quick questions loaded successfully');
-    } catch (e, stack) {
-      quickQuestionsError.value =
-          'Failed to load quick questions: ${e.toString()}';
-      quickQuestions.value = [
-        'Give me a romantic date idea!',
-        "What's my love compatibility?",
-      ];
-      AppLogger.error('Failed to load quick questions', e, stack);
-    } finally {
-      isQuickQuestionsLoading.value = false;
     }
   }
 

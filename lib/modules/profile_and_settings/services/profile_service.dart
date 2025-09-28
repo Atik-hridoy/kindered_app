@@ -190,7 +190,7 @@ class ProfileService {
   }
 
   /// Fetch current match data from AI matchmaking
-  Future<CurrentMatchResponse> getCurrentMatch() async {
+  Future<CurrentMatchsResponse> getCurrentMatch() async {
     try {
       AppLogger.info('🔄 [PROFILE SERVICE] Fetching current match data...');
       AppLogger.info('📋 [PROFILE SERVICE] Endpoint: ${AppUrls.aiCurrentMatch}');
@@ -204,7 +204,7 @@ class ProfileService {
       AppLogger.info('📝 [PROFILE SERVICE] Response data: ${response.data}');
       
       if (response.statusCode == 200 && response.data != null) {
-        final currentMatchResponse = CurrentMatchResponse.fromJson(response.data);
+        final currentMatchResponse = CurrentMatchsResponse.fromJson(response.data);
         AppLogger.success('✅ [PROFILE SERVICE] Current match data fetched successfully');
         return currentMatchResponse;
       } else {
