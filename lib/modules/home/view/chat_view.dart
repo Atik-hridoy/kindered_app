@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_navigation/src/snackbar/snackbar_controller.dart';
+import 'dart:async';
 import '../controller/chat_controller.dart';
 
 class ChatConversationView extends StatefulWidget {
@@ -13,15 +14,28 @@ class ChatConversationView extends StatefulWidget {
 class _ChatConversationViewState extends State<ChatConversationView> {
   final ChatController _chatController = Get.put(ChatController());
   final TextEditingController _messageController = TextEditingController();
+  Timer? _typingTimer;
 
   @override
   void dispose() {
     _messageController.dispose();
+    _typingTimer?.cancel();
     super.dispose();
   }
 
+  void _startTypingTimer() {
+    _typingTimer?.cancel();
+    _typingTimer = Timer(const Duration(seconds: 2), () {
+      _chatController.sendStoppedTypingIndicator();
+    });
+  }
+  
   void _handleSendMessage() {
     final message = _messageController.text.trim();
+    
+    // Send stopped typing indicator when message is sent
+    _chatController.sendStoppedTypingIndicator();
+    _typingTimer?.cancel();
     
     // Debug logging
     print('🚀 [CHAT VIEW] Send button pressed');
@@ -163,13 +177,47 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                               fontFamily: 'PlayfairDisplay',
                             ),
                           ),
-                          Text(
-                            hasChat ? 'Online' : 'Creating chat...',
-                            style: TextStyle(
-                              color: hasChat ? Colors.green : Colors.orange,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                hasChat ? 'Online' : 'Creating chat...',
+                                style: TextStyle(
+                                  color: hasChat ? Colors.green : Colors.orange,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              if (hasChat) ...[
+                                const SizedBox(width: 8),
+                                Obx(() {
+                                  final isConnected = _chatController.isConnected.value;
+                                  final connectionStatus = _chatController.connectionStatus.value;
+                                  
+                                  return Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: isConnected ? Colors.green : Colors.red,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        connectionStatus,
+                                        style: TextStyle(
+                                          color: isConnected ? Colors.green : Colors.red,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }),
+                              ],
+                            ],
                           ),
                         ],
                       );
@@ -184,6 +232,37 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                 ],
               ),
             ),
+            
+            // Typing indicator
+            Obx(() {
+              if (_chatController.isParticipantTyping.value) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        _chatController.typingStatus.value,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            }),
             
             // Chat messages
             Expanded(
@@ -201,7 +280,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                         Text(
                           'Creating chat...',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Colors.white70,
                             fontSize: 16,
                           ),
                         ),
@@ -420,6 +499,12 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                         ),
                         textCapitalization: TextCapitalization.sentences,
                         maxLines: null,
+                        onChanged: (text) {
+                          if (text.trim().isNotEmpty) {
+                            _chatController.sendTypingIndicator();
+                            _startTypingTimer();
+                          }
+                        },
                         onSubmitted: (_) => _handleSendMessage(),
                       ),
                     ),

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/modules/home/widget/nav_card.dart';
 import 'package:kindered_app/modules/profile_and_settings/controller/profile_view_controller.dart';
+import 'package:kindered_app/local/storage_service.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class ProfileView extends StatefulWidget {
@@ -258,62 +259,74 @@ class _ProfileViewState extends State<ProfileView> {
   }
 
   void _showLogoutConfirmation() {
-    Get.defaultDialog(
-      title: 'Logout Confirmation',
-      titleStyle: const TextStyle(
-        color: Color(0xFFD29A67),
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        fontFamily: 'PlayfairDisplay',
-      ),
-      content: const Text(
-        'Are you sure you want to logout?',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-        ),
-        textAlign: TextAlign.center,
-      ),
-      backgroundColor: const Color(0xFF2E3A59),
-      radius: 16,
-      confirm: ElevatedButton(
-        onPressed: () {
-          Get.offAllNamed(AppRoutes.onboarding);
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFD29A67),
-          foregroundColor: Colors.white,
-          minimumSize: const Size(80, 40),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        child: const Text(
-          'Yes',
+    Get.dialog(
+      AlertDialog(
+        title: const Text(
+          'Logout Confirmation',
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
+            color: Color(0xFFD29A67),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'PlayfairDisplay',
           ),
         ),
-      ),
-      cancel: ElevatedButton(
-        onPressed: Get.back,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF21293F),
-          foregroundColor: Colors.white,
-          minimumSize: const Size(80, 40),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: const BorderSide(color: Color(0xFFD29A67), width: 1),
-          ),
-        ),
-        child: const Text(
-          'No',
+        content: const Text(
+          'Are you sure you want to logout?',
           style: TextStyle(
+            color: Colors.white,
             fontSize: 16,
-            fontWeight: FontWeight.w500,
           ),
+          textAlign: TextAlign.center,
         ),
+        backgroundColor: const Color(0xFF2E3A59),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () async {
+              // Clear all saved authentication data
+              await LocalStorage.clearAll();
+              
+              // Navigate to onboarding
+              Get.offAllNamed(AppRoutes.onboarding);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD29A67),
+              foregroundColor: Colors.white,
+              minimumSize: const Size(80, 40),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Yes',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: Get.back,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF21293F),
+              foregroundColor: Colors.white,
+              minimumSize: const Size(80, 40),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: const BorderSide(color: Color(0xFFD29A67), width: 1),
+              ),
+            ),
+            child: const Text(
+              'No',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
       barrierDismissible: false,
     );

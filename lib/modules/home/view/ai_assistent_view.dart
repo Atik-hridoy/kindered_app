@@ -12,8 +12,8 @@ class AiAssistantView extends GetView<AiAssistentController> {
 
   @override
   Widget build(BuildContext context) {
-    // Initialize controller
-    Get.put(AiAssistentController());
+    // Initialize controller with proper tag to avoid disposal issues
+    final controller = Get.put(AiAssistentController(), tag: 'ai_assistant');
     
     return Scaffold(
       backgroundColor: const Color(0xFF2E3A59),
@@ -37,10 +37,12 @@ class AiAssistantView extends GetView<AiAssistentController> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min, // Prevent overflow
                         children: [
                           // Dynamic messages from controller
                           Obx(
                             () => Column(
+                              mainAxisSize: MainAxisSize.min, // Prevent overflow
                               children: controller.messages.map((message) {
                                 return _buildMessageBubble(
                                   text: message['text'],

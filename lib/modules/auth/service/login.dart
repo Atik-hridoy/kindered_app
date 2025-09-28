@@ -75,7 +75,6 @@ class AuthService {
       }
       
       return {
-        'success': false,
         'error': errorMessage,
       };
     }
@@ -99,6 +98,109 @@ class AuthService {
       return {
         'success': false,
         'error': e.response?.data?['message'] ?? 'OTP verification failed',
+      };
+    }
+  }
+
+  /// Validate saved authentication token
+  Future<Map<String, dynamic>> validateToken(String token) async {
+    try {
+      AppLogger.info('🔐 [AUTH SERVICE] Validating saved token...');
+      
+      // Set Authorization header with saved token
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      
+      // Make a request to validate the token (you can use any protected endpoint)
+      // For now, we'll use a simple user profile endpoint or create a dedicated validate endpoint
+      final response = await _dio.get(
+        '${AppUrls.baseUrl}/auth/validate', // You may need to create this endpoint
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      
+      AppLogger.success('✅ [AUTH SERVICE] Token validation successful');
+      return {
+        'success': true,
+        'data': response.data,
+      };
+    } on DioException catch (e) {
+      AppLogger.warning('⚠️ [AUTH SERVICE] Token validation failed: ${e.response?.statusCode}');
+      
+      // Check if it's a 401 Unauthorized error (token expired/invalid)
+      if (e.response?.statusCode == 401) {
+        return {
+          'success': false,
+          'error': 'Token expired or invalid',
+          'needsRefresh': true,
+        };
+      }
+      
+      return {
+        'success': false,
+        'error': e.response?.data?['message'] ?? 'Token validation failed',
+      };
+    } catch (e) {
+      AppLogger.error('❌ [AUTH SERVICE] Unexpected error during token validation: $e');
+      return {
+        'success': false,
+        'error': 'Token validation failed',
+      };
+    }
+  }
+
+  /// Alternative token validation using login endpoint (fallback)
+  Future<Map<String, dynamic>> validateTokenWithLogin(String email, String token) async {
+    try {
+      AppLogger.info('🔄 [AUTH SERVICE] Validating token with login endpoint for: $email');
+      
+      // Try to login with the saved email to check if user exists and token is still valid
+      final loginResult = await login(email);
+      
+      if (loginResult['success'] == true) {
+        // User exists, now check if we can access a protected resource with the token
+        _dio.options.headers['Authorization'] = 'Bearer $token';
+        
+        try {
+          // Try to access a protected endpoint
+          final response = await _dio.get(
+            '${AppUrls.baseUrl}/user/profile', // Example protected endpoint
+            options: Options(
+              headers: {
+                'Authorization': 'Bearer $token',
+              },
+            ),
+          );
+          
+          AppLogger.success('✅ [AUTH SERVICE] Token validation with login successful');
+          return {
+            'success': true,
+            'data': response.data,
+          };
+        } on DioException catch (e) {
+          if (e.response?.statusCode == 401) {
+            AppLogger.warning('⚠️ [AUTH SERVICE] Token is invalid, needs refresh');
+            return {
+              'success': false,
+              'error': 'Token expired or invalid',
+              'needsRefresh': true,
+            };
+          }
+          return {
+            'success': false,
+            'error': 'Token validation failed',
+          };
+        }
+      } else {
+        return loginResult; // Return the login error
+      }
+    } catch (e) {
+      AppLogger.error('❌ [AUTH SERVICE] Error during token validation with login: $e');
+      return {
+        'success': false,
+        'error': 'Token validation failed',
       };
     }
   }

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:kindered_app/config/app_routes.dart';
 import 'package:kindered_app/core/logger/app_logger.dart';
 import '../service/login.dart';
+import 'package:kindered_app/local/storage_service.dart';
 
 class LoginEmailController extends GetxController {
   final AuthService _authService = AuthService();
@@ -23,12 +24,49 @@ class LoginEmailController extends GetxController {
       return;
     }
     
+    final email = emailController.text.trim();
     isLoading.value = true;
     errorMessage.value = '';
     
     try {
-      AppLogger.info('🔄 [LOGIN] Attempting login with email: ${emailController.text.trim()}');
-      final result = await _authService.login(emailController.text.trim());
+      AppLogger.info('🔄 [LOGIN] Attempting login with email: $email');
+      
+      // First check if we have saved tokens for this email
+      final savedEmail = LocalStorage.myEmail;
+      final savedToken = LocalStorage.token;
+      final isAuthenticated = LocalStorage.isAuthenticated();
+      
+      AppLogger.info('📋 [LOGIN] Checking saved auth data:');
+      AppLogger.info('   - Input email: $email');
+      AppLogger.info('   - Saved email: $savedEmail');
+      AppLogger.info('   - Has saved token: ${savedToken.isNotEmpty}');
+      AppLogger.info('   - Is authenticated: $isAuthenticated');
+      
+      // If we have saved data for this email, try auto-login
+      if (isAuthenticated && savedEmail == email && savedToken.isNotEmpty) {
+        AppLogger.info('🚀 [LOGIN] Found saved auth data for this email, attempting auto-login...');
+        
+        // Validate the saved token
+        final tokenValidationResult = await _authService.validateTokenWithLogin(email, savedToken);
+        
+        if (tokenValidationResult['success'] == true) {
+          // Token is valid, navigate directly to home
+          AppLogger.success('✅ [LOGIN] Auto-login successful! Navigating to home...');
+          Get.offAllNamed(AppRoutes.locationView);
+          return;
+        } else if (tokenValidationResult['needsRefresh'] == true) {
+          // Token expired, need to get new one via OTP
+          AppLogger.info('⏰ [LOGIN] Token expired, need OTP verification');
+        } else {
+          // Invalid token, clear and proceed with normal login
+          AppLogger.warning('⚠️ [LOGIN] Invalid saved token, clearing and proceeding with normal login');
+          await LocalStorage.clearAll();
+        }
+      }
+      
+      // If no saved data or auto-login failed, proceed with normal login flow
+      AppLogger.info('📧 [LOGIN] Proceeding with normal login flow for: $email');
+      final result = await _authService.login(email);
       
       AppLogger.info('📝 [LOGIN] Server response: $result');
       
@@ -39,7 +77,7 @@ class LoginEmailController extends GetxController {
         await Get.toNamed(
           AppRoutes.otp, 
           arguments: {
-            'target': emailController.text.trim(), 
+            'target': email, 
             'type': 'email',
             'source': 'login'
           }
@@ -59,7 +97,7 @@ class LoginEmailController extends GetxController {
         await Get.toNamed(
           AppRoutes.otp, 
           arguments: {
-            'target': emailController.text.trim(), 
+            'target': email, 
             'type': 'email',
             'source': 'login'
           }
@@ -71,6 +109,7 @@ class LoginEmailController extends GetxController {
         errorMessage.value = result['error'] ?? 'Login failed. Please try again.';
       }
     } catch (e) {
+      AppLogger.error('❌ [LOGIN] Unexpected error: $e');
       errorMessage.value = 'An unexpected error occurred';
     } finally {
       isLoading.value = false;

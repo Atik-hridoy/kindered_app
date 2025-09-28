@@ -320,7 +320,8 @@ class HomeSuggestionController extends GetxController {
     final suggestedUserAge = userAge > 0 ? userAge.toString() : (age.isNotEmpty ? age : '0');
     
     // Determine the final chat ID to be used
-    final finalChatId = chatId ?? suggestedUserId;
+    // Only use chatId if it's provided and valid, otherwise let ChatController create new chat
+    final finalChatId = (chatId != null && chatId.isNotEmpty && chatId != suggestedUserId) ? chatId : null;
     
     AppLogger.info('=== HOME SUGGESTION - NAVIGATE TO CHAT ===');
     AppLogger.info('🏠 HOME TO CHAT NAVIGATION STARTED ===');
@@ -335,15 +336,14 @@ class HomeSuggestionController extends GetxController {
     AppLogger.info('  - Suggested User Age: $suggestedUserAge');
     AppLogger.info('🆔 Chat ID Resolution:');
     AppLogger.info('  - Final Chat ID: $finalChatId');
-    AppLogger.info('  - Chat ID Source: ${chatId != null ? 'Provided as parameter' : 'Generated from suggested user ID'}');
+    AppLogger.info('  - Chat ID Source: ${finalChatId != null ? 'Using existing chat ID' : 'Will create new chat'}');
     
     // Prepare navigation arguments
     final navigationArgs = {
-      'chatId': finalChatId,
+      'chatId': finalChatId, // Will be null for new chats
       'currentUserId': currentUserId,
-      'suggestedUserId': suggestedUserId,
       'participantName': participantName ?? suggestedUserName,
-      'participantId': participantId ?? suggestedUserId,
+      'participantId': participantId ?? suggestedUserId, // This should be the other user's ID
     };
     
     AppLogger.info('🚀 Navigation Arguments:');

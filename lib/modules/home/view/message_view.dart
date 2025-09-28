@@ -199,7 +199,7 @@ class MessageView extends GetView<MessageController> {
                         left: 20,
                         right: 20,
                         top: 8,
-                        bottom: 100, 
+                        bottom: 80, 
                       ),
                       itemCount: controller.filteredChatList.length,
                       itemBuilder: (context, index) {
