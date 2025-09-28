@@ -9,16 +9,16 @@ class CreateChatService {
 
   CreateChatService(this._dio);
 
-  /// Create a new chat with the specified participants
+  /// Create a new chat with the specified participant
   /// 
-  /// [participants] - List of user IDs to include in the chat
+  /// [participant] - Single user ID to create chat with (backend expects singular 'participant' field)
   /// Returns CreateChatResponse with the created chat data
   Future<CreateChatResponse> createChat({
-    required List<String> participants,
+    required String participant,
   }) async {
     try {
       AppLogger.info('=== CREATE CHAT SERVICE ===');
-      AppLogger.info('Creating chat with participants: $participants');
+      AppLogger.info('Creating chat with participant: $participant');
       
       // Get authentication token
       final token = LocalStorage.token;
@@ -27,9 +27,9 @@ class CreateChatService {
         throw Exception('Authentication token is required');
       }
       
-      // Prepare request data
+      // Prepare request data (matching Postman working format)
       final requestData = {
-        'participants': participants,
+        'participant': participant,
       };
       
       AppLogger.info('Request data: $requestData');
@@ -99,7 +99,9 @@ class CreateChatService {
     required String userId1,
     required String userId2,
   }) async {
-    return createChat(participants: [userId1, userId2]);
+    // For one-on-one chat, we'll use the second user as the participant
+    // The backend will automatically add the authenticated user
+    return createChat(participant: userId2);
   }
 
   /// Create a chat with the suggested user from home suggestion
@@ -112,15 +114,12 @@ class CreateChatService {
     final currentUserId = LocalStorage.userId;
     
     if (currentUserId.isEmpty) {
-      AppLogger.error('No current user ID found in LocalStorage');
       throw Exception('Current user ID is required');
     }
     
     AppLogger.info('Creating chat between current user ($currentUserId) and suggested user ($suggestedUserId)');
     
-    return createOneOnOneChat(
-      userId1: suggestedUserId, // Suggested user first as per requirement
-      userId2: currentUserId,   // Current user second
-    );
+    // Use the suggested user as the participant
+    return createChat(participant: suggestedUserId);
   }
 }

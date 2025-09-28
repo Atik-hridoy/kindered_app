@@ -48,6 +48,7 @@ dependencies:
   dio: ^5.9.0
   image_picker: ^1.2.0
   permission_handler: ^11.4.0
+  jwt_decode: ^0.3.1
   geolocator: ^12.0.0
   skeletonizer: ^2.1.0+1
 

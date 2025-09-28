@@ -319,20 +319,43 @@ class HomeSuggestionController extends GetxController {
     final suggestedUserName = fullName.isNotEmpty ? fullName : (name.isNotEmpty ? name : 'Unknown');
     final suggestedUserAge = userAge > 0 ? userAge.toString() : (age.isNotEmpty ? age : '0');
     
-    AppLogger.info('=== HOME SUGGESTION - NAVIGATE TO CHAT ===');
-    AppLogger.info('Current User ID: $currentUserId');
-    AppLogger.info('Suggested User ID: $suggestedUserId');
-    AppLogger.info('Suggested User Name: $suggestedUserName');
-    AppLogger.info('Suggested User Age: $suggestedUserAge');
+    // Determine the final chat ID to be used
+    final finalChatId = chatId ?? suggestedUserId;
     
-    // Navigate to chat view with both user IDs and suggested user data
-    // The ChatController will automatically create the chat using CreateChatService
-    Get.toNamed(AppRoutes.chat, arguments: {
-      'chatId': chatId ?? suggestedUserId,
+    AppLogger.info('=== HOME SUGGESTION - NAVIGATE TO CHAT ===');
+    AppLogger.info('🏠 HOME TO CHAT NAVIGATION STARTED ===');
+    AppLogger.info('📋 Input Parameters:');
+    AppLogger.info('  - chatId (input): $chatId');
+    AppLogger.info('  - participantName (input): $participantName');
+    AppLogger.info('  - participantId (input): $participantId');
+    AppLogger.info('👤 User Data:');
+    AppLogger.info('  - Current User ID: $currentUserId');
+    AppLogger.info('  - Suggested User ID: $suggestedUserId');
+    AppLogger.info('  - Suggested User Name: $suggestedUserName');
+    AppLogger.info('  - Suggested User Age: $suggestedUserAge');
+    AppLogger.info('🆔 Chat ID Resolution:');
+    AppLogger.info('  - Final Chat ID: $finalChatId');
+    AppLogger.info('  - Chat ID Source: ${chatId != null ? 'Provided as parameter' : 'Generated from suggested user ID'}');
+    
+    // Prepare navigation arguments
+    final navigationArgs = {
+      'chatId': finalChatId,
       'currentUserId': currentUserId,
       'suggestedUserId': suggestedUserId,
       'participantName': participantName ?? suggestedUserName,
       'participantId': participantId ?? suggestedUserId,
+    };
+    
+    AppLogger.info('🚀 Navigation Arguments:');
+    navigationArgs.forEach((key, value) {
+      AppLogger.info('  - $key: $value');
     });
+    
+    AppLogger.info('🎯 Navigating to: ${AppRoutes.chat}');
+    AppLogger.info('=== HOME TO CHAT NAVIGATION COMPLETED ===');
+    
+    // Navigate to chat view with both user IDs and suggested user data
+    // The ChatController will automatically create the chat using CreateChatService
+    Get.toNamed(AppRoutes.chat, arguments: navigationArgs);
   }
 }

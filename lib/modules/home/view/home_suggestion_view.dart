@@ -46,7 +46,7 @@ class _HomeSuggestionViewState extends State<HomeSuggestionView> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -72,8 +72,8 @@ class _HomeSuggestionViewState extends State<HomeSuggestionView> {
                   colors: [
                     Colors.transparent,
                     Colors.transparent,
-                    Colors.black.withOpacity(0.3),
-                    Colors.black.withOpacity(0.7),
+                    Colors.black.withValues(alpha: 0.3),
+                    Colors.black.withValues(alpha: 0.7),
                   ],
                   stops: const [0.0, 0.4, 0.7, 1.0],
                 ),
@@ -120,7 +120,7 @@ class _HomeSuggestionViewState extends State<HomeSuggestionView> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -143,7 +143,7 @@ class _HomeSuggestionViewState extends State<HomeSuggestionView> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -356,7 +356,7 @@ class _HomeSuggestionViewState extends State<HomeSuggestionView> {
                   'assets/svg/Chat.svg',
                   'assets/svg/menu Frame.svg',
                 ],
-                labels: const ['', '', '', ''], // Empty labels since we're just using icons
+                labels: const ['', '', '', ''], 
               ),
             ),
           ],

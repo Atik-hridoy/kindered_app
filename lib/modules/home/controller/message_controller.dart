@@ -75,20 +75,65 @@ class MessageController extends GetxController {
       
       AppLogger.info('[MESSAGE CONTROLLER] API Response: $response');
       
-      if (response['success']) {
-        final data = response['data'];
-        if (data['chats'] != null) {
-          chatList.assignAll(data['chats'].map<Chat>((chat) => Chat.fromJson(chat)).toList());
+      // Check if response has the expected structure
+      if (response.containsKey('chats')) {
+        // API returns chats directly: {"chats": [...]}
+        final chatsList = response['chats'] as List;
+        AppLogger.info('[MESSAGE CONTROLLER] Direct chats list length: ${chatsList.length}');
+        
+        if (chatsList.isNotEmpty) {
+          chatList.assignAll(chatsList.map<Chat>((chat) => Chat.fromJson(chat)).toList());
           filteredChatList.assignAll(chatList); // Initialize filtered list with all chats
-          AppLogger.info('[MESSAGE CONTROLLER] Loaded ${data['chats'].length} chats');
+          AppLogger.info('[MESSAGE CONTROLLER] Loaded ${chatList.length} chats successfully');
+          
+          // Log first chat details for debugging
+          if (chatList.isNotEmpty) {
+            final firstChat = chatList.first;
+            AppLogger.info('[MESSAGE CONTROLLER] First chat ID: ${firstChat.id}');
+            AppLogger.info('[MESSAGE CONTROLLER] First chat participant: ${firstChat.participantName}');
+            AppLogger.info('[MESSAGE CONTROLLER] First chat status: ${firstChat.status}');
+          }
+        } else {
+          AppLogger.info('[MESSAGE CONTROLLER] Chats list is empty - no conversations yet');
+          chatList.clear();
+          filteredChatList.clear();
+        }
+      } else if (response['success'] == true && response.containsKey('data')) {
+        // API returns structured response: {"success": true, "data": {"chats": [...]}}
+        final data = response['data'];
+        AppLogger.info('[MESSAGE CONTROLLER] Response data keys: ${data.keys.toList()}');
+        AppLogger.info('[MESSAGE CONTROLLER] Chats data type: ${data['chats']?.runtimeType}');
+        AppLogger.info('[MESSAGE CONTROLLER] Chats data: ${data['chats']}');
+        
+        if (data['chats'] != null) {
+          final chatsList = data['chats'] as List;
+          AppLogger.info('[MESSAGE CONTROLLER] Chats list length: ${chatsList.length}');
+          
+          if (chatsList.isNotEmpty) {
+            chatList.assignAll(chatsList.map<Chat>((chat) => Chat.fromJson(chat)).toList());
+            filteredChatList.assignAll(chatList); // Initialize filtered list with all chats
+            AppLogger.info('[MESSAGE CONTROLLER] Loaded ${chatList.length} chats successfully');
+            
+            // Log first chat details for debugging
+            if (chatList.isNotEmpty) {
+              final firstChat = chatList.first;
+              AppLogger.info('[MESSAGE CONTROLLER] First chat ID: ${firstChat.id}');
+              AppLogger.info('[MESSAGE CONTROLLER] First chat participant: ${firstChat.participantName}');
+              AppLogger.info('[MESSAGE CONTROLLER] First chat status: ${firstChat.status}');
+            }
+          } else {
+            AppLogger.info('[MESSAGE CONTROLLER] Chats list is empty - no conversations yet');
+            chatList.clear();
+            filteredChatList.clear();
+          }
         } else {
           AppLogger.warning('[MESSAGE CONTROLLER] No chats data in response');
           chatList.clear();
           filteredChatList.clear();
         }
       } else {
-        errorMessage.value = response['message'] ?? 'Failed to load chats';
-        AppLogger.error('[MESSAGE CONTROLLER] Failed to load chats: ${response['message']}');
+        errorMessage.value = response['message'] ?? 'Invalid response format';
+        AppLogger.error('[MESSAGE CONTROLLER] Invalid response format: $response');
       }
     } catch (e) {
       // Handle different types of errors with specific messages
@@ -183,14 +228,24 @@ class MessageController extends GetxController {
   }
 
   void navigateToChat({String? chatId, String? participantName, String? participantId}) {
+    AppLogger.info('[MESSAGE CONTROLLER] Navigating to chat with:');
+    AppLogger.info('  - chatId: $chatId');
+    AppLogger.info('  - participantName: $participantName');
+    AppLogger.info('  - participantId: $participantId');
+    AppLogger.info('  - currentUserId: ${LocalStorage.userId}');
+    
     if (chatId != null && participantName != null && participantId != null) {
       Get.toNamed(AppRoutes.chat, arguments: {
         'chatId': chatId,
         'participantName': participantName,
         'participantId': participantId,
+        'currentUserId': LocalStorage.userId, // Add current user ID
       });
     } else {
-      Get.toNamed(AppRoutes.chat);
+      // Fallback navigation without specific chat data
+      Get.toNamed(AppRoutes.chat, arguments: {
+        'currentUserId': LocalStorage.userId, // Still include current user ID
+      });
     }
   }
 

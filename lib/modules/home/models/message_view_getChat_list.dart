@@ -15,11 +15,11 @@ class ChatResponse {
 
   factory ChatResponse.fromJson(Map<String, dynamic> json) {
     return ChatResponse(
-      success: json['success'],
-      message: json['message'],
-      statusCode: json['statusCode'],
-      data: ChatData.fromJson(json['data']),
-      meta: Meta.fromJson(json['meta']),
+      success: json['success'] ?? false,
+      message: json['message'] ?? '',
+      statusCode: json['statusCode'] ?? 0,
+      data: json['data'] != null ? ChatData.fromJson(json['data']) : ChatData(chats: [], unreadChatsCount: 0, totalUnreadMessages: 0, totalIconUnreadMessages: 0),
+      meta: json['meta'] != null ? Meta.fromJson(json['meta']) : Meta(limit: 0, page: 0, total: 0, totalPage: 0),
     );
   }
 
@@ -49,10 +49,12 @@ class ChatData {
 
   factory ChatData.fromJson(Map<String, dynamic> json) {
     return ChatData(
-      chats: List<Chat>.from(json['chats'].map((x) => Chat.fromJson(x))),
-      unreadChatsCount: json['unreadChatsCount'],
-      totalUnreadMessages: json['totalUnreadMessages'],
-      totalIconUnreadMessages: json['totalIconUnreadMessages'],
+      chats: json['chats'] != null 
+          ? List<Chat>.from(json['chats'].map((x) => Chat.fromJson(x)))
+          : [],
+      unreadChatsCount: json['unreadChatsCount'] ?? 0,
+      totalUnreadMessages: json['totalUnreadMessages'] ?? 0,
+      totalIconUnreadMessages: json['totalIconUnreadMessages'] ?? 0,
     );
   }
 
@@ -111,25 +113,29 @@ class Chat {
 
   factory Chat.fromJson(Map<String, dynamic> json) {
     return Chat(
-      id: json['_id'],
-      participants: List<Participant>.from(
-          json['participants'].map((x) => Participant.fromJson(x))),
+      id: json['_id']?.toString() ?? '',
+      participants: json['participants'] != null 
+          ? List<Participant>.from(
+              json['participants']
+                  .where((participant) => participant != null)
+                  .map((x) => Participant.fromJson(x)))
+          : [],
       lastMessage: json['lastMessage'],
-      status: json['status'],
-      isDeleted: json['isDeleted'],
-      readBy: List<dynamic>.from(json['readBy']),
-      mutedBy: List<dynamic>.from(json['mutedBy']),
-      deletedByDetails: List<dynamic>.from(json['deletedByDetails']),
-      blockedUsers: List<dynamic>.from(json['blockedUsers']),
-      userPinnedMessages: List<dynamic>.from(json['userPinnedMessages']),
-      createdAt: json['createdAt'],
-      updatedAt: json['updatedAt'],
-      isRead: json['isRead'],
-      unreadCount: json['unreadCount'],
-      iconUnreadCount: json['iconUnreadCount'],
-      isMuted: json['isMuted'],
-      isBlocked: json['isBlocked'],
-      wasDeletedByUser: json['wasDeletedByUser'],
+      status: json['status']?.toString() ?? 'active',
+      isDeleted: json['isDeleted'] ?? false,
+      readBy: json['readBy'] != null ? List<dynamic>.from(json['readBy']) : [],
+      mutedBy: json['mutedBy'] != null ? List<dynamic>.from(json['mutedBy']) : [],
+      deletedByDetails: json['deletedByDetails'] != null ? List<dynamic>.from(json['deletedByDetails']) : [],
+      blockedUsers: json['blockedUsers'] != null ? List<dynamic>.from(json['blockedUsers']) : [],
+      userPinnedMessages: json['userPinnedMessages'] != null ? List<dynamic>.from(json['userPinnedMessages']) : [],
+      createdAt: json['createdAt']?.toString() ?? '',
+      updatedAt: json['updatedAt']?.toString() ?? '',
+      isRead: json['isRead'] ?? false,
+      unreadCount: json['unreadCount'] ?? 0,
+      iconUnreadCount: json['iconUnreadCount'] ?? 0,
+      isMuted: json['isMuted'] ?? false,
+      isBlocked: json['isBlocked'] ?? false,
+      wasDeletedByUser: json['wasDeletedByUser'] ?? false,
       deletedAt: json['deletedAt'],
     );
   }
@@ -206,11 +212,11 @@ class Participant {
 
   factory Participant.fromJson(Map<String, dynamic> json) {
     return Participant(
-      id: json['_id'],
-      email: json['email'],
-      image: List<dynamic>.from(json['image']),
-      firstName: json['firstName'],
-      lastName: json['lastName'],
+      id: json['_id']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      image: json['image'] != null ? List<dynamic>.from(json['image']) : [],
+      firstName: json['firstName']?.toString() ?? 'Unknown',
+      lastName: json['lastName']?.toString() ?? 'User',
     );
   }
 
@@ -240,10 +246,10 @@ class Meta {
 
   factory Meta.fromJson(Map<String, dynamic> json) {
     return Meta(
-      limit: json['limit'],
-      page: json['page'],
-      total: json['total'],
-      totalPage: json['totalPage'],
+      limit: json['limit'] ?? 0,
+      page: json['page'] ?? 0,
+      total: json['total'] ?? 0,
+      totalPage: json['totalPage'] ?? 0,
     );
   }
 

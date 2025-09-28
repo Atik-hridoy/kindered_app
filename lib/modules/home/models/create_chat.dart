@@ -62,8 +62,15 @@ class ChatData {
   });
 
   factory ChatData.fromJson(Map<String, dynamic> json) {
+    // Handle participants array that might contain null values
+    final List<dynamic> rawParticipants = json['participants'] ?? [];
+    final List<String> participants = rawParticipants
+        .where((participant) => participant != null && participant.toString().isNotEmpty)
+        .map((participant) => participant.toString())
+        .toList();
+    
     return ChatData(
-      participants: List<String>.from(json['participants']),
+      participants: participants,
       lastMessage: json['lastMessage'],
       status: json['status'],
       isDeleted: json['isDeleted'],

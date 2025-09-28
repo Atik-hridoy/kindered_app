@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controller/message_controller.dart';  // Import your controller
-import '../widget/nav_card.dart';  // Your navigation widget
+import '../controller/message_controller.dart';
+import '../widget/nav_card.dart';  
 
 class MessageView extends GetView<MessageController> {
   const MessageView({super.key});
@@ -13,26 +13,40 @@ class MessageView extends GetView<MessageController> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Main content
+            
             Column(
               children: [
-                // Header with title and search
+                
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Messages',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'PlayfairDisplay',
-                        ),
+                      Row(
+                        children: [
+                          const Text(
+                            'Messages',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'PlayfairDisplay',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Obx(() => IconButton(
+                            icon: Icon(
+                              Icons.refresh,
+                              color: controller.isLoading.value ? Colors.white54 : Colors.white,
+                              size: 24,
+                            ),
+                            onPressed: controller.isLoading.value ? null : () => controller.refreshChatList(),
+                          )
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
-                      // Search bar
+                      
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -79,7 +93,7 @@ class MessageView extends GetView<MessageController> {
                   ),
                 ),
                 
-                // Chat list
+                
                 Expanded(
                   child: Obx(() {
                     if (controller.isLoading.value) {
@@ -137,22 +151,43 @@ class MessageView extends GetView<MessageController> {
                     }
                     
                     if (controller.filteredChatList.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.chat_bubble_outline,
                               color: Colors.white54,
                               size: 48,
                             ),
-                            SizedBox(height: 16),
-                            Text(
-                              'No messages yet',
+                            const SizedBox(height: 16),
+                            const Text(
+                              'No conversations yet',
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 16,
                               ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Start a chat from the Home suggestions',
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () => controller.handleNavigation(0), // Navigate to Home tab
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFD4A373),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                              ),
+                              child: const Text('Find People to Chat'),
                             ),
                           ],
                         ),
@@ -164,7 +199,7 @@ class MessageView extends GetView<MessageController> {
                         left: 20,
                         right: 20,
                         top: 8,
-                        bottom: 100, // Add bottom padding to prevent content from being hidden behind the nav
+                        bottom: 100, 
                       ),
                       itemCount: controller.filteredChatList.length,
                       itemBuilder: (context, index) {
@@ -187,13 +222,13 @@ class MessageView extends GetView<MessageController> {
                 ),
               ],
             ),
-            // Bottom Navigation - Positioned at the bottom of the screen
+            
             Positioned(
               left: 16,
               right: 16,
               bottom: 20,
               child: NavCard(
-                currentIndex: 2, // Messages tab is active (0-based index)
+                currentIndex: 2, 
                 onTap: controller.handleNavigation,
                 iconPaths: const [
                   'assets/svg/explore.svg',
@@ -224,7 +259,7 @@ class MessageView extends GetView<MessageController> {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1))),
+          border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -268,7 +303,7 @@ class MessageView extends GetView<MessageController> {
                       Text(
                         time,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: .7),
                           fontSize: 13,
                           fontWeight: FontWeight.w400,
                         ),
@@ -288,7 +323,7 @@ class MessageView extends GetView<MessageController> {
                         child: Text(
                           message,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: .8),
                             fontSize: 15,
                             fontWeight: FontWeight.w400,
                           ),
