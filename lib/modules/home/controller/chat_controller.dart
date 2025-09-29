@@ -143,15 +143,13 @@ class ChatController extends GetxController {
           // If we have participant ID but no chat ID, create new chat
           _createChatWithParticipant();
         } else {
-          errorMessage.value = 'Missing participant information';
         }
       } else {
         errorMessage.value = 'No chat information provided';
       }
       
     } catch (e) {
-      AppLogger.error('❌ Error initializing chat controller: $e');
-      errorMessage.value = 'Failed to initialize chat';
+      _handleApiError('onInit', e);
     }
   }
   
@@ -172,13 +170,7 @@ class ChatController extends GetxController {
       if (participantId.value.isNotEmpty && participantId.value != 'null') {
       } else {
         // If no valid participant ID, show error and don't proceed
-        Get.snackbar(
-          'Chat Error',
-          'No valid participant found for chat',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        _showErrorSnackbar('Chat Error', 'No valid participant found for chat');
         return; // Stop the chat creation process
       }
       
@@ -212,9 +204,7 @@ class ChatController extends GetxController {
       }
       
     } catch (e) {
-      AppLogger.error('❌ ERROR CREATING CHAT ===');
-      AppLogger.error('Error details: $e');
-      AppLogger.error('Error type: ${e.runtimeType}');
+      _handleApiError('createChatWithParticipant', e);
       errorMessage.value = 'Failed to create chat: $e';
     } finally {
       isLoading.value = false;
@@ -291,7 +281,7 @@ class ChatController extends GetxController {
         chatMessages.refresh();
       }
     } catch (e) {
-      AppLogger.warning('[CHAT CONTROLLER] Error fetching messages (this may be normal for new chats): $e');
+      _handleApiError('fetchMessages', e);
       // For new chats, it's normal to have no messages yet
       // Clear any error messages and show empty chat
       messages.clear();
@@ -302,14 +292,7 @@ class ChatController extends GetxController {
       
       // Only show error snackbar if it's not a 400 error (which is normal for new chats)
       if (!e.toString().contains('400') && !e.toString().contains('Client error')) {
-        Get.snackbar(
-          'Chat Info',
-          'Starting new conversation...',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.blue,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
-        );
+        _showErrorSnackbar('Chat Info', 'Starting new conversation...');
       }
     } finally {
       isLoadingMessages.value = false;
@@ -427,22 +410,28 @@ class ChatController extends GetxController {
           v: 0,
           isPinnedByCurrentUser: false,
         );
-        
-        chatMessages.add(imageMessage);
-        chatMessages.refresh();
+        _addMessageToLists(imageMessage, legacyMessage: {
+          'id': imageMessage.id,
+          'text': imageMessage.text,
+          'type': imageMessage.type,
+          'sender': imageMessage.sender.toJson(),
+          'createdAt': imageMessage.createdAt,
+          'isSentByMe': true,
+          'images': imageMessage.images,
+        });
         
         AppLogger.info('[CHAT CONTROLLER] Image message added to reactive UI');
       } catch (e) {
-        AppLogger.error('[CHAT CONTROLLER] Error creating image Message object: $e');
+        _handleApiError('createImageMessageObject', e);
       }
 
     } catch (e) {
-      AppLogger.error('[CHAT CONTROLLER] Error sending image message: $e');
-      imageUploadError.value = 'Failed to send image: $e';
+      _handleApiError('sendImageFromPath', e);
     } finally {
       isImageUploading.value = false;
     }
   }
+
 
   /// Send pending message (text + images)
   Future<void> sendPendingMessage() async {
@@ -528,22 +517,26 @@ class ChatController extends GetxController {
           v: 0,
           isPinnedByCurrentUser: false,
         );
-        chatMessages.add(sentMessage);
-        
-        // Force UI update
-        chatMessages.refresh();
+        _addMessageToLists(sentMessage, legacyMessage: {
+          'id': sentMessage.id,
+          'text': sentMessage.text,
+          'type': sentMessage.type,
+          'sender': sentMessage.sender.toJson(),
+          'createdAt': sentMessage.createdAt,
+          'isSentByMe': true,
+          'images': sentMessage.images,
+        });
         
         AppLogger.info('[CHAT CONTROLLER] Successfully created and added sent Message object');
       } catch (e) {
-        AppLogger.error('[CHAT CONTROLLER] Error creating sent Message object: $e');
-        AppLogger.error('[CHAT CONTROLLER] Message object creation failed with response: ${response.data}');
+        _handleApiError('createSentMessageObject', e);
       }
       
       
       // Emit message via WebSocket for real-time delivery with dynamic user ID
       if (isConnected.value) {
         try {
-          final userId = LocalStorage.userId.isNotEmpty ? LocalStorage.userId : currentUserId.value;
+          final userId = _getCurrentUserId();
           socket?.emit('sendMessage', {
             'chatId': chatId,
             'messageId': response.data.id,
@@ -554,25 +547,18 @@ class ChatController extends GetxController {
           });
           AppLogger.info('📨 Message emitted via WebSocket for user: $userId');
         } catch (e) {
-          AppLogger.error('❌ Error emitting message via WebSocket: $e');
+          _handleApiError('emitMessageWebSocket', e);
         }
       } else {
         AppLogger.warning('⚠️ WebSocket not connected, message not sent via real-time');
       }
 
     } catch (e) {
-      AppLogger.error('[CHAT CONTROLLER] Error sending message: $e');
+      _handleApiError('sendTextMessage', e);
       messageSendingError.value = e.toString();
       
       // Show error feedback
-      Get.snackbar(
-        'Send Failed',
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-      );
+      _showErrorSnackbar('Send Failed', e.toString());
     } finally {
       isSendingMessage.value = false;
     }
@@ -654,28 +640,24 @@ class ChatController extends GetxController {
           isPinnedByCurrentUser: false,
         );
         
-        chatMessages.add(mixedMessage);
-        
-        // Force UI update
-        chatMessages.refresh();
-        
+        _addMessageToLists(mixedMessage, legacyMessage: {
+          'id': mixedMessage.id,
+          'text': mixedMessage.text,
+          'type': mixedMessage.type,
+          'sender': mixedMessage.sender.toJson(),
+          'createdAt': mixedMessage.createdAt,
+          'isSentByMe': true,
+          'images': mixedMessage.images,
+        });
         AppLogger.info('[CHAT CONTROLLER] Mixed message added to reactive UI');
       } catch (e) {
-        AppLogger.error('[CHAT CONTROLLER] Error creating mixed Message object: $e');
+        _handleApiError('createMixedMessageObject', e);
+        _showErrorSnackbar('Send Failed', e.toString());
       }
 
     } catch (e) {
-      AppLogger.error('[CHAT CONTROLLER] Error sending mixed message: $e');
-      messageSendingError.value = e.toString();
-      
-      Get.snackbar(
-        'Send Failed',
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-      );
+      _handleApiError('sendMixedMessage', e);
+      _showErrorSnackbar('Send Failed', e.toString());
     } finally {
       isSendingMessage.value = false;
     }
@@ -763,28 +745,26 @@ class ChatController extends GetxController {
           isPinnedByCurrentUser: false,
         );
         
-        chatMessages.add(customMessage);
-        
-        // Force UI update
-        chatMessages.refresh();
+        _addMessageToLists(customMessage, legacyMessage: {
+          'id': customMessage.id,
+          'text': customMessage.text,
+          'type': customMessage.type,
+          'sender': customMessage.sender.toJson(),
+          'createdAt': customMessage.createdAt,
+          'isSentByMe': true,
+          'images': customMessage.images,
+        });
         
         AppLogger.info('[CHAT CONTROLLER] Custom message added to reactive UI');
       } catch (e) {
-        AppLogger.error('[CHAT CONTROLLER] Error creating custom Message object: $e');
+        _handleApiError('createCustomMessageObject', e);
       }
 
     } catch (e) {
-      AppLogger.error('[CHAT CONTROLLER] Error sending custom message: $e');
+      _handleApiError('sendCustomMessage', e);
       messageSendingError.value = e.toString();
       
-      Get.snackbar(
-        'Send Failed',
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-      );
+      _showErrorSnackbar('Send Failed', e.toString());
     } finally {
       isSendingMessage.value = false;
     }
@@ -813,7 +793,7 @@ class ChatController extends GetxController {
       addPendingImage(imageFile.path);
       AppLogger.info('[CHAT CONTROLLER] Image added to pending list: ${imageFile.path}');
     } catch (e) {
-      AppLogger.error('[CHAT CONTROLLER] Error picking image: $e');
+      _handleApiError('pickImageForPreview', e);
     }
   }
 
@@ -840,7 +820,7 @@ class ChatController extends GetxController {
       addPendingImage(imageFile.path);
       AppLogger.info('[CHAT CONTROLLER] Photo added to pending list: ${imageFile.path}');
     } catch (e) {
-      AppLogger.error('[CHAT CONTROLLER] Error taking photo: $e');
+      _handleApiError('takePhotoForPreview', e);
     }
   }
 
@@ -940,30 +920,23 @@ class ChatController extends GetxController {
           isPinnedByCurrentUser: false,
         );
         
-        chatMessages.add(imageMessage);
-        
-        // Force UI update
-        chatMessages.refresh();
-        
+        _addMessageToLists(imageMessage, legacyMessage: {
+          'id': imageMessage.id,
+          'text': imageMessage.text,
+          'type': imageMessage.type,
+          'sender': imageMessage.sender.toJson(),
+          'createdAt': imageMessage.createdAt,
+          'isSentByMe': true,
+          'images': imageMessage.images,
+        });
         AppLogger.info('✅ [CHAT CONTROLLER] Image message added to reactive UI');
       } catch (e) {
-        AppLogger.error('[CHAT CONTROLLER] Error creating image Message object: $e');
+        _handleApiError('createImageMessageObject', e);
       }
       
-
     } catch (e) {
-      AppLogger.error('[CHAT CONTROLLER] Error sending image: $e');
-      imageUploadError.value = e.toString();
-      
-      // Show error feedback
-      Get.snackbar(
-        'Image Send Failed',
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-      );
+      _handleApiError('pickAndSendImage', e);
+      _showErrorSnackbar('Image Send Failed', e.toString());
     } finally {
       isImageUploading.value = false;
     }
@@ -1062,30 +1035,28 @@ class ChatController extends GetxController {
           isPinnedByCurrentUser: false,
         );
         
-        chatMessages.add(photoMessage);
-        
-        // Force UI update
-        chatMessages.refresh();
+        _addMessageToLists(photoMessage, legacyMessage: {
+          'id': photoMessage.id,
+          'text': photoMessage.text,
+          'type': photoMessage.type,
+          'sender': photoMessage.sender.toJson(),
+          'createdAt': photoMessage.createdAt,
+          'isSentByMe': true,
+          'images': photoMessage.images,
+        });
         
         AppLogger.info('✅ [CHAT CONTROLLER] Photo message added to reactive UI');
       } catch (e) {
-        AppLogger.error('[CHAT CONTROLLER] Error creating photo Message object: $e');
+        _handleApiError('createPhotoMessageObject', e);
       }
       
 
     } catch (e) {
-      AppLogger.error('[CHAT CONTROLLER] Error sending photo: $e');
+      _handleApiError('takeAndSendPhoto', e);
       imageUploadError.value = e.toString();
       
       // Show error feedback
-      Get.snackbar(
-        'Photo Send Failed',
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-      );
+      _showErrorSnackbar('Photo Send Failed', e.toString());
     } finally {
       isImageUploading.value = false;
     }
@@ -1111,7 +1082,7 @@ class ChatController extends GetxController {
       AppLogger.info('🌐 [SOCKET] Socket URL: $socketUrl');
       
       // Use the user ID from LocalStorage (from access token)
-      final userId = LocalStorage.userId.isNotEmpty ? LocalStorage.userId : currentUserId.value;
+      final userId = _getCurrentUserId();
       AppLogger.info('👤 [SOCKET] User ID: $userId');
       
       socket = IO.io(
@@ -1133,7 +1104,7 @@ class ChatController extends GetxController {
       socket?.connect();
       
     } catch (e) {
-      AppLogger.error('❌ [SOCKET] Error initializing WebSocket: $e');
+      _handleApiError('initializeSocket', e);
       connectionStatus.value = 'Connection Error';
     }
   }
@@ -1175,7 +1146,7 @@ class ChatController extends GetxController {
     });
     
     // Get user ID for dynamic event names
-    final userId = LocalStorage.userId.isNotEmpty ? LocalStorage.userId : currentUserId.value;
+    final userId = _getCurrentUserId();
     
     // Dynamic user-specific events only
     _setupDynamicEventListeners(userId);
@@ -1255,7 +1226,7 @@ class ChatController extends GetxController {
       AppLogger.info('✅ [SOCKET] Successfully joined chat room: $chatId');
       
     } catch (e) {
-      AppLogger.error('❌ [SOCKET] Error joining chat room: $e');
+      _handleApiError('joinChatRoom', e);
     }
   }
   
@@ -1357,14 +1328,11 @@ class ChatController extends GetxController {
           isPinnedByCurrentUser: false,
         );
         
-        chatMessages.add(receivedMessage);
+        _addMessageToLists(receivedMessage);
         AppLogger.info('✅ [SOCKET] Message added to UI: $messageId (Total: ${chatMessages.length})');
         
-        // Force UI update
-        chatMessages.refresh();
-        
       } catch (e) {
-        AppLogger.error('❌ [SOCKET] Error creating message object: $e');
+        _handleApiError('createMessageObject', e);
         return; // Don't proceed if message creation fails
       }
       
@@ -1372,7 +1340,7 @@ class ChatController extends GetxController {
       _markMessageAsDelivered(messageId);
       
     } catch (e) {
-      AppLogger.error('❌ [SOCKET] Error handling new message: $e');
+      _handleApiError('handleNewMessage', e);
     }
   }
   
@@ -1383,7 +1351,7 @@ class ChatController extends GetxController {
       // You can add message status tracking here
       
     } catch (e) {
-      AppLogger.error('❌ Error handling message delivered: $e');
+      _handleApiError('handleMessageDelivered', e);
     }
   }
   
@@ -1394,7 +1362,7 @@ class ChatController extends GetxController {
       // You can add message status tracking here
       
     } catch (e) {
-      AppLogger.error('❌ Error handling message read: $e');
+      _handleApiError('handleMessageRead', e);
     }
   }
   
@@ -1410,7 +1378,7 @@ class ChatController extends GetxController {
       }
       
     } catch (e) {
-      AppLogger.error('❌ Error handling user typing: $e');
+      _handleApiError('handleUserTyping', e);
     }
   }
   
@@ -1426,102 +1394,106 @@ class ChatController extends GetxController {
       }
       
     } catch (e) {
-      AppLogger.error('❌ Error handling user stopped typing: $e');
+      _handleApiError('handleUserStoppedTyping', e);
     }
   }
   
   /// Mark message as delivered
   void _markMessageAsDelivered(String messageId) {
-    if (socket == null || !isConnected.value) return;
+    if (!_isSocketConnected()) return;
     
     try {
-      final userId = LocalStorage.userId.isNotEmpty ? LocalStorage.userId : currentUserId.value;
+      final userId = _getCurrentUserId();
+      _logSocketEvent('markMessageDelivered', '📤', 'Message ID: $messageId, Chat ID: $chatId');
       socket?.emit('markMessageDelivered', {
         'messageId': messageId,
         'chatId': chatId,
         'userId': userId,
       });
+      _logSocketEvent('markMessageDelivered sent', '✅');
       
     } catch (e) {
-      AppLogger.error('❌ Error marking message as delivered: $e');
+      _handleApiError('markMessageDelivered', e);
     }
   }
   
   /// Mark message as read
   void markMessageAsRead(String messageId) {
-    if (socket == null || !isConnected.value) return;
+    if (!_isSocketConnected()) return;
     
     try {
-      final userId = LocalStorage.userId.isNotEmpty ? LocalStorage.userId : currentUserId.value;
+      final userId = _getCurrentUserId();
+      _logSocketEvent('markMessageRead', '📖', 'Message ID: $messageId, Chat ID: $chatId');
       socket?.emit('markMessageRead', {
         'messageId': messageId,
         'chatId': chatId,
         'userId': userId,
       });
+      _logSocketEvent('markMessageRead sent', '✅');
       
     } catch (e) {
-      AppLogger.error('❌ Error marking message as read: $e');
+      _handleApiError('markMessageRead', e);
     }
   }
   
   /// Send typing indicator
   void sendTypingIndicator() {
-    if (socket == null || !isConnected.value) {
-      AppLogger.warning('⚠️ [SOCKET] Cannot send typing indicator - socket: ${socket != null}, connected: ${isConnected.value}');
+    if (!_isSocketConnected()) {
+      _logSocketEvent('Cannot send typing indicator', '⚠️', 'Socket: ${socket != null}, Connected: ${isConnected.value}');
       return;
     }
     
     try {
-      final userId = LocalStorage.userId.isNotEmpty ? LocalStorage.userId : currentUserId.value;
-      AppLogger.info('⌨️ [SOCKET] Sending typing indicator for user: $userId in chat: $chatId');
+      final userId = _getCurrentUserId();
+      _logSocketEvent('Sending typing indicator', '⌨️', 'User: $userId, Chat: $chatId');
       socket?.emit('typing', {
         'chatId': chatId,
         'userId': userId,
       });
-      AppLogger.info('✅ [SOCKET] Typing indicator sent successfully');
+      _logSocketEvent('Typing indicator sent', '✅');
       
     } catch (e) {
-      AppLogger.error('❌ [SOCKET] Error sending typing indicator: $e');
+      _handleApiError('sendTypingIndicator', e);
     }
   }
   
   /// Send stopped typing indicator
   void sendStoppedTypingIndicator() {
-    if (socket == null || !isConnected.value) {
-      AppLogger.warning('⚠️ [SOCKET] Cannot send stopped typing indicator - socket: ${socket != null}, connected: ${isConnected.value}');
+    if (!_isSocketConnected()) {
+      _logSocketEvent('Cannot send stopped typing indicator', '⚠️', 'Socket: ${socket != null}, Connected: ${isConnected.value}');
       return;
     }
     
     try {
-      final userId = LocalStorage.userId.isNotEmpty ? LocalStorage.userId : currentUserId.value;
-      AppLogger.info('⏹️ [SOCKET] Sending stopped typing indicator for user: $userId in chat: $chatId');
+      final userId = _getCurrentUserId();
+      _logSocketEvent('Sending stopped typing indicator', '⏹️', 'User: $userId, Chat: $chatId');
       socket?.emit('stopTyping', {
         'chatId': chatId,
         'userId': userId,
       });
-      AppLogger.info('✅ [SOCKET] Stopped typing indicator sent successfully');
+      _logSocketEvent('Stopped typing indicator sent', '✅');
       
     } catch (e) {
-      AppLogger.error('❌ [SOCKET] Error sending stopped typing indicator: $e');
+      _handleApiError('sendStoppedTypingIndicator', e);
     }
   }
   
   /// Disconnect WebSocket
   void _disconnectSocket() {
     if (socket != null) {
-      AppLogger.info('🔌 [SOCKET] Disconnecting WebSocket...');
+      _logSocketEvent('Disconnecting WebSocket', '🔌');
       socket?.disconnect();
       socket?.dispose();
       socket = null;
       isConnected.value = false;
       connectionStatus.value = 'Disconnected';
-      AppLogger.info('✅ [SOCKET] WebSocket disconnected successfully');
+      _logSocketEvent('WebSocket disconnected', '✅');
     }
   }
   
   /// Reconnect WebSocket
   void reconnectSocket() {
-    AppLogger.info('🔄 [SOCKET] Reconnecting WebSocket...');
+    _logSocketEvent('Reconnecting WebSocket', '🔄');
     _disconnectSocket();
     _initializeSocket();
   }
@@ -1529,86 +1501,86 @@ class ChatController extends GetxController {
   /// Handle new chat event
   void _handleNewChat(dynamic data) {
     try {
-      AppLogger.info('🆕 [SOCKET] Handling new chat event: $data');
+      _logSocketEvent('Handling new chat event', '🆕', data.toString());
       
       if (data is Map<String, dynamic>) {
         final chatId = data['chatId']?.toString() ?? '';
         final chatName = data['chatName']?.toString() ?? '';
-        AppLogger.info('📝 [SOCKET] New chat details - ID: $chatId, Name: $chatName');
+        _logSocketEvent('New chat details', '📝', 'ID: $chatId, Name: $chatName');
       }
     } catch (e) {
-      AppLogger.error('❌ [SOCKET] Error handling new chat event: $e');
+      _handleApiError('handleNewChat', e);
     }
   }
   
   /// Handle chat list update event
   void _handleChatListUpdate(dynamic data) {
     try {
-      AppLogger.info('📋 [SOCKET] Handling chat list update: $data');
+      _logSocketEvent('Handling chat list update', '📋', data.toString());
       
       if (data is Map<String, dynamic>) {
         final updateType = data['updateType']?.toString() ?? '';
         final receivedChatId = data['chatId']?.toString() ?? '';
-        AppLogger.info('📝 [SOCKET] Chat list update - Type: $updateType, Chat ID: $receivedChatId');
+        _logSocketEvent('Chat list update', '📝', 'Type: $updateType, Chat ID: $receivedChatId');
         
         // Check if this update is for the current active chat
         if (receivedChatId == chatId && chatId.isNotEmpty) {
-          AppLogger.info('🔄 [SOCKET] Refreshing messages for current chat: $chatId');
+          _logSocketEvent('Refreshing messages for current chat', '🔄', 'Chat ID: $chatId');
           
           // Refresh messages to get the latest updates
           fetchMessages();
         }
       }
     } catch (e) {
-      AppLogger.error('❌ [SOCKET] Error handling chat list update: $e');
+      _handleApiError('handleChatListUpdate', e);
     }
   }
   
   /// Handle notification event
   void _handleNotification(dynamic data) {
     try {
-      AppLogger.info('🔔 [SOCKET] Handling notification: $data');
+      _logSocketEvent('Handling notification', '🔔', data.toString());
       
       if (data is Map<String, dynamic>) {
         final notificationType = data['type']?.toString() ?? '';
         final message = data['message']?.toString() ?? '';
         final receivedChatId = data['chatId']?.toString() ?? '';
-        AppLogger.info('📝 [SOCKET] Notification - Type: $notificationType, Message: $message, Chat ID: $receivedChatId');
+        _logSocketEvent('Notification details', '📝', 'Type: $notificationType, Message: $message, Chat ID: $receivedChatId');
         
         // Check if this notification is for the current active chat
         if (receivedChatId == chatId && chatId.isNotEmpty) {
-          AppLogger.info('🔄 [SOCKET] Refreshing messages due to notification for current chat: $chatId');
+          _logSocketEvent('Refreshing messages due to notification', '🔄', 'Chat ID: $chatId');
           
           // Refresh messages to get the latest updates
           fetchMessages();
         }
       }
     } catch (e) {
-      AppLogger.error('❌ [SOCKET] Error handling notification: $e');
+      _handleApiError('handleNotification', e);
     }
   }
   
   /// Handle chat mute status event
   void _handleChatMuteStatus(dynamic data) {
     try {
-      AppLogger.info('🔇 [SOCKET] Handling chat mute status: $data');
+      _logSocketEvent('Handling chat mute status', '🔇', data.toString());
       // TODO: Handle chat mute/unmute
       // This could update the UI to show muted status
       // For now, just log the event for debugging
       if (data is Map<String, dynamic>) {
         final chatId = data['chatId']?.toString() ?? '';
         final isMuted = data['isMuted']?.toString() ?? '';
-        AppLogger.info('📝 [SOCKET] Chat mute status - Chat ID: $chatId, Is Muted: $isMuted');
+        _logSocketEvent('Chat mute status', '📝', 'Chat ID: $chatId, Is Muted: $isMuted');
       }
     } catch (e) {
-      AppLogger.error('❌ [SOCKET] Error handling chat mute status: $e');
+      _handleApiError('handleChatMuteStatus', e);
     }
   }
   
   /// Handle user block status event
   void _handleUserBlockStatus(dynamic data) {
     try {
-      AppLogger.info('🚫 [SOCKET] Handling user block status: $data');
+      _logSocketEvent('Handling user block status', '🚫', data.toString());
       // TODO: Handle user block/unblock
       // This could update the UI to show blocked status or restrict messaging
       // For now, just log the event for debugging
@@ -1616,10 +1588,10 @@ class ChatController extends GetxController {
         final userId = data['userId']?.toString() ?? '';
         final isBlocked = data['isBlocked']?.toString() ?? '';
         final chatId = data['chatId']?.toString() ?? '';
-        AppLogger.info('📝 [SOCKET] User block status - User ID: $userId, Is Blocked: $isBlocked, Chat ID: $chatId');
+        _logSocketEvent('User block status', '📝', 'User ID: $userId, Is Blocked: $isBlocked, Chat ID: $chatId');
       }
     } catch (e) {
-      AppLogger.error('❌ [SOCKET] Error handling user block status: $e');
+      _handleApiError('handleUserBlockStatus', e);
     }
   }
   
@@ -1628,15 +1600,75 @@ class ChatController extends GetxController {
     if (images == null || images.isEmpty) {
       return [];
     }
+    return images;
+  }
+
+  // HELPER METHODS FOR REFACTORING
+
+  /// Get current user ID with fallbacks
+  String _getCurrentUserId() {
+    return LocalStorage.userId.isNotEmpty ? LocalStorage.userId : currentUserId.value;
+  }
+
+
+  /// Add message to both message lists and update UI
+  void _addMessageToLists(Message message, {Map<String, dynamic>? legacyMessage}) {
+    // Add to chatMessages for reactive UI
+    chatMessages.add(message);
     
-    return images.map((imageUrl) {
-      // If the URL already starts with http, return it as-is
-      if (imageUrl.startsWith('http')) {
-        return imageUrl;
-      }
-      
-      // Otherwise, return the relative URL as-is (backend will handle full URL construction)
-      return imageUrl;
-    }).toList();
+    // Add to legacy messages list for backward compatibility
+    if (legacyMessage != null) {
+      messages.add(legacyMessage);
+    } else {
+      final isSentByMe = message.sender.id == currentUserId.value;
+      messages.add({
+        'id': message.id,
+        'text': message.text,
+        'type': message.type,
+        'sender': message.sender.toJson(),
+        'createdAt': message.createdAt,
+        'isSentByMe': isSentByMe,
+        'images': message.images,
+      });
+    }
+    
+    // Force UI update
+    chatMessages.refresh();
+  }
+
+  /// Show error snackbar with consistent styling
+  void _showErrorSnackbar(String title, String message) {
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 3),
+    );
+  }
+
+  /// Check if socket is connected and available
+  bool _isSocketConnected() {
+    return socket != null && isConnected.value;
+  }
+
+  /// Log socket event with consistent format
+  void _logSocketEvent(String eventName, String emoji, [String? additionalInfo]) {
+    String logMessage = '$emoji [SOCKET] $eventName';
+    if (additionalInfo != null) {
+      logMessage += ' - $additionalInfo';
+    }
+    AppLogger.info(logMessage);
+  }
+
+  /// Handle API error with consistent logging and error setting
+  void _handleApiError(String context, dynamic error, {String? errorVariable}) {
+    AppLogger.error('❌ [$context] Error: $error');
+    if (errorVariable != null) {
+      // This would need to be implemented with reflection or passed as a callback
+      // For now, we'll just log it
+      AppLogger.error('❌ [$context] Error variable set: $errorVariable');
+    }
   }
 }

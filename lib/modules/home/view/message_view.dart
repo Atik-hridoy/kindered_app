@@ -33,26 +33,6 @@ class MessageView extends GetView<MessageController> {
                               fontFamily: 'PlayfairDisplay',
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Obx(() => IconButton(
-                            icon: Icon(
-                              Icons.refresh,
-                              color: controller.isLoading.value ? Colors.white54 : Colors.white,
-                              size: 24,
-                            ),
-                            onPressed: controller.isLoading.value ? null : () => controller.refreshChatList(),
-                          )
-                          ),
-                          const SizedBox(width: 8),
-                          Obx(() => Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: controller.isSocketConnected.value ? Colors.green : Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                          )
-                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -113,23 +93,17 @@ class MessageView extends GetView<MessageController> {
                 Expanded(
                   child: Obx(() {
                     if (controller.isLoading.value) {
-                      return const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFD4A373)),
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              'Loading messages...',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
+                      return ListView.builder(
+                        padding: const EdgeInsets.only(
+                          left: 20,
+                          right: 20,
+                          top: 8,
+                          bottom: 80,
                         ),
+                        itemCount: 6, // Show 6 skeleton items
+                        itemBuilder: (context, index) {
+                          return _buildChatSkeleton();
+                        },
                       );
                     }
                     
@@ -414,6 +388,115 @@ class MessageView extends GetView<MessageController> {
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build a smooth skeleton loader for chat items
+  Widget _buildChatSkeleton() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: -1.0, end: 1.0),
+      duration: const Duration(milliseconds: 2000),
+      builder: (context, value, child) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Profile image skeleton with shimmer
+              _buildShimmerContainer(
+                width: 60,
+                height: 60,
+                borderRadius: 25,
+                shimmerValue: value,
+              ),
+              
+              const SizedBox(width: 16),
+              
+              // Content skeleton
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Name skeleton
+                        _buildShimmerContainer(
+                          width: 120,
+                          height: 20,
+                          borderRadius: 4,
+                          shimmerValue: value,
+                        ),
+                        // Time skeleton
+                        _buildShimmerContainer(
+                          width: 50,
+                          height: 16,
+                          borderRadius: 4,
+                          shimmerValue: value,
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Message skeleton
+                        Expanded(
+                          child: _buildShimmerContainer(
+                            height: 16,
+                            borderRadius: 4,
+                            shimmerValue: value,
+                          ),
+                        ),
+                        // Unread count skeleton
+                        _buildShimmerContainer(
+                          width: 24,
+                          height: 24,
+                          borderRadius: 12,
+                          shimmerValue: value,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Build a single shimmer container with gradient animation
+  Widget _buildShimmerContainer({
+    required double shimmerValue,
+    double? width,
+    required double height,
+    required double borderRadius,
+  }) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Colors.white.withValues(alpha: 0.05),
+            Colors.white.withValues(alpha: 0.15),
+            Colors.white.withValues(alpha: 0.05),
+          ],
+          stops: [
+            0.0,
+            0.5 + (shimmerValue * 0.5),
+            1.0,
           ],
         ),
       ),

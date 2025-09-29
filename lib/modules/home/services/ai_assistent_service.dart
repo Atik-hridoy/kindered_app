@@ -3,6 +3,7 @@ import 'package:kindered_app/core/app_urls.dart';
 import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:kindered_app/local/storage_service.dart';
 import '../models/ai_assistent_get_model.dart';
+import '../models/chat_with_ai.dart';
 
 class AiAssistentService {
   final Dio _dio;
@@ -366,6 +367,62 @@ class AiAssistentService {
     } catch (e, stackTrace) {
       // Log any other errors
       AppLogger.error('❌ Unexpected error in AI quick questions: $e', e, stackTrace);
+      throw Exception('An unexpected error occurred: $e');
+    }
+  }
+
+  /// Chat with AI for matchmaking
+  /// Sends a message to AI and gets matchmaking response with user message, AI response, and current match
+  Future<ChatWithAIResponse> chatWithAI({
+    required String message,
+    String? sessionId,
+  }) async {
+    try {
+      final payload = {
+        'message': message,
+        if (sessionId != null) 'sessionId': sessionId,
+      };
+
+      AppLogger.api('POST', AppUrls.aiChatWithAi, data: payload);
+      
+      final response = await _dio.post(
+        AppUrls.aiChatWithAi,
+        data: payload,
+      );
+
+      // Log the API response
+      AppLogger.api(
+        'POST',
+        AppUrls.aiChatWithAi,
+        data: response.data,
+        statusCode: response.statusCode,
+      );
+
+      // Parse the response using the ChatWithAI model
+      final chatResponse = ChatWithAIResponse.fromJson(response.data);
+      
+      AppLogger.success('✅ AI chat matchmaking response fetched successfully');
+      return chatResponse;
+      
+    } on DioException catch (e) {
+      // Log Dio error with details
+      AppLogger.error('❌ AI chat matchmaking request failed: ${e.message}', e, e.stackTrace);
+      
+      String errorMessage = 'Request failed';
+      if (e.response?.data != null) {
+        if (e.response?.data is Map<String, dynamic>) {
+          errorMessage = e.response?.data['message'] ?? errorMessage;
+        } else if (e.response?.data is String) {
+          errorMessage = e.response?.data;
+        }
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
+      throw Exception(errorMessage);
+    } catch (e, stackTrace) {
+      // Log any other errors
+      AppLogger.error('❌ Unexpected error in AI chat matchmaking: $e', e, stackTrace);
       throw Exception('An unexpected error occurred: $e');
     }
   }

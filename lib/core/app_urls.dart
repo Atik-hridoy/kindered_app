@@ -28,6 +28,7 @@ abstract class AppUrls {
   static const String aiQuickQuestions = '/ai-chat/quick-questions';
   static const String aiNextMatch = '/ai-chat/actions';
   static const String aiCurrentMatch = '/ai-chat/current-match';
+  static const String aiChatWithAi = '/ai-chat/matchmaking';
 
 
   //location

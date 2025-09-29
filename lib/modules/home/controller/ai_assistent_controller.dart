@@ -334,20 +334,36 @@ class AiAssistentController extends GetxController {
       clearError();
       updateConnectionStatus(true);
 
-      final response = await _aiService.sendChatMessage(
+      final response = await _aiService.chatWithAI(
         message: messageText,
         sessionId: sessionId.value.isNotEmpty ? sessionId.value : null,
       );
 
-      if (response['sessionId'] != null) {
-        sessionId.value = response['sessionId'];
-      }
+      // Note: sessionId handling may need to be adjusted based on API response
+      // The current model doesn't include sessionId in the response
 
       updateLastActivity();
       resetRetryCount();
 
-      if (response['response'] != null) {
-        _addAIMessage(response['response']);
+      _addAIMessage(response.data.aiResponse.message);
+      
+      // If there's match data, add it as a separate message
+      if (response.data.currentMatch.user.firstName.isNotEmpty) {
+        final matchUser = response.data.currentMatch.user;
+        _addAIMessage(
+          'I found a match for you! ${matchUser.firstName} ${matchUser.lastName}, ${matchUser.age}',
+          matchData: MatchData(
+            userImage: [matchUser.headShotImage, ...matchUser.image],
+            commonInterests: response.data.currentMatch.commonInterests,
+            userId: matchUser.id,
+            userFirstName: matchUser.firstName,
+            userLastName: matchUser.lastName,
+            userGender: matchUser.gender,
+            userAge: matchUser.age,
+            matchScore: response.data.currentMatch.matchScore,
+            distance: response.data.currentMatch.distance.toDouble(),
+          ),
+        );
       }
     } catch (e, stack) {
       _handleError(e, stack, 'AI chat',
