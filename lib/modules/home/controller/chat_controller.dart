@@ -1,66 +1,153 @@
+//============================================================================
+// CHAT CONTROLLER
+//============================================================================
+//
+// A comprehensive chat controller that manages real-time messaging functionality
+// including WebSocket connections, message sending/receiving, image handling,
+// and UI state management.
+//
+// Features:
+// - Real-time messaging via WebSocket
+// - Text and image message support
+// - Typing indicators
+// - Message status tracking (delivered, read)
+// - Error handling and user feedback
+// - Chat room management
+// - Image picking and sending
+//
+//============================================================================
+
+// Flutter & Core Framework Imports
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:io';
 import 'package:kindered_app/core/app_urls.dart';
-import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:kindered_app/local/storage_service.dart';
 import 'package:kindered_app/local/storage_keys.dart';
+import 'package:dio/dio.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:image_picker/image_picker.dart';
 import '../services/create_chat_service.dart';
 import '../services/send_message_service.dart';
 import '../services/get_message.dart';
 import '../models/create_chat.dart';
 import '../models/send_message_model.dart';
 import '../models/get_message_model.dart';
-import 'package:dio/dio.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
 
+/// ChatController manages the chat functionality including message sending/receiving,
+/// WebSocket connections, and UI state management.
 class ChatController extends GetxController {
-  final CreateChatService _createChatService = CreateChatService(Dio());
-  final SendMessageService _sendMessageService = SendMessageService();
-  final GetMessageService _getMessageService = GetMessageService();
-  final ImagePicker _imagePicker = ImagePicker();
+  // =============================================================================
+  // DEPENDENCIES & SERVICES
+  // =============================================================================
   
-  // Socket.io instance
+  /// Service for creating new chats
+  final CreateChatService _createChatService;
+  
+  /// Service for sending messages
+  final SendMessageService _sendMessageService;
+  
+  /// Service for retrieving messages
+  final GetMessageService _getMessageService;
+  
+  /// Image picker for selecting images
+  final ImagePicker _imagePicker;
+  
+  /// Socket.io instance for real-time communication
   IO.Socket? socket;
   
-  // Reactive variables
+  // =============================================================================
+  // CHAT STATE & DATA
+  // =============================================================================
+  
+  /// Chat response containing chat data
   final Rx<CreateChatResponse?> chatResponse = Rx<CreateChatResponse?>(null);
-  final RxBool isLoading = false.obs;
-  final RxBool isSendingMessage = false.obs;
-  final RxBool isLoadingMessages = false.obs;
-  final RxString errorMessage = ''.obs;
-  final RxString participantName = ''.obs;
-  final RxString participantId = ''.obs;
+  
+  /// Current user ID
   final RxString currentUserId = ''.obs;
   
-  // WebSocket connection status
-  final RxBool isConnected = false.obs;
-  final RxString connectionStatus = 'Disconnected'.obs;
+  /// Participant information
+  final RxString participantName = ''.obs;
+  final RxString participantId = ''.obs;
   
-  // Typing indicators
-  final RxBool isParticipantTyping = false.obs;
-  final RxString typingStatus = ''.obs;
+  /// General loading and error states
+  final RxBool isLoading = false.obs;
+  final RxString errorMessage = ''.obs;
   
-  // Messages lists
+  // =============================================================================
+  // MESSAGES & CONTENT
+  // =============================================================================
+  
+  /// Messages lists for different purposes
   final RxList<Map<String, dynamic>> messages = <Map<String, dynamic>>[].obs;
   final RxList<Message> chatMessages = <Message>[].obs;
   
-  // Message sending reactive variables
+  /// Message loading state
+  final RxBool isLoadingMessages = false.obs;
+  
+  /// Message sending states
+  final RxBool isSendingMessage = false.obs;
   final RxString messageSendingError = ''.obs;
+  
+  /// Image upload states
   final RxBool isImageUploading = false.obs;
   final RxString imageUploadError = ''.obs;
   
-  // Pending message data (for UI preview)
+  /// Pending message data (for UI preview)
   final RxString draftMessage = ''.obs;
   final RxList<String> pendingImages = <String>[].obs;
   final RxBool hasPendingContent = false.obs;
   
-  // Getters
+  // =============================================================================
+  // WEBSOCKET STATE
+  // =============================================================================
+  
+  /// WebSocket connection status
+  final RxBool isConnected = false.obs;
+  final RxString connectionStatus = 'Disconnected'.obs;
+  
+  // =============================================================================
+  // TYPING INDICATORS
+  // =============================================================================
+  
+  /// Typing status indicators
+  final RxBool isParticipantTyping = false.obs;
+  final RxString typingStatus = ''.obs;
+  
+  // =============================================================================
+  // COMPUTED PROPERTIES (GETTERS)
+  // =============================================================================
+  
+  /// Check if chat is available
   bool get hasChat => chatResponse.value != null;
+  
+  /// Get current chat ID
   String get chatId => chatResponse.value?.data.id ?? '';
+  
+  /// Get list of participants
   List<String> get participants => chatResponse.value?.data.participants ?? [];
+  
+  /// Check if there's pending message content
   bool get hasPendingMessage => draftMessage.value.isNotEmpty || pendingImages.isNotEmpty;
+  
+  // =============================================================================
+  // CONSTRUCTOR
+  // =============================================================================
+  
+  /// Constructor with dependency injection
+  ChatController({
+    CreateChatService? createChatService,
+    SendMessageService? sendMessageService,
+    GetMessageService? getMessageService,
+    ImagePicker? imagePicker,
+  }) : _createChatService = createChatService ?? CreateChatService(Dio()),
+       _sendMessageService = sendMessageService ?? SendMessageService(),
+       _getMessageService = getMessageService ?? GetMessageService(),
+       _imagePicker = imagePicker ?? ImagePicker();
+  
+  // =============================================================================
+  // LIFECYCLE METHODS
+  // =============================================================================
   
   @override
   void onInit() {
@@ -74,6 +161,10 @@ class ChatController extends GetxController {
     _disconnectSocket();
     super.onClose();
   }
+  
+  // =============================================================================
+  // INITIALIZATION METHODS
+  // =============================================================================
   
   /// Initialize controller data from navigation arguments
   void _initializeFromArguments() {
@@ -211,6 +302,10 @@ class ChatController extends GetxController {
     }
   }
   
+  // =============================================================================
+  // CHAT MANAGEMENT METHODS
+  // =============================================================================
+  
   /// Retry creating chat
   Future<void> retryCreateChat() async {
     await _createChatWithParticipant();
@@ -238,7 +333,6 @@ class ChatController extends GetxController {
     isLoadingMessages.value = true;
     
     try {
-      AppLogger.info('[CHAT CONTROLLER] Fetching messages for chat: ${chatId}');
       
       final response = await _getMessageService.getMessages(
         chatId: chatId,
@@ -253,8 +347,6 @@ class ChatController extends GetxController {
         // Force UI update
         chatMessages.refresh();
         
-        AppLogger.info('[CHAT CONTROLLER] Messages fetched successfully');
-        AppLogger.info('[CHAT CONTROLLER] Total messages: ${chatMessages.length}');
         
         // Also update the old messages list for backward compatibility
         messages.clear();
@@ -271,7 +363,6 @@ class ChatController extends GetxController {
           });
         }
       } else {
-        AppLogger.warning('[CHAT CONTROLLER] Could not fetch messages: ${response.message}');
         // For new chats or empty chats, this is normal
         // Clear messages and show empty chat
         messages.clear();
@@ -299,6 +390,10 @@ class ChatController extends GetxController {
     }
   }
 
+  // =============================================================================
+  // MESSAGE MANAGEMENT METHODS
+  // =============================================================================
+  
   /// Update draft message
   void updateDraftMessage(String text) {
     draftMessage.value = text;
@@ -329,15 +424,17 @@ class ChatController extends GetxController {
     hasPendingContent.value = hasPendingMessage;
   }
 
+  // =============================================================================
+  // IMAGE HANDLING METHODS
+  // =============================================================================
+  
   /// Send image from file path
   Future<void> sendImageFromPath(String imagePath) async {
     if (!hasChat) {
-      AppLogger.warning('[CHAT CONTROLLER] Cannot send image - no chat');
       return;
     }
 
     if (isImageUploading.value) {
-      AppLogger.warning('[CHAT CONTROLLER] Already uploading an image');
       return;
     }
 
@@ -347,24 +444,12 @@ class ChatController extends GetxController {
       // Create File object from the image path
       final imageFile = File(imagePath);
       
-      // Enhanced logging for image sending
-      AppLogger.info('🚀 [CHAT CONTROLLER] SENDING IMAGE (Direct Form-Data)');
-      AppLogger.info('📁 [CHAT CONTROLLER] Original image path: $imagePath');
-      AppLogger.info('💬 [CHAT CONTROLLER] Chat ID: $chatId');
 
-      AppLogger.info('📤 [CHAT CONTROLLER] Sending image with form-data...');
       final SendMessageResponse response = await _sendMessageService.sendMessageWithImage(
         chatId: chatId,
         imageFile: imageFile,
         content: '', // You can add caption functionality later
       );
-
-      AppLogger.info('✅ [CHAT CONTROLLER] Image message sent successfully');
-      AppLogger.info('📊 [CHAT CONTROLLER] Response success: ${response.success}');
-      AppLogger.info('🆔 [CHAT CONTROLLER] Message ID: ${response.data.id}');
-      AppLogger.info('📝 [CHAT CONTROLLER] Message text: ${response.data.text}');
-      AppLogger.info('🏷️ [CHAT CONTROLLER] Message type: ${response.data.type}');
-      AppLogger.info('🖼️ [CHAT CONTROLLER] Response images: ${response.data.images}');
 
       // Add the sent image message to the messages list
       messages.add({
@@ -380,9 +465,7 @@ class ChatController extends GetxController {
       try {
         final senderId = response.data.sender;
         
-        // Log the processed image URLs
         final processedImages = _processImageUrls(response.data.images);
-        AppLogger.info('🔄 [CHAT CONTROLLER] Processed image URLs: $processedImages');
         
         final imageMessage = Message(
           id: response.data.id,
@@ -420,7 +503,6 @@ class ChatController extends GetxController {
           'images': imageMessage.images,
         });
         
-        AppLogger.info('[CHAT CONTROLLER] Image message added to reactive UI');
       } catch (e) {
         _handleApiError('createImageMessageObject', e);
       }
@@ -461,16 +543,18 @@ class ChatController extends GetxController {
     }
   }
 
+  // =============================================================================
+  // MESSAGE SENDING METHODS
+  // =============================================================================
+  
   /// Send a text message
   Future<void> sendTextMessage(String content) async {
     
     if (!hasChat || content.trim().isEmpty) {
-      AppLogger.warning('[CHAT CONTROLLER] Cannot send message - no chat or empty content');
       return;
     }
 
     if (isSendingMessage.value) {
-      AppLogger.warning('[CHAT CONTROLLER] Already sending a message');
       return;
     }
     isSendingMessage.value = true;
@@ -481,14 +565,6 @@ class ChatController extends GetxController {
         chatId: chatId,
         content: content.trim(),
       );
-
-      AppLogger.info('[CHAT CONTROLLER] Message sent successfully');
-      AppLogger.info('[CHAT CONTROLLER] Response success: ${response.success}');
-      AppLogger.info('[CHAT CONTROLLER] Response message: ${response.message}');
-      AppLogger.info('[CHAT CONTROLLER] Message ID: ${response.data.id}');
-      AppLogger.info('[CHAT CONTROLLER] Message type: ${response.data.type}');
-      AppLogger.info('[CHAT CONTROLLER] Message created at: ${response.data.createdAt}');
-
 
       // Add the sent message to the chatMessages list (used by UI)
       try {
@@ -526,8 +602,6 @@ class ChatController extends GetxController {
           'isSentByMe': true,
           'images': sentMessage.images,
         });
-        
-        AppLogger.info('[CHAT CONTROLLER] Successfully created and added sent Message object');
       } catch (e) {
         _handleApiError('createSentMessageObject', e);
       }
@@ -545,12 +619,9 @@ class ChatController extends GetxController {
             'type': response.data.type,
             'createdAt': response.data.createdAt,
           });
-          AppLogger.info('📨 Message emitted via WebSocket for user: $userId');
         } catch (e) {
           _handleApiError('emitMessageWebSocket', e);
         }
-      } else {
-        AppLogger.warning('⚠️ WebSocket not connected, message not sent via real-time');
       }
 
     } catch (e) {
@@ -571,12 +642,10 @@ class ChatController extends GetxController {
     String messageType = 'both',
   }) async {
     if (!hasChat) {
-      AppLogger.warning('[CHAT CONTROLLER] Cannot send mixed message - no chat');
       return;
     }
 
     if (isSendingMessage.value) {
-      AppLogger.warning('[CHAT CONTROLLER] Already sending a message');
       return;
     }
 
@@ -591,12 +660,6 @@ class ChatController extends GetxController {
         imageUrl: imageUrl,
         messageType: messageType,
       );
-
-      AppLogger.info('[CHAT CONTROLLER] Mixed message sent successfully');
-      AppLogger.info('[CHAT CONTROLLER] Response success: ${response.success}');
-      AppLogger.info('[CHAT CONTROLLER] Response message: ${response.message}');
-      AppLogger.info('[CHAT CONTROLLER] Message ID: ${response.data.id}');
-      AppLogger.info('[CHAT CONTROLLER] Message type: ${response.data.type}');
 
       // Add the sent message to the messages list
       messages.add({
@@ -649,7 +712,6 @@ class ChatController extends GetxController {
           'isSentByMe': true,
           'images': mixedMessage.images,
         });
-        AppLogger.info('[CHAT CONTROLLER] Mixed message added to reactive UI');
       } catch (e) {
         _handleApiError('createMixedMessageObject', e);
         _showErrorSnackbar('Send Failed', e.toString());
@@ -670,12 +732,10 @@ class ChatController extends GetxController {
     List<String>? images,
   }) async {
     if (!hasChat) {
-      AppLogger.warning('[CHAT CONTROLLER] Cannot send custom message - no chat');
       return;
     }
 
     if (isSendingMessage.value) {
-      AppLogger.warning('[CHAT CONTROLLER] Already sending a message');
       return;
     }
 
@@ -683,12 +743,6 @@ class ChatController extends GetxController {
     messageSendingError.value = '';
 
     try {
-      AppLogger.info('[CHAT CONTROLLER] Sending custom message to chat: $chatId');
-      AppLogger.info('[CHAT CONTROLLER] Content: $content');
-      AppLogger.info('[CHAT CONTROLLER] Message type: $messageType');
-      if (images != null) {
-        AppLogger.info('[CHAT CONTROLLER] Images: $images');
-      }
 
       final SendMessageResponse response = await _sendMessageService.sendCustomMessage(
         chatId: chatId,
@@ -696,12 +750,6 @@ class ChatController extends GetxController {
         messageType: messageType,
         images: images,
       );
-
-      AppLogger.info('[CHAT CONTROLLER] Custom message sent successfully');
-      AppLogger.info('[CHAT CONTROLLER] Response success: ${response.success}');
-      AppLogger.info('[CHAT CONTROLLER] Response message: ${response.message}');
-      AppLogger.info('[CHAT CONTROLLER] Message ID: ${response.data.id}');
-      AppLogger.info('[CHAT CONTROLLER] Message type: ${response.data.type}');
 
       // Add the sent message to the messages list
       messages.add({
@@ -754,8 +802,6 @@ class ChatController extends GetxController {
           'isSentByMe': true,
           'images': customMessage.images,
         });
-        
-        AppLogger.info('[CHAT CONTROLLER] Custom message added to reactive UI');
       } catch (e) {
         _handleApiError('createCustomMessageObject', e);
       }
@@ -773,7 +819,6 @@ class ChatController extends GetxController {
   /// Pick image and add to pending list
   Future<void> pickImageForPreview() async {
     if (!hasChat) {
-      AppLogger.warning('[CHAT CONTROLLER] Cannot pick image - no chat');
       return;
     }
 
@@ -791,7 +836,6 @@ class ChatController extends GetxController {
 
       // Add image to pending list for preview
       addPendingImage(imageFile.path);
-      AppLogger.info('[CHAT CONTROLLER] Image added to pending list: ${imageFile.path}');
     } catch (e) {
       _handleApiError('pickImageForPreview', e);
     }
@@ -800,7 +844,6 @@ class ChatController extends GetxController {
   /// Take photo and add to pending list
   Future<void> takePhotoForPreview() async {
     if (!hasChat) {
-      AppLogger.warning('[CHAT CONTROLLER] Cannot take photo - no chat');
       return;
     }
 
@@ -818,7 +861,6 @@ class ChatController extends GetxController {
 
       // Add image to pending list for preview
       addPendingImage(imageFile.path);
-      AppLogger.info('[CHAT CONTROLLER] Photo added to pending list: ${imageFile.path}');
     } catch (e) {
       _handleApiError('takePhotoForPreview', e);
     }
@@ -827,12 +869,10 @@ class ChatController extends GetxController {
   /// Pick and send an image message (legacy method)
   Future<void> pickAndSendImage() async {
     if (!hasChat) {
-      AppLogger.warning('[CHAT CONTROLLER] Cannot send image - no chat');
       return;
     }
 
     if (isImageUploading.value) {
-      AppLogger.warning('[CHAT CONTROLLER] Already uploading an image');
       return;
     }
 
@@ -855,24 +895,11 @@ class ChatController extends GetxController {
       // Create File object from the picked file
       final file = File(imageFile.path);
       
-      // Enhanced logging for image sending
-      AppLogger.info('🚀 [CHAT CONTROLLER] SENDING IMAGE (Direct Form-Data)');
-      AppLogger.info('📁 [CHAT CONTROLLER] Original image path: ${imageFile.path}');
-      AppLogger.info('💬 [CHAT CONTROLLER] Chat ID: $chatId');
-
-      AppLogger.info('📤 [CHAT CONTROLLER] Sending image with form-data...');
       final SendMessageResponse response = await _sendMessageService.sendMessageWithImage(
         chatId: chatId,
         imageFile: file,
         content: '', // You can add caption functionality later
       );
-
-      AppLogger.info('✅ [CHAT CONTROLLER] Image message sent successfully');
-      AppLogger.info('📊 [CHAT CONTROLLER] Response success: ${response.success}');
-      AppLogger.info('🆔 [CHAT CONTROLLER] Message ID: ${response.data.id}');
-      AppLogger.info('📝 [CHAT CONTROLLER] Message text: ${response.data.text}');
-      AppLogger.info('🏷️ [CHAT CONTROLLER] Message type: ${response.data.type}');
-      AppLogger.info('🖼️ [CHAT CONTROLLER] Response images: ${response.data.images}');
 
       // Add the sent image message to the messages list
       messages.add({
@@ -891,7 +918,6 @@ class ChatController extends GetxController {
         
         // Log the processed image URLs
         final processedImages = _processImageUrls(response.data.images);
-        AppLogger.info('🔄 [CHAT CONTROLLER] Processed image URLs: $processedImages');
         
         final imageMessage = Message(
           id: response.data.id,
@@ -929,7 +955,6 @@ class ChatController extends GetxController {
           'isSentByMe': true,
           'images': imageMessage.images,
         });
-        AppLogger.info('✅ [CHAT CONTROLLER] Image message added to reactive UI');
       } catch (e) {
         _handleApiError('createImageMessageObject', e);
       }
@@ -945,12 +970,10 @@ class ChatController extends GetxController {
   /// Take a photo and send it as a message
   Future<void> takeAndSendPhoto() async {
     if (!hasChat) {
-      AppLogger.warning('[CHAT CONTROLLER] Cannot send photo - no chat');
       return;
     }
 
     if (isImageUploading.value) {
-      AppLogger.warning('[CHAT CONTROLLER] Already uploading an image');
       return;
     }
 
@@ -971,23 +994,12 @@ class ChatController extends GetxController {
       final file = File(photoFile.path);
       
       // Enhanced logging for image sending
-      AppLogger.info('🚀 [CHAT CONTROLLER] SENDING IMAGE (Camera Form-Data)');
-      AppLogger.info('📁 [CHAT CONTROLLER] Original photo path: ${photoFile.path}');
-      AppLogger.info('💬 [CHAT CONTROLLER] Chat ID: $chatId');
-
-      AppLogger.info('📤 [CHAT CONTROLLER] Sending photo with form-data...');
       final SendMessageResponse response = await _sendMessageService.sendMessageWithImage(
         chatId: chatId,
         imageFile: file,
         content: '', // You can add caption functionality later
       );
 
-      AppLogger.info('✅ [CHAT CONTROLLER] Photo message sent successfully');
-      AppLogger.info('📊 [CHAT CONTROLLER] Response success: ${response.success}');
-      AppLogger.info('🆔 [CHAT CONTROLLER] Message ID: ${response.data.id}');
-      AppLogger.info('📝 [CHAT CONTROLLER] Message text: ${response.data.text}');
-      AppLogger.info('🏷️ [CHAT CONTROLLER] Message type: ${response.data.type}');
-      AppLogger.info('🖼️ [CHAT CONTROLLER] Response images: ${response.data.images}');
 
       // Add the sent photo message to the messages list
       messages.add({
@@ -1006,7 +1018,6 @@ class ChatController extends GetxController {
         
         // Log the processed image URLs
         final processedImages = _processImageUrls(response.data.images);
-        AppLogger.info('🔄 [CHAT CONTROLLER] Processed photo URLs: $processedImages');
         
         final photoMessage = Message(
           id: response.data.id,
@@ -1045,7 +1056,6 @@ class ChatController extends GetxController {
           'images': photoMessage.images,
         });
         
-        AppLogger.info('✅ [CHAT CONTROLLER] Photo message added to reactive UI');
       } catch (e) {
         _handleApiError('createPhotoMessageObject', e);
       }
@@ -1072,18 +1082,18 @@ class ChatController extends GetxController {
     imageUploadError.value = '';
   }
   
+  // =============================================================================
+  // WEBSOCKET METHODS
+  // =============================================================================
+  
   /// Initialize WebSocket connection
   void _initializeSocket() {
     try {
-      AppLogger.info('🔌 [SOCKET] Initializing WebSocket connection...');
-      
       // Get the base URL without /api/v1 for socket connection
       final socketUrl = AppUrls.socketUrl;
-      AppLogger.info('🌐 [SOCKET] Socket URL: $socketUrl');
       
       // Use the user ID from LocalStorage (from access token)
       final userId = _getCurrentUserId();
-      AppLogger.info('👤 [SOCKET] User ID: $userId');
       
       socket = IO.io(
         socketUrl,
@@ -1100,7 +1110,6 @@ class ChatController extends GetxController {
       _setupSocketEvents();
       
       // Connect to socket
-      AppLogger.info('🔗 [SOCKET] Connecting to WebSocket...');
       socket?.connect();
       
     } catch (e) {
@@ -1115,27 +1124,21 @@ class ChatController extends GetxController {
     
     // Connection events
     socket?.onConnect((_) {
-      AppLogger.info('✅ [SOCKET] WebSocket connected successfully!');
       isConnected.value = true;
       connectionStatus.value = 'Connected';
       
       // Join the chat room when connected
       if (chatId.isNotEmpty) {
-        AppLogger.info('🏠 [SOCKET] Joining chat room: $chatId');
         _joinChatRoom();
-      } else {
-        AppLogger.warning('⚠️ [SOCKET] No chat ID available to join room');
       }
     });
     
     socket?.onDisconnect((_) {
-      AppLogger.info('❌ [SOCKET] WebSocket disconnected');
       isConnected.value = false;
       connectionStatus.value = 'Disconnected';
     });
     
     socket?.onConnectError((data) {
-      AppLogger.error('❌ [SOCKET] WebSocket connection error: $data');
       isConnected.value = false;
       connectionStatus.value = 'Connection Error';
     });
@@ -1154,86 +1157,72 @@ class ChatController extends GetxController {
   
   /// Setup dynamic event listeners with user ID
   void _setupDynamicEventListeners(String userId) {
-    AppLogger.info('🎧 [SOCKET] Setting up dynamic event listeners for user: $userId');
-    
     // Dynamic user-specific events
     socket?.on('newChat::$userId', (data) {
-      AppLogger.info('🆕 [SOCKET] Received newChat event');
       _handleNewChat(data);
     });
     
     socket?.on('chatListUpdate::$userId', (data) {
-      AppLogger.info('📋 [SOCKET] Received chatListUpdate event');
       _handleChatListUpdate(data);
     });
     
     socket?.on('notification::$userId', (data) {
-      AppLogger.info('🔔 [SOCKET] Received notification event');
       _handleNotification(data);
     });
     
     socket?.on('chatMuteStatus::$userId', (data) {
-      AppLogger.info('🔇 [SOCKET] Received chatMuteStatus event');
       _handleChatMuteStatus(data);
     });
     
     socket?.on('userBlockStatus::$userId', (data) {
-      AppLogger.info('🚫 [SOCKET] Received userBlockStatus event');
       _handleUserBlockStatus(data);
     });
     
     socket?.on('newMessage::$userId', (data) {
-      AppLogger.info('📨 [SOCKET] Received newMessage event');
       _handleNewMessage(data);
     });
     
     socket?.on('messageDelivered::$userId', (data) {
-      AppLogger.info('📤 [SOCKET] Received messageDelivered event');
       _handleMessageDelivered(data);
     });
     
     socket?.on('messageRead::$userId', (data) {
-      AppLogger.info('👁️ [SOCKET] Received messageRead event');
       _handleMessageRead(data);
     });
     
     socket?.on('userTyping::$userId', (data) {
-      AppLogger.info('⌨️ [SOCKET] Received userTyping event');
       _handleUserTyping(data);
     });
     
     socket?.on('userStoppedTyping::$userId', (data) {
-      AppLogger.info('⏹️ [SOCKET] Received userStoppedTyping event');
       _handleUserStoppedTyping(data);
     });
-    
-    AppLogger.info('✅ [SOCKET] All dynamic event listeners setup complete');
   }
   
   /// Join chat room
   void _joinChatRoom() {
     if (socket == null || !isConnected.value || chatId.isEmpty) {
-      AppLogger.warning('⚠️ [SOCKET] Cannot join chat room - socket: ${socket != null}, connected: ${isConnected.value}, chatId: $chatId');
       return;
     }
     
     try {
-      AppLogger.info('🏠 [SOCKET] Emitting joinChat event for chat: $chatId');
       socket?.emit('joinChat', {
         'chatId': chatId,
         'userId': currentUserId.value,
       });
-      AppLogger.info('✅ [SOCKET] Successfully joined chat room: $chatId');
       
     } catch (e) {
       _handleApiError('joinChatRoom', e);
     }
   }
   
+  // =============================================================================
+  // WEBSOCKET EVENT HANDLERS
+  // =============================================================================
+  
   /// Handle new message received via WebSocket
   void _handleNewMessage(dynamic data) {
     try {
-      AppLogger.info('📨 [SOCKET] Handling new message: $data');
       
       final messageData = data as Map<String, dynamic>;
       
@@ -1274,29 +1263,24 @@ class ChatController extends GetxController {
       } catch (e) { }
       
       // Log extracted message data for debugging
-      AppLogger.info('📝 [SOCKET] Extracted message - ID: $messageId, Sender: $senderId, Text: $text, Type: $type');
       
       // Validate critical fields
       if (messageId.isEmpty) {
-        AppLogger.warning('⚠️ [SOCKET] Message rejected: Empty message ID');
         return;
       }
       
       if (senderId.isEmpty) {
-        AppLogger.warning('⚠️ [SOCKET] Message rejected: Empty sender ID');
         return;
       }
       
       // Don't add message if it's sent by current user (already in list)
       if (senderId == currentUserId.value) {
-        AppLogger.info('🔄 [SOCKET] Message ignored: Sent by current user');
         return;
       }
       
       // Check if message already exists to prevent duplicates
       final existingMessage = chatMessages.any((msg) => msg.id == messageId);
       if (existingMessage) {
-        AppLogger.info('🔄 [SOCKET] Message ignored: Already exists in list');
         return;
       }
       
@@ -1329,7 +1313,6 @@ class ChatController extends GetxController {
         );
         
         _addMessageToLists(receivedMessage);
-        AppLogger.info('✅ [SOCKET] Message added to UI: $messageId (Total: ${chatMessages.length})');
         
       } catch (e) {
         _handleApiError('createMessageObject', e);
@@ -1636,6 +1619,10 @@ class ChatController extends GetxController {
     chatMessages.refresh();
   }
 
+  // =============================================================================
+  // UTILITY METHODS
+  // =============================================================================
+  
   /// Show error snackbar with consistent styling
   void _showErrorSnackbar(String title, String message) {
     Get.snackbar(
@@ -1655,20 +1642,14 @@ class ChatController extends GetxController {
 
   /// Log socket event with consistent format
   void _logSocketEvent(String eventName, String emoji, [String? additionalInfo]) {
-    String logMessage = '$emoji [SOCKET] $eventName';
-    if (additionalInfo != null) {
-      logMessage += ' - $additionalInfo';
-    }
-    AppLogger.info(logMessage);
+    // This method is now empty as logging has been removed
   }
 
   /// Handle API error with consistent logging and error setting
   void _handleApiError(String context, dynamic error, {String? errorVariable}) {
-    AppLogger.error('❌ [$context] Error: $error');
     if (errorVariable != null) {
       // This would need to be implemented with reflection or passed as a callback
       // For now, we'll just log it
-      AppLogger.error('❌ [$context] Error variable set: $errorVariable');
     }
   }
 }

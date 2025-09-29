@@ -344,10 +344,6 @@ class _AiAssistantViewState extends State<AiAssistantView> {
   Widget _buildProfileImage([String? imageUrl, MatchUser? user]) {
     final defaultImage = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80';
     
-    // Debug: Print the image URL to see what we're getting
-    print('DEBUG: Image URL received: $imageUrl');
-    print('DEBUG: Image URL is null: ${imageUrl == null}');
-    print('DEBUG: Image URL is empty: ${imageUrl?.isEmpty ?? true}');
     
     // Try to get image from different possible sources
     String? finalImageUrl;
@@ -357,27 +353,22 @@ class _AiAssistantViewState extends State<AiAssistantView> {
       // Try alternative image fields from the user object
       if (user.image.isNotEmpty) {
         finalImageUrl = user.image.first;
-        print('DEBUG: Using first image from user.image list: $finalImageUrl');
       } else if (user.bodyImage.isNotEmpty) {
         finalImageUrl = user.bodyImage;
-        print('DEBUG: Using bodyImage: $finalImageUrl');
       } else if (user.personalityImage.isNotEmpty) {
         finalImageUrl = user.personalityImage;
-        print('DEBUG: Using personalityImage: $finalImageUrl');
       }
     }
     
     // If the image URL is relative (starts with /), prepend the base URL
     if (finalImageUrl != null && finalImageUrl.isNotEmpty && finalImageUrl.startsWith('/')) {
       finalImageUrl = '${AppUrls.imageUrl}$finalImageUrl';
-      print('DEBUG: Converted relative URL to absolute: $finalImageUrl');
     }
     
     final imageProvider = (finalImageUrl != null && finalImageUrl.isNotEmpty) 
         ? NetworkImage(finalImageUrl) 
         : NetworkImage(defaultImage) as ImageProvider;
     
-    print('DEBUG: Final image URL being used: ${finalImageUrl ?? defaultImage}');
     
     return Container(
       width: 120, height: 140,
@@ -480,9 +471,9 @@ class _AiAssistantViewState extends State<AiAssistantView> {
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.withOpacity(0.3)),
+                    border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [

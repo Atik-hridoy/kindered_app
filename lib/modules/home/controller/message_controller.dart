@@ -368,7 +368,6 @@ class MessageController extends GetxController {
       AppLogger.error('[MESSAGE CONTROLLER] Error initializing socket: $e');
     }
   }
-
   /// Set up socket event listeners
   void _setupSocketListeners() {
     if (_socket == null) return;
@@ -379,7 +378,7 @@ class MessageController extends GetxController {
       
       // Join user-specific room
       final userId = LocalStorage.userId;
-      if (userId.isNotEmpty) {
+      if (userId.isNotEmpty && _socket != null) {
         _socket!.emit('joinUserRoom', {'userId': userId});
         AppLogger.info('[MESSAGE CONTROLLER] Joined user room: $userId');
       }

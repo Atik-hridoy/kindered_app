@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:kindered_app/core/app_urls.dart';
 import 'package:kindered_app/local/storage_service.dart';
-import 'package:kindered_app/core/logger/app_logger.dart';
 import '../models/send_message_model.dart';
 import 'dart:io';
 
@@ -26,19 +25,14 @@ class SendMessageService {
       final token = LocalStorage.token;
       
       if (token.isEmpty) {
-        AppLogger.error('[SEND MESSAGE SERVICE] No authentication token found');
         throw Exception('Authentication required. Please login again.');
       }
       
-      AppLogger.info('[SEND MESSAGE SERVICE] Sending message to chat: $chatId');
-      AppLogger.info('[SEND MESSAGE SERVICE] Message content: $content');
-      AppLogger.info('[SEND MESSAGE SERVICE] Message type: $messageType');
       
       // Replace the :chatId placeholder in the URL with the actual chat ID
       final endpoint = AppUrls.sentMessage.replaceAll(':chatId', chatId);
       final url = '${AppUrls.baseUrl}$endpoint';
       
-      AppLogger.info('[SEND MESSAGE SERVICE] Making POST request to: $url');
       
       // Prepare request data based on message type
       Map<String, dynamic> requestData;
@@ -82,7 +76,6 @@ class SendMessageService {
           break;
       }
       
-      AppLogger.info('[SEND MESSAGE SERVICE] Request data: $requestData');
       
       // Make the POST request
       final response = await _dio.post(
@@ -96,25 +89,17 @@ class SendMessageService {
         ),
       );
       
-      AppLogger.info('[SEND MESSAGE SERVICE] Message sent successfully');
-      AppLogger.info('[SEND MESSAGE SERVICE] Response status: ${response.statusCode}');
-      AppLogger.info('[SEND MESSAGE SERVICE] Response data: ${response.data}');
       
       return SendMessageResponse.fromJson(response.data);
       
     } on DioException catch (e) {
       // Handle Dio-specific errors
-      AppLogger.error('[SEND MESSAGE SERVICE] DioException occurred');
-      AppLogger.error('[SEND MESSAGE SERVICE] Error type: ${e.type}');
-      AppLogger.error('[SEND MESSAGE SERVICE] Error message: ${e.message}');
       
       if (e.response != null) {
         // Server responded with an error
         final statusCode = e.response?.statusCode;
         final responseData = e.response?.data;
         
-        AppLogger.error('[SEND MESSAGE SERVICE] Server error - Status: $statusCode');
-        AppLogger.error('[SEND MESSAGE SERVICE] Server error - Response: $responseData');
         
         // Handle specific HTTP status codes
         switch (statusCode) {
@@ -141,7 +126,6 @@ class SendMessageService {
         }
       } else {
         // Network error or no response from server
-        AppLogger.error('[SEND MESSAGE SERVICE] Network error: ${e.message}');
         
         if (e.type == DioExceptionType.connectionTimeout || 
             e.type == DioExceptionType.sendTimeout || 
@@ -156,7 +140,6 @@ class SendMessageService {
       
     } catch (e) {
       // Handle any other unexpected errors
-      AppLogger.error('[SEND MESSAGE SERVICE] Unexpected error: $e');
       throw Exception('Failed to send message: ${e.toString()}');
     }
   }
@@ -179,7 +162,6 @@ class SendMessageService {
       final token = LocalStorage.token;
       
       if (token.isEmpty) {
-        AppLogger.error('[SEND MESSAGE SERVICE] No authentication token found');
         throw Exception('Authentication required. Please login again.');
       }
       
@@ -192,9 +174,6 @@ class SendMessageService {
         if (content.isNotEmpty) 'content': content,
       });
       
-      AppLogger.info('[SEND MESSAGE SERVICE] Sending message with image to chat: $chatId');
-      AppLogger.info('[SEND MESSAGE SERVICE] Image file: ${imageFile.path}');
-      AppLogger.info('[SEND MESSAGE SERVICE] Content: $content');
       
       // Make the request to the send message endpoint
       final response = await _dio.post(
@@ -208,15 +187,11 @@ class SendMessageService {
       );
       
       if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.info('[SEND MESSAGE SERVICE] Message with image sent successfully');
         return SendMessageResponse.fromJson(response.data);
       } else {
-        AppLogger.error('[SEND MESSAGE SERVICE] Failed to send message with image: ${response.data}');
         throw Exception('Failed to send message: ${response.data['message'] ?? 'Unknown error'}');
       }
     } on DioException catch (e) {
-      AppLogger.error('[SEND MESSAGE SERVICE] DioException sending message with image: ${e.message}');
-      AppLogger.error('[SEND MESSAGE SERVICE] Response data: ${e.response?.data}');
       
       if (e.response != null) {
         final statusCode = e.response?.statusCode;
@@ -242,7 +217,6 @@ class SendMessageService {
         }
       } else {
         // Network error or no response from server
-        AppLogger.error('[SEND MESSAGE SERVICE] Network error: ${e.message}');
         
         if (e.type == DioExceptionType.connectionTimeout || 
             e.type == DioExceptionType.sendTimeout || 
@@ -256,7 +230,6 @@ class SendMessageService {
       }
     } catch (e) {
       // Handle any other unexpected errors
-      AppLogger.error('[SEND MESSAGE SERVICE] Unexpected error sending message with image: $e');
       throw Exception('Failed to send message: ${e.toString()}');
     }
   }

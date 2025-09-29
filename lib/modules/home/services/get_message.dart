@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:kindered_app/core/app_urls.dart';
 import 'package:kindered_app/local/storage_service.dart';
-import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:kindered_app/modules/home/models/get_message_model.dart';
 
 class GetMessageService {
@@ -25,12 +24,9 @@ class GetMessageService {
       final token = LocalStorage.token;
       
       if (token.isEmpty) {
-        AppLogger.error('[GET MESSAGE SERVICE] No authentication token found');
         throw Exception('Authentication required. Please login again.');
       }
       
-      AppLogger.info('[GET MESSAGE SERVICE] Getting messages for chat: $chatId');
-      AppLogger.info('[GET MESSAGE SERVICE] Page: $page, Limit: $limit');
       
       // Replace the :chatId placeholder in the URL with the actual chat ID
       final endpoint = AppUrls.getMessages.replaceAll(':chatId', chatId);
@@ -42,8 +38,6 @@ class GetMessageService {
         'limit': limit.toString(),
       };
       
-      AppLogger.info('[GET MESSAGE SERVICE] Making GET request to: $url');
-      AppLogger.info('[GET MESSAGE SERVICE] Query parameters: $queryParams');
       
       // Make the GET request
       final response = await _dio.get(
@@ -57,24 +51,16 @@ class GetMessageService {
         ),
       );
       
-      AppLogger.info('[GET MESSAGE SERVICE] Response status: ${response.statusCode}');
-      AppLogger.info('[GET MESSAGE SERVICE] Response data: ${response.data}');
       
       // Check if the response is successful
       if (response.statusCode == 200 || response.statusCode == 201) {
         final getMessageResponse = GetMessageResponse.fromJson(response.data);
-        AppLogger.info('[GET MESSAGE SERVICE] Messages retrieved successfully');
-        AppLogger.info('[GET MESSAGE SERVICE] Total messages: ${getMessageResponse.data.messages.length}');
         return getMessageResponse;
       } else {
-        AppLogger.error('[GET MESSAGE SERVICE] Unexpected status code: ${response.statusCode}');
         throw Exception('Failed to get messages. Status code: ${response.statusCode}');
       }
       
     } on DioException catch (e) {
-      AppLogger.error('[GET MESSAGE SERVICE] DioException occurred: ${e.message}');
-      AppLogger.error('[GET MESSAGE SERVICE] Error type: ${e.type}');
-      AppLogger.error('[GET MESSAGE SERVICE] Error response: ${e.response?.data}');
       
       String errorMessage = 'Failed to get messages';
       
@@ -97,7 +83,6 @@ class GetMessageService {
       throw Exception(errorMessage);
       
     } catch (e) {
-      AppLogger.error('[GET MESSAGE SERVICE] Unexpected error occurred: $e');
       throw Exception('An unexpected error occurred while getting messages: $e');
     }
   }
@@ -110,7 +95,6 @@ class GetMessageService {
     int batchSize = 100,
   }) async {
     try {
-      AppLogger.info('[GET MESSAGE SERVICE] Getting all messages for chat: $chatId');
       
       List<Message> allMessages = [];
       int currentPage = 1;
@@ -126,7 +110,6 @@ class GetMessageService {
         final messages = response.data.messages;
         allMessages.addAll(messages);
         
-        AppLogger.info('[GET MESSAGE SERVICE] Retrieved ${messages.length} messages (page $currentPage)');
         
         // If we got fewer messages than the batch size, we've reached the end
         if (messages.length < batchSize) {
@@ -136,7 +119,6 @@ class GetMessageService {
         }
       }
       
-      AppLogger.info('[GET MESSAGE SERVICE] Total messages retrieved: ${allMessages.length}');
       
       // Create a combined response with all messages
       return GetMessageResponse(
@@ -147,7 +129,6 @@ class GetMessageService {
       );
       
     } catch (e) {
-      AppLogger.error('[GET MESSAGE SERVICE] Error getting all messages: $e');
       rethrow;
     }
   }
@@ -162,7 +143,6 @@ class GetMessageService {
     int limit = 20,
   }) async {
     try {
-      AppLogger.info('[GET MESSAGE SERVICE] Getting latest messages for chat: $chatId');
       
       final response = await getMessages(
         chatId: chatId,
@@ -170,12 +150,10 @@ class GetMessageService {
         limit: limit,
       );
       
-      AppLogger.info('[GET MESSAGE SERVICE] Retrieved ${response.data.messages.length} latest messages');
       
       return response;
       
     } catch (e) {
-      AppLogger.error('[GET MESSAGE SERVICE] Error getting latest messages: $e');
       rethrow;
     }
   }

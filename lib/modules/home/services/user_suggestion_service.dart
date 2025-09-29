@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:kindered_app/core/app_urls.dart';
-import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:kindered_app/local/storage_service.dart';
 import '../models/user_suggestion_model.dart';
 
@@ -28,38 +27,25 @@ class UserSuggestionService {
 
       final url = '${AppUrls.baseUrl}${AppUrls.aiCurrentMatch}';
 
-      AppLogger.api('GET', url);
       
       final response = await _dio.get(
         url,
         options: Options(
           headers: {
-            'Authorization': 'Bearer $_authToken',
             'Content-Type': 'application/json',
           },
         ),
-      );
-
-      // Log the API response
-      AppLogger.api(
-        'GET',
-        url,
-        data: response.data,
-        statusCode: response.statusCode,
       );
 
       if (response.statusCode == 200 && response.data != null) {
         // Parse the comprehensive response structure
         final suggestionResponse = UserSuggestionResponse.fromJson(response.data);
         
-        AppLogger.success('✅ Current match data fetched successfully');
         return suggestionResponse;
       } else {
         throw Exception('Failed to fetch current match: Invalid response');
       }
     } on DioException catch (e) {
-      // Log Dio error with details
-      AppLogger.error('❌ Current match request failed: ${e.message}', e, e.stackTrace);
       
       String errorMessage = 'Request failed';
       if (e.response?.data != null) {
@@ -73,15 +59,12 @@ class UserSuggestionService {
       }
       
       throw Exception(errorMessage);
-    } catch (e, stackTrace) {
-      // Log any other errors
-      AppLogger.error('❌ Unexpected error in current match: $e', e, stackTrace);
+    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }
 
   /// Get next match suggestion
-  /// Returns UserSuggestionResponse with comprehensive match data
   Future<UserSuggestionResponse> getNextMatch() async {
     try {
       if (!isAuthenticated) {
@@ -90,7 +73,6 @@ class UserSuggestionService {
 
       final url = '${AppUrls.baseUrl}${AppUrls.aiNextMatch}';
 
-      AppLogger.api('POST', url);
       
       final response = await _dio.post(
         url,
@@ -102,26 +84,16 @@ class UserSuggestionService {
         ),
       );
 
-      // Log the API response
-      AppLogger.api(
-        'POST',
-        url,
-        data: response.data,
-        statusCode: response.statusCode,
-      );
 
       if (response.statusCode == 200 && response.data != null) {
         // Parse the comprehensive response structure
         final suggestionResponse = UserSuggestionResponse.fromJson(response.data);
         
-        AppLogger.success('✅ Next match data fetched successfully');
         return suggestionResponse;
       } else {
         throw Exception('Failed to fetch next match: Invalid response');
       }
     } on DioException catch (e) {
-      // Log Dio error with details
-      AppLogger.error('❌ Next match request failed: ${e.message}', e, e.stackTrace);
       
       String errorMessage = 'Request failed';
       if (e.response?.data != null) {
@@ -135,9 +107,7 @@ class UserSuggestionService {
       }
       
       throw Exception(errorMessage);
-    } catch (e, stackTrace) {
-      // Log any other errors
-      AppLogger.error('❌ Unexpected error in next match: $e', e, stackTrace);
+    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }
@@ -154,7 +124,6 @@ class UserSuggestionService {
         response.data.currentMatch.matchScore,
       );
     } catch (e) {
-      AppLogger.error('❌ Failed to get legacy match data: $e');
       return null;
     }
   }
@@ -171,7 +140,6 @@ class UserSuggestionService {
         response.data.currentMatch.matchScore,
       );
     } catch (e) {
-      AppLogger.error('❌ Failed to get legacy next match data: $e');
       return null;
     }
   }

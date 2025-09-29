@@ -625,7 +625,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                       
                       // Images preview
                       if (_chatController.pendingImages.isNotEmpty)
-                        Container(
+                        SizedBox(
                           height: 100,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
@@ -791,7 +791,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -808,7 +808,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                   height: 150,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
@@ -824,7 +824,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                             width: 200,
                             height: 150,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
@@ -840,7 +840,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                             width: 200,
                             height: 150,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: Colors.white.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Center(
@@ -874,7 +874,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                   width: 200,
                   height: 150,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -964,7 +964,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -981,7 +981,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                         height: 150,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
@@ -997,7 +997,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                                   width: 200,
                                   height: 150,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Icon(
@@ -1013,7 +1013,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                                   width: 200,
                                   height: 150,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.1),
+                                    color: Colors.white.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Center(
@@ -1047,7 +1047,7 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                         width: 200,
                         height: 150,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(

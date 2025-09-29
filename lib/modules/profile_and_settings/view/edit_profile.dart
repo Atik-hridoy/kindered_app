@@ -1,21 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 import 'package:kindered_app/modules/profile_and_settings/controller/edit_profile_controller.dart';
 
 class EditProfile extends GetView<ProfileEditController> {
-   EditProfile({super.key});
+   const EditProfile({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Debug: Check if profile data is loading
-    print('DEBUG: Building EditProfile view');
-    print('DEBUG: Is loading: ${controller.isLoading}');
-    print('DEBUG: User profile: ${controller.profile}');
-    print('DEBUG: Profile completion: ${controller.profileCompletion}%');
-    print('DEBUG: User name: ${controller.userFirstName ?? 'No name'}');
-    
     return Scaffold(
       backgroundColor: Color(0xFF2E3A59),
       body: Container(
@@ -79,9 +71,7 @@ class EditProfile extends GetView<ProfileEditController> {
                           children: [
                             // Name Section
                             Obx(() {
-                              print('DEBUG: Name widget rebuilding');
                               final name = controller.userFirstName;
-                              print('DEBUG: Displaying name: $name');
                               return Text(
                                 name,
                                 style: TextStyle(
@@ -94,8 +84,6 @@ class EditProfile extends GetView<ProfileEditController> {
                             }),
                             SizedBox(height: 16),
                             Obx(() {
-                              print('DEBUG: Profile completion widget rebuilding');
-                              print('DEBUG: Current completion: ${controller.profileCompletion}%');
                               return Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -258,10 +246,6 @@ class EditProfile extends GetView<ProfileEditController> {
                       
                       // Photo Grid with dynamic photos
                       Obx(() {
-                        final userPhotos = controller.userPhotos;
-                        print('DEBUG: User photos count: ${userPhotos.length}');
-                        print('DEBUG: User photos: $userPhotos');
-                        
                         return GridView.count(
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
@@ -389,7 +373,7 @@ class EditProfile extends GetView<ProfileEditController> {
                       // Eating Style
                       Obx(() => _buildInfoField(
                         'Eating Style',
-                        controller.userEatingStyle.join(', ') ?? '',
+                        controller.userEatingStyle.join(', '),
                         dropdownItems: controller.foodPreferences,
                         isEditable: true
                       )),
@@ -640,28 +624,16 @@ class EditProfile extends GetView<ProfileEditController> {
   Widget _buildPhotoSlot(String imagePath, int index) {
     final hasImage = imagePath.isNotEmpty;
     
-    // Debug: Print image path information
-    print('DEBUG: Building photo slot $index with path: $imagePath');
-    print('DEBUG: Has image: $hasImage');
-    
-    // Determine if the image path is a network URL or local file
     ImageProvider? imageProvider;
     if (hasImage) {
       if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-        // Network image
-        print('DEBUG: Using NetworkImage for: $imagePath');
         imageProvider = NetworkImage(imagePath);
       } else if (File(imagePath).existsSync()) {
-        // Local file
-        print('DEBUG: Using FileImage for: $imagePath');
         imageProvider = FileImage(File(imagePath));
       } else {
-        // Fallback to network image if file doesn't exist
-        print('DEBUG: File does not exist, trying NetworkImage for: $imagePath');
         imageProvider = NetworkImage(imagePath);
       }
     } else {
-      print('DEBUG: No image path provided for slot $index');
     }
     
     return Container(
@@ -673,8 +645,6 @@ class EditProfile extends GetView<ProfileEditController> {
                 image: imageProvider,
                 fit: BoxFit.cover,
                 onError: (exception, stackTrace) {
-                  print('DEBUG: Error loading image: $imagePath');
-                  print('DEBUG: Error: $exception');
                 },
               )
             : null,
@@ -682,7 +652,6 @@ class EditProfile extends GetView<ProfileEditController> {
       child: hasImage
           ? Stack(
               children: [
-                // Fallback UI in case image fails to load
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
@@ -707,7 +676,7 @@ class EditProfile extends GetView<ProfileEditController> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.5),
+                          Colors.black.withValues(alpha: 0.5),
                         ],
                       ),
                     ),
@@ -739,83 +708,16 @@ class EditProfile extends GetView<ProfileEditController> {
     );
   }
 
-  // New method for sample photos from internet
-  Widget _buildSamplePhotoSlot(String imagePath, int index) {
-    return GestureDetector(
-      onTap: () {
-        // Add this sample photo to user's photos
-        controller.addPhoto(imagePath);
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Color(0xFF1E2A3A),
-          borderRadius: BorderRadius.circular(12),
-          image: DecorationImage(
-            image: NetworkImage(imagePath),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.3),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 8,
-              right: 8,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: Color(0xFF4A9EFF),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 16,
-                ),
-              ),
-            ),
-            // Optional: Add a subtle overlay to indicate it's a sample
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Color(0xFF4A9EFF).withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildAddPhotoSlot(int index, BuildContext context) {
     return GestureDetector(
       onTap: () => _showPhotoSelectionDialog(context, index),
       child: Container(
         decoration: BoxDecoration(
-          color: Color(0xFF1E2A3A).withOpacity(0.1),
+          color: Color(0xFF1E2A3A).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Color(0xFF4A9EFF).withOpacity(0.5),
+            color: Color(0xFF4A9EFF).withValues(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -887,7 +789,7 @@ class EditProfile extends GetView<ProfileEditController> {
                   leading: Container(
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Color(0xFF4A9EFF).withOpacity(0.1),
+                      color: Color(0xFF4A9EFF).withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -916,7 +818,7 @@ class EditProfile extends GetView<ProfileEditController> {
                   leading: Container(
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Color(0xFF4A9EFF).withOpacity(0.1),
+                      color: Color(0xFF4A9EFF).withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -1095,7 +997,7 @@ class EditProfile extends GetView<ProfileEditController> {
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: controller.userTraits.contains(trait)
-                  ? Color(0xFF4A9EFF).withOpacity(0.2)
+                  ? Color(0xFF4A9EFF).withValues(alpha: 0.2)
                   : Color(0xFF1E2A3A),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
@@ -1151,7 +1053,7 @@ class EditProfile extends GetView<ProfileEditController> {
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: controller.userInterests.contains(interest)
-                  ? Color(0xFF4A9EFF).withOpacity(0.2)
+                  ? Color(0xFF4A9EFF).withValues(alpha: 0.2)
                   : Color(0xFF1E2A3A),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(

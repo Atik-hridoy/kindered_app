@@ -1,231 +1,217 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:kindered_app/core/app_urls.dart'; 
-import 'package:kindered_app/core/logger/app_logger.dart';
+import 'package:kindered_app/core/app_urls.dart';
 import 'package:kindered_app/local/storage_service.dart';
 import 'package:kindered_app/modules/profile_and_settings/model/get_profile.dart';
 import 'package:kindered_app/modules/profile_and_settings/model/display_profile.dart';
 
+/// Service class for managing profile-related API operations
+/// Handles profile updates, data fetching, and match information
+/// 
+/// Features:
+/// - Token-based authentication
+/// - Multipart file upload support
+/// - Centralized error handling
+/// - Type-safe API responses
 class ProfileService {
   final Dio _dio;
 
-  ProfileService(String token)
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: AppUrls.baseUrl,
-            headers: LocalStorage.getAuthHeaders(),
-            validateStatus: (status) {
-              return status! < 500; 
-            }
-          ),
-        ) {
-    // Ensure the token is set correctly
+  /// Creates a new ProfileService instance with authentication
+  /// 
+  /// [token] - Bearer token for API authentication
+  ProfileService(String token) : _dio = _createDioInstance(token);
+
+  /// Factory method to create configured Dio instance
+  static Dio _createDioInstance(String token) {
+    final dio = Dio(BaseOptions(
+      baseUrl: AppUrls.baseUrl,
+      headers: LocalStorage.getAuthHeaders(),
+      validateStatus: (status) => status! < 500,
+    ));
+    
     if (token.isNotEmpty) {
-      _dio.options.headers['Authorization'] = 'Bearer $token';
+      dio.options.headers['Authorization'] = 'Bearer $token';
     }
+    
+    return dio;
   }
 
-  /// Update Dio headers with new token
+  /// Updates the authentication token for all subsequent requests
+  /// 
+  /// [newToken] - New bearer token to use for authentication
   void updateToken(String newToken) {
     _dio.options.headers.addAll(LocalStorage.getAuthHeaders());
-    // Ensure the specific token is set
     _dio.options.headers['Authorization'] = 'Bearer $newToken';
-    AppLogger.info('🔐 ProfileService token updated');
   }
 
+  /// Updates user profile with provided data and optional images
+  /// 
+  /// [data] - Profile data to update
+  /// [images] - Optional list of image files to upload
+  /// 
+  /// Returns: API response from the server
+  /// Throws: Exception with descriptive error message
   Future<Response> updateProfile({
     required Map<String, dynamic> data,
     List<File>? images,
   }) async {
+    _validateAuthentication();
+    
     try {
-      AppLogger.info('🔄 [PROFILE SERVICE] Starting profile update request...');
-      AppLogger.info('📋 [PROFILE SERVICE] Endpoint: ${AppUrls.updateProfile}');
-      AppLogger.info('🔐 [PROFILE SERVICE] Using Bearer authorization');
+      final payload = _preparePayload(data, images);
+      final options = _getRequestOptions(images?.isNotEmpty ?? false);
       
-      if (LocalStorage.token.isEmpty) {
-        throw Exception('No access token found. Please log in again.');
-      }
- 
-      Response response;
-      if (images != null && images.isNotEmpty) {
-    
-        final payload = Map<String, dynamic>.from(data);
-
-        final files = <MultipartFile>[];
-        for (final file in images) {
-          try {
-            final filename = file.path.split(Platform.pathSeparator).last;
-            files.add(await MultipartFile.fromFile(file.path, filename: filename));
-            AppLogger.info('📸 [PROFILE SERVICE] Added image: $filename');
-          } catch (e, st) {
-            AppLogger.warning('⚠️ [PROFILE SERVICE] Skipping an image that could not be read: ${file.path}', e, st as StackTrace?);
-          }
-        }
-    
-        payload['image'] = files;
-
-        final formData = FormData.fromMap(payload);
-        AppLogger.api('PATCH', AppUrls.updateProfile, data: '[multipart form with ${files.length} photos]');
-        
-        response = await _dio.patch(
-          AppUrls.updateProfile,
-          data: formData,
-          options: Options(
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          ),
-        );
-      } else {
-   
-        final json = {
-          ...data,
-          'image': data.containsKey('image') ? data['image'] : <dynamic>[],
-        };
-        AppLogger.api('PATCH', AppUrls.updateProfile, data: json);
-        
-        response = await _dio.patch(
-          AppUrls.updateProfile,
-          data: json,
-          options: Options(
-            headers: {
-              'Content-Type': Headers.jsonContentType,
-            },
-          ),
-        );
-      }
-
-      AppLogger.api(
-        'PATCH',
+      final response = await _dio.patch(
         AppUrls.updateProfile,
-        data: response.data,
-        statusCode: response.statusCode,
+        data: payload,
+        options: options,
       );
-
-      AppLogger.success('✅ [PROFILE SERVICE] Profile update successful');
-      AppLogger.info('📊 [PROFILE SERVICE] Response status: ${response.statusCode}');
-      AppLogger.info('📝 [PROFILE SERVICE] Response data: ${response.data}');
       
       return response;
     } on DioException catch (e) {
- 
-      AppLogger.error('❌ [PROFILE SERVICE] Profile update failed: ${e.message}', e, e.stackTrace);
-      
-      String errorMessage = 'Profile update failed';
-      if (e.response?.data != null) {
-        if (e.response?.data is Map) {
-          errorMessage = e.response?.data['message'] ?? e.response?.data['error'] ?? errorMessage;
-        } else {
-          errorMessage = e.response?.data.toString() ?? errorMessage;
-        }
-      } else if (e.message != null) {
-        errorMessage = e.message ?? errorMessage;
-      }
-      
-      AppLogger.error('❌ [PROFILE SERVICE] Error message: $errorMessage');
-      throw Exception(errorMessage);
+      throw _handleDioError(e, 'Profile update failed');
     } catch (e) {
-      AppLogger.error('❌ [PROFILE SERVICE] Unexpected error during profile update: $e');
       throw Exception('An unexpected error occurred while updating profile');
     }
   }
 
-
+  /// Fetches current user profile data from the server
+  /// 
+  /// Returns: API response containing profile data
+  /// Throws: Exception with descriptive error message
   Future<Response> getProfile() async {
     try {
-      AppLogger.info('🔄 [PROFILE SERVICE] Fetching current profile data...');
-      AppLogger.info('📋 [PROFILE SERVICE] Endpoint: ${AppUrls.getProfile}');
-      
-      final response = await _dio.get(
-        AppUrls.getProfile,
-      );
-
-      AppLogger.api('GET', AppUrls.getProfile, statusCode: response.statusCode);
-      AppLogger.info('📊 [PROFILE SERVICE] Response status: ${response.statusCode}');
-      AppLogger.info('📝 [PROFILE SERVICE] Response data: ${response.data}');
-      
-      // Only log success if the response was actually successful
-      if (response.statusCode == 200) {
-        AppLogger.success('✅ [PROFILE SERVICE] Profile data fetched successfully');
-      }
-      
+      final response = await _dio.get(AppUrls.getProfile);
       return response;
     } on DioException catch (e) {
-      AppLogger.error('❌ [PROFILE SERVICE] Failed to fetch profile data: ${e.message}', e, e.stackTrace);
-      
-      String errorMessage = 'Failed to fetch profile data';
-      if (e.response?.data != null) {
-        if (e.response?.data is Map) {
-          errorMessage = e.response?.data['message'] ?? e.response?.data['error'] ?? errorMessage;
-        } else {
-          errorMessage = e.response?.data.toString() ?? errorMessage;
-        }
-      }
-      
-      throw Exception(errorMessage);
+      throw _handleDioError(e, 'Failed to fetch profile data');
     } catch (e) {
-      AppLogger.error('❌ [PROFILE SERVICE] Unexpected error fetching profile: $e');
       throw Exception('An unexpected error occurred while fetching profile');
     }
   }
 
-
+  /// Fetches and parses user profile into UserProfile model
+  /// 
+  /// Returns: Parsed UserProfile object
+  /// Throws: Exception if parsing fails or API call fails
   Future<UserProfile> getUserProfile() async {
     try {
-      AppLogger.info('🔄 [PROFILE SERVICE] Fetching UserProfile object...');
-      
       final response = await getProfile();
       
       if (response.statusCode == 200 && response.data != null) {
-        final userProfile = UserProfile.fromJson(response.data);
-        AppLogger.success('✅ [PROFILE SERVICE] UserProfile object created successfully');
-        return userProfile;
-      } else {
-        throw Exception('Failed to create UserProfile from API response');
+        return UserProfile.fromJson(response.data);
       }
+      
+      throw Exception('Failed to create UserProfile from API response');
     } catch (e) {
-      AppLogger.error('❌ [PROFILE SERVICE] Error creating UserProfile: $e');
       rethrow;
     }
   }
 
-  /// Fetch current match data from AI matchmaking
+  /// Fetches current match data from AI matchmaking service
+  /// 
+  /// Returns: Parsed CurrentMatchsResponse object
+  /// Throws: Exception if API call fails or parsing fails
   Future<CurrentMatchsResponse> getCurrentMatch() async {
     try {
-      AppLogger.info('🔄 [PROFILE SERVICE] Fetching current match data...');
-      AppLogger.info('📋 [PROFILE SERVICE] Endpoint: ${AppUrls.aiCurrentMatch}');
-      
-      final response = await _dio.get(
-        AppUrls.aiCurrentMatch,
-      );
-
-      AppLogger.api('GET', AppUrls.aiCurrentMatch, statusCode: response.statusCode);
-      AppLogger.info('📊 [PROFILE SERVICE] Response status: ${response.statusCode}');
-      AppLogger.info('📝 [PROFILE SERVICE] Response data: ${response.data}');
+      final response = await _dio.get(AppUrls.aiCurrentMatch);
       
       if (response.statusCode == 200 && response.data != null) {
-        final currentMatchResponse = CurrentMatchsResponse.fromJson(response.data);
-        AppLogger.success('✅ [PROFILE SERVICE] Current match data fetched successfully');
-        return currentMatchResponse;
-      } else {
-        throw Exception('Failed to create CurrentMatchResponse from API response');
+        return CurrentMatchsResponse.fromJson(response.data);
       }
+      
+      throw Exception('Failed to create CurrentMatchResponse from API response');
     } on DioException catch (e) {
-      AppLogger.error('❌ [PROFILE SERVICE] Failed to fetch current match data: ${e.message}', e, e.stackTrace);
-      
-      String errorMessage = 'Failed to fetch current match data';
-      if (e.response?.data != null) {
-        if (e.response?.data is Map) {
-          errorMessage = e.response?.data['message'] ?? e.response?.data['error'] ?? errorMessage;
-        } else {
-          errorMessage = e.response?.data.toString() ?? errorMessage;
-        }
-      }
-      
-      throw Exception(errorMessage);
+      throw _handleDioError(e, 'Failed to fetch current match data');
     } catch (e) {
-      AppLogger.error('❌ [PROFILE SERVICE] Unexpected error fetching current match: $e');
       throw Exception('An unexpected error occurred while fetching current match');
     }
+  }
+
+  // MARK: - Private Helper Methods
+
+  /// Validates that user is authenticated
+  /// 
+  /// Throws: Exception if no valid token is found
+  void _validateAuthentication() {
+    if (LocalStorage.token.isEmpty) {
+      throw Exception('No access token found. Please log in again.');
+    }
+  }
+
+  /// Prepares payload for API request based on whether images are included
+  /// 
+  /// [data] - Profile data to include
+  /// [images] - Optional image files
+  /// 
+  /// Returns: FormData if images present, Map otherwise
+  dynamic _preparePayload(Map<String, dynamic> data, List<File>? images) {
+    if (images != null && images.isNotEmpty) {
+      return _createMultipartPayload(data, images.first);
+    } else {
+      return _createJsonPayload(data);
+    }
+  }
+
+  /// Creates multipart form data payload for image upload
+  /// 
+  /// [data] - Profile data
+  /// [image] - Image file to upload
+  /// 
+  /// Returns: FormData object with image and profile data
+  FormData _createMultipartPayload(Map<String, dynamic> data, File image) {
+    final payload = Map<String, dynamic>.from(data);
+    
+    final filename = image.path.split(Platform.pathSeparator).last;
+    final multipartFile = MultipartFile.fromFileSync(
+      image.path,
+      filename: filename,
+    );
+    
+    payload['image'] = multipartFile;
+    return FormData.fromMap(payload);
+  }
+
+  /// Creates JSON payload for profile update without images
+  /// 
+  /// [data] - Profile data
+  /// 
+  /// Returns: Map with profile data and empty image array
+  Map<String, dynamic> _createJsonPayload(Map<String, dynamic> data) {
+    final json = Map<String, dynamic>.from(data);
+    if (!data.containsKey('image')) {
+      json['image'] = <dynamic>[];
+    }
+    return json;
+  }
+
+  /// Creates appropriate request options based on content type
+  /// 
+  /// [isMultipart] - Whether request contains multipart data
+  /// 
+  /// Returns: Options object with appropriate headers
+  Options _getRequestOptions(bool isMultipart) {
+    return Options(
+      headers: {
+        'Content-Type': isMultipart 
+          ? 'multipart/form-data' 
+          : Headers.jsonContentType,
+      },
+    );
+  }
+
+  /// Centralized Dio error handling
+  /// 
+  /// [error] - DioException to handle
+  /// [defaultMessage] - Default error message if none found in response
+  /// 
+  /// Returns: Exception with appropriate error message
+  Exception _handleDioError(DioException error, String defaultMessage) {
+    final errorMessage = error.response?.data['message'] ??
+                         error.response?.data['error'] ??
+                         error.message ??
+                         defaultMessage;
+    
+    return Exception(errorMessage);
   }
 }
