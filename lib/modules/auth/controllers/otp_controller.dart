@@ -182,8 +182,7 @@ class OtpController extends GetxController {
     isLoading.value = true;
     try {
       final response = await _otpService.resendOtp(
-        target: target.value,
-        type: type.value,
+        email: target.value,
       );
       AppLogger.success('✅ OTP resent: $response');
       Get.snackbar('Success', 'OTP resent successfully.');

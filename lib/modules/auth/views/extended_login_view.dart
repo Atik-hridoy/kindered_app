@@ -175,13 +175,13 @@ class ExtendedLoginView extends GetView<ExtendedLoginViewController> {
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         SvgPicture.asset(
-                                          'assets/svg/Frame.svg',  // Using the new SVG icon
+                                          'assets/svg/mail.svg',  
                                           width: 24,
                                           height: 24,
                                         ),
                                         const SizedBox(width: 12),
                                         Text(
-                                          '${AppStrings.continueText} ${AppStrings.orContinueWith} ${AppStrings.phoneNumber}',
+                                          '${AppStrings.continueText} ${AppStrings.orContinueWith} ${AppStrings.email}',
                                           style: const TextStyle(
                                             color: Color(0xFF2E3A59),
                                             fontSize: 16,

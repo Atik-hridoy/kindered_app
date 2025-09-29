@@ -123,7 +123,7 @@ class LoginWithEmail extends GetView<LoginEmailController> {
         border: Border.all(color: const Color(0xFFD4A373), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFD4A373).withOpacity(0.5),
+            color: const Color(0xFFD4A373).withValues(alpha: 0.5),
             offset: const Offset(0, 2),
           ),
         ],
@@ -159,7 +159,7 @@ class LoginWithEmail extends GetView<LoginEmailController> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE98675).withOpacity(0.5),
+                  color: const Color(0xFFE98675).withValues(alpha: 0.5),
                   blurRadius: 4,
                   spreadRadius: 1,
                 ),

@@ -56,18 +56,50 @@ class OtpService {
   }
 
   Future<Map<String, dynamic>> resendOtp({
-    required String target,
-    required String type,
+    required String email,
   }) async {
     try {
+      AppLogger.info('📧 Resending OTP for $email');
       final response = await _dio.post(
-        '${AppUrls.baseUrl}/auth/resend-otp',
-        data: {'target': target, 'type': type},
+        '${AppUrls.baseUrl}${AppUrls.resendOtp}',
+        data: {
+
+          'email': email,
+          
+        },
       );
-      return response.data;
+      
+      // Return consistent response format
+      return {
+        'success': response.data['success'] ?? response.data['status'] == 'success',
+        'status': response.data['status'] ?? 'success',
+        'message': response.data['message'] ?? 'OTP resent successfully',
+        'data': response.data['data'] ?? response.data,
+      };
     } on DioException catch (e) {
       AppLogger.error('❌ Dio error: ${e.message}', e, e.stackTrace);
-      rethrow;
+      
+      String errorMessage = 'OTP resend failed';
+      if (e.response?.data != null) {
+        errorMessage = e.response?.data['message'] ?? errorMessage;
+      } else if (e.message != null) {
+        errorMessage = e.message ?? errorMessage;
+      }
+      
+      return {
+        'success': false,
+        'status': 'error',
+        'message': errorMessage,
+        'error': errorMessage,
+      };
+    } catch (e) {
+      AppLogger.error('❌ Unexpected error: $e');
+      return {
+        'success': false,
+        'status': 'error',
+        'message': 'An unexpected error occurred',
+        'error': 'An unexpected error occurred',
+      };
     }
   }
 }

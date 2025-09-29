@@ -113,6 +113,7 @@ flutter:
     - assets/svg/profile/personal/Group.svg
     - assets/svg/profile/personal/single.svg
     - assets/svg/profile/personal/left_arrow_5.svg
+    - assets/svg/mail.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

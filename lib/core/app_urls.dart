@@ -10,6 +10,7 @@ abstract class AppUrls {
 
   static const String createAccount = '/auth/register';
   static const String verifyOtp = '/auth/verify-otp';
+  static const String resendOtp = '/auth/resend-otp';
   static const String login = '/auth/login';
 
 
