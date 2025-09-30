@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
+import 'dart:math' as math;
+import 'package:flutter_emoji/flutter_emoji.dart';
 import '../../../core/app_urls.dart';
 import '../controller/chat_controller.dart';
 
@@ -14,13 +17,35 @@ class ChatConversationView extends StatefulWidget {
   });
 
   @override
-  State<ChatConversationView> createState() => _ChatConversationViewState();
+  _ChatConversationViewState createState() => _ChatConversationViewState();
 }
 
 class _ChatConversationViewState extends State<ChatConversationView> {
   final ChatController _chatController = Get.put(ChatController());
   final TextEditingController _messageController = TextEditingController();
+  List<Emoji>? _allEmojis;
   Timer? _typingTimer;
+  bool _showEmojiPicker = false;
+  
+  // Cache for all emojis
+  /// Get all emojis from the JSON_EMOJI data
+  List<Emoji> _getAllEmojis() {
+    if (_allEmojis != null) {
+      return _allEmojis!;
+    }
+    
+    _allEmojis = [];
+    
+    // Parse the JSON_EMOJI string
+    final emojiMap = jsonDecode(EmojiParser.JSON_EMOJI) as Map<String, dynamic>;
+    
+    // Convert each entry to an Emoji object
+    emojiMap.forEach((name, code) {
+      _allEmojis!.add(Emoji(name, code));
+    });
+    
+    return _allEmojis!;
+  }
   
   void _showFullScreenImage(String imageUrl) {
     // Preprocess URL the same way as message display
@@ -173,6 +198,126 @@ class _ChatConversationViewState extends State<ChatConversationView> {
 
   void _handleImageAttachment() {
     _showImageSourceDialog();
+  }
+  
+  void _handleEmojiPicker() {
+    setState(() {
+      _showEmojiPicker = !_showEmojiPicker;
+    });
+    
+    // Hide keyboard when emoji picker is shown
+    if (_showEmojiPicker) {
+      FocusScope.of(context).unfocus();
+    }
+  }
+  
+  void _onEmojiSelected(Emoji emoji) {
+    // Add emoji to the current text
+    final currentText = _messageController.text;
+    final cursorPosition = _messageController.selection.baseOffset;
+    
+    // Insert emoji at cursor position or at the end
+    final newText = cursorPosition >= 0 
+        ? currentText.replaceRange(cursorPosition, cursorPosition, emoji.code)
+        : currentText + emoji.code;
+    
+    _messageController.text = newText;
+    _messageController.selection = TextSelection.fromPosition(
+      TextPosition(offset: cursorPosition >= 0 ? cursorPosition + emoji.code.length : newText.length)
+    );
+    
+    // Update draft message
+    _handleTextChanged(newText);
+  }
+  
+  Widget _buildEmojiPicker() {
+    return Container(
+      height: 250,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2E3A59),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Emoji categories
+          Container(
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _buildEmojiCategoryButton('😀', 'Smileys'),
+                _buildEmojiCategoryButton('🐶', 'Animals'),
+                _buildEmojiCategoryButton('🍎', 'Food'),
+                _buildEmojiCategoryButton('⚽', 'Activities'),
+                _buildEmojiCategoryButton('🚗', 'Travel'),
+                _buildEmojiCategoryButton('💡', 'Objects'),
+                _buildEmojiCategoryButton('🔣', 'Symbols'),
+                _buildEmojiCategoryButton('🏁', 'Flags'),
+              ],
+            ),
+          ),
+          
+          // Emoji grid - horizontally scrollable
+          Expanded(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.all(8),
+              itemCount: (_getAllEmojis().length / 40).ceil(), // Divide into pages of 40 emojis each
+              itemBuilder: (context, pageIndex) {
+                final startIndex = pageIndex * 40;
+                final endIndex = math.min(startIndex + 40, _getAllEmojis().length);
+                final pageEmojis = _getAllEmojis().sublist(startIndex, endIndex);
+                
+                return Container(
+                  width: MediaQuery.of(context).size.width, // Full width per page
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(), // Disable nested scrolling
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 8,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: pageEmojis.length,
+                    itemBuilder: (context, index) {
+                      final emoji = pageEmojis[index];
+                      return GestureDetector(
+                        onTap: () => _onEmojiSelected(emoji),
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Text(
+                            emoji.code,
+                            style: const TextStyle(fontSize: 24),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildEmojiCategoryButton(String emoji, String category) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: TextButton(
+        onPressed: () {
+          // Scroll to category (simplified - just shows all emojis)
+        },
+        child: Text(
+          emoji,
+          style: const TextStyle(fontSize: 20),
+        ),
+      ),
+    );
   }
   
   void _handleSendImageDirectly() {
@@ -727,6 +872,18 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                   ),
                   const SizedBox(width: 8),
                   
+                  // Emoji button
+                  IconButton(
+                    icon: Icon(
+                      _showEmojiPicker ? Icons.keyboard : Icons.emoji_emotions,
+                      color: Colors.white70,
+                      size: 24,
+                    ),
+                    onPressed: _handleEmojiPicker,
+                    tooltip: 'Toggle Emoji Picker',
+                  ),
+                  const SizedBox(width: 8),
+                  
                   // Text input field
                   Expanded(
                     child: Container(
@@ -764,6 +921,10 @@ class _ChatConversationViewState extends State<ChatConversationView> {
                 ],
               ),
             ),
+            
+            // Emoji picker (conditionally shown)
+            if (_showEmojiPicker)
+              _buildEmojiPicker(),
           ],
         ),
       ),
