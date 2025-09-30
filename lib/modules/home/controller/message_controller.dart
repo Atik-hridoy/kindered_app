@@ -187,6 +187,10 @@ class MessageController extends GetxController {
       
       filteredChatList.assignAll(filtered);
     }
+    
+    // CRITICAL: Force UI refresh for filtered list
+    filteredChatList.refresh();
+    AppLogger.info('🔄 [FILTER] Filtered chat list refreshed, count: ${filteredChatList.length}');
   }
 
   void clearSearch() {
@@ -344,9 +348,13 @@ class MessageController extends GetxController {
     try {
       final token = LocalStorage.token;
       if (token.isEmpty) {
-        AppLogger.warning('[MESSAGE CONTROLLER] No token available for socket connection');
+        AppLogger.warning('⚠️ [SOCKET] No token available for socket connection');
         return;
       }
+
+      AppLogger.info('🔌 [SOCKET] Initializing WebSocket connection...');
+      AppLogger.info('🌐 [SOCKET] Socket URL: ${AppUrls.socketUrl}');
+      AppLogger.info('👤 [SOCKET] User ID: ${LocalStorage.userId}');
 
       // Configure socket connection
       _socket = IO.io(AppUrls.socketUrl, <String, dynamic>{
@@ -363,131 +371,75 @@ class MessageController extends GetxController {
 
       // Connect to socket
       _socket?.connect();
-      AppLogger.info('[MESSAGE CONTROLLER] Socket connection initialized');
+      AppLogger.info('✅ [SOCKET] Socket connection initialized successfully');
     } catch (e) {
-      AppLogger.error('[MESSAGE CONTROLLER] Error initializing socket: $e');
+      AppLogger.error('❌ [SOCKET] Error initializing socket: $e');
     }
   }
-
   /// Set up socket event listeners
   void _setupSocketListeners() {
     if (_socket == null) return;
 
     _socket!.onConnect((_) {
-      AppLogger.info('[MESSAGE CONTROLLER] Socket connected successfully');
+      AppLogger.info('✅ [SOCKET] WebSocket connected successfully');
       isSocketConnected.value = true;
       
       // Join user-specific room
       final userId = LocalStorage.userId;
-      if (userId.isNotEmpty) {
+      if (userId.isNotEmpty && _socket != null) {
         _socket!.emit('joinUserRoom', {'userId': userId});
-        AppLogger.info('[MESSAGE CONTROLLER] Joined user room: $userId');
+        AppLogger.info('🏠 [SOCKET] Joined user room: $userId');
       }
     });
 
     _socket!.onDisconnect((_) {
-      AppLogger.info('[MESSAGE CONTROLLER] Socket disconnected');
+      AppLogger.info('🔌 [SOCKET] WebSocket disconnected');
       isSocketConnected.value = false;
     });
 
     _socket!.onConnectError((data) {
-      AppLogger.error('[MESSAGE CONTROLLER] Socket connection error: $data');
+      AppLogger.error('❌ [SOCKET] WebSocket connection error: $data');
       isSocketConnected.value = false;
     });
 
     _socket!.on('chatListUpdate', (data) {
-      AppLogger.info('[MESSAGE CONTROLLER] Received chatListUpdate event: $data');
+      AppLogger.info('📨 [SOCKET] Received chatListUpdate event: $data');
       _handleChatListUpdate(data);
     });
 
     _socket!.on('error', (data) {
-      AppLogger.error('[MESSAGE CONTROLLER] Socket error: $data');
+      AppLogger.error('❌ [SOCKET] Socket error: $data');
     });
   }
 
-  /// Handle chat list update from socket.
-  ///
-  /// This method handles real-time chat list updates received via socket.io events.
-  /// It supports multiple update types to provide a seamless real-time chat experience.
-  ///
-  /// **Event Data Structure:**
-  /// The event data should be a Map<String, dynamic> with the following structure:
-  /// ```json
-  /// {
-  ///   "userId": "current_user_id",           // Required: User ID for validation
-  ///   "type": "update_type",                 // Required: Type of update
-  ///   "chatId": "chat_id",                   // Required for most update types
-  ///   // Additional fields based on update type
-  /// }
-  /// ```
-  ///
-  /// **Supported Update Types:**
-  ///
-  /// **1. "new_message"** - New message received
-  /// Updates chat with new message information and sorts to top.
-  /// - `lastMessage`: Message content/object
-  /// - `updatedAt`: New timestamp
-  /// - `isFromOtherUser`: Boolean (true if message from other user)
-  ///
-  /// **2. "read_status"** - Chat read status changed
-  /// Updates the read status and optionally resets unread count.
-  /// - `isRead`: Boolean (true if chat is read)
-  ///
-  /// **3. "unread_count"** - Unread message count changed
-  /// Updates the unread count for a specific chat.
-  /// - `unreadCount`: Integer (number of unread messages)
-  ///
-  /// **4. "chat_deleted"** - Chat was deleted
-  /// Removes the chat from the chat list.
-  ///
-  /// **5. "mute_status"** - Chat mute status changed
-  /// Updates the mute status for a chat.
-  /// - `isMuted`: Boolean (true if chat is muted)
-  ///
-  /// **6. "block_status"** - Chat block status changed
-  /// Updates the block status for a chat.
-  /// - `isBlocked`: Boolean (true if chat is blocked)
-  ///
-  /// **7. "participant_update"** - Chat participants changed
-  /// Refreshes the entire chat list when participants change.
-  ///
-  /// **8. "general"** - General update (fallback)
-  /// Handles general updates and optional full refresh.
-  /// - `refresh`: Boolean (true to trigger full list refresh)
-  ///
-  /// **Error Handling:**
-  /// - All update types include comprehensive error handling
-  /// - Falls back to full chat list refresh on errors
-  /// - Logs all operations for debugging
-  /// - Validates required fields before processing
-  ///
-  /// **Performance Considerations:**
-  /// - Updates are performed in-memory for optimal performance
-  /// - Only refreshes from API when necessary
-  /// - Automatic sorting keeps most recent chats at top
-  /// - Filtered list is updated automatically
+ 
   void _handleChatListUpdate(dynamic data) {
     try {
       final userId = LocalStorage.userId;
       if (userId.isEmpty) {
-        AppLogger.warning('[MESSAGE CONTROLLER] No user ID available for chat list update');
+        AppLogger.warning('⚠️ [MESSAGE] No user ID available for chat list update');
         return;
       }
 
-      AppLogger.info('[MESSAGE CONTROLLER] Processing chatListUpdate event: $data');
+      AppLogger.info('📨 [MESSAGE] Processing chatListUpdate event: $data');
 
       if (data is Map<String, dynamic>) {
         // Check if the update is for the current user
         if (data.containsKey('userId')) {
           final eventUserId = data['userId'].toString();
           if (eventUserId != userId) {
-            AppLogger.info('[MESSAGE CONTROLLER] Chat list update not for current user ($eventUserId != $userId)');
+            AppLogger.info('🔄 [MESSAGE] Chat list update not for current user ($eventUserId != $userId)');
             return;
           }
         }
 
         // Handle different types of updates
         final updateType = data['type']?.toString() ?? 'general';
+        
+        // Generate a unique ID for this update to prevent duplicates
+        final updateId = '${data['chatId']}_${data['type']}_${DateTime.now().millisecondsSinceEpoch}';
+        
+        AppLogger.info('🎯 [MESSAGE] Processing update type: $updateType, ID: $updateId');
         
         switch (updateType.toLowerCase()) {
           case 'new_message':
@@ -518,11 +470,11 @@ class MessageController extends GetxController {
         }
       } else {
         // Handle non-map data (legacy support)
-        AppLogger.info('[MESSAGE CONTROLLER] Received legacy chat list update format');
+        AppLogger.info('🔄 [MESSAGE] Received legacy chat list update format');
         _handleGeneralUpdate(data);
       }
     } catch (e) {
-      AppLogger.error('[MESSAGE CONTROLLER] Error handling chat list update: $e');
+      AppLogger.error('❌ [MESSAGE] Error handling chat list update: $e');
       // Fallback to general refresh on error
       _loadChatList();
     }
@@ -531,57 +483,82 @@ class MessageController extends GetxController {
   /// Handle new message update
   void _handleNewMessageUpdate(Map<String, dynamic> data) {
     try {
+      AppLogger.info('📨 [MESSAGE] Processing new message update: $data');
+      
       final chatId = data['chatId']?.toString();
       if (chatId == null || chatId.isEmpty) {
-        AppLogger.warning('[MESSAGE CONTROLLER] No chatId provided for new message update');
+        AppLogger.warning('⚠️ [MESSAGE] Message rejected: Empty chat ID');
         return;
       }
-
-      AppLogger.info('[MESSAGE CONTROLLER] Handling new message update for chat: $chatId');
+      
+      AppLogger.info('🔍 [MESSAGE] Looking for chat with ID: $chatId');
       
       // Find the chat in the current list
       final chatIndex = chatList.indexWhere((chat) => chat.id == chatId);
       if (chatIndex != -1) {
+        AppLogger.info('✅ [MESSAGE] Found chat at index $chatIndex');
+        
         // Create a copy of the chat to modify
         final updatedChat = chatList[chatIndex];
+        final oldMessage = updatedChat.lastMessage;
+        final oldUnreadCount = updatedChat.unreadCount;
+        
+        AppLogger.info('📝 [MESSAGE] Before update - Last message: $oldMessage, Unread count: $oldUnreadCount');
         
         // Update last message if provided
         if (data.containsKey('lastMessage')) {
           updatedChat.lastMessage = data['lastMessage'];
+          AppLogger.info('🔄 [MESSAGE] Updated last message: ${updatedChat.lastMessage}');
         }
         
         // Update timestamp if provided
         if (data.containsKey('updatedAt')) {
           updatedChat.updatedAt = data['updatedAt'].toString();
+          AppLogger.info('⏰ [MESSAGE] Updated timestamp: ${updatedChat.updatedAt}');
         }
         
         // Increment unread count if message is from another user
         if (data['isFromOtherUser'] == true) {
           updatedChat.unreadCount = updatedChat.unreadCount + 1;
+          AppLogger.info('📊 [MESSAGE] Incremented unread count to: ${updatedChat.unreadCount}');
         }
         
         // Mark as unread if message is from another user
         if (data['isFromOtherUser'] == true) {
           updatedChat.isRead = false;
+          AppLogger.info('👁️ [MESSAGE] Marked chat as unread');
         }
         
         // Replace the chat in the list to trigger UI update
         chatList[chatIndex] = updatedChat;
         
-        // Notify listeners that the list has changed
+        // CRITICAL: Force UI refresh
         chatList.refresh();
         
-        AppLogger.info('[MESSAGE CONTROLLER] Updated chat $chatId with new message');
+        AppLogger.info('🎯 [MESSAGE] Chat $chatId updated successfully');
+        AppLogger.info('📊 [MESSAGE] After update - Last message: ${updatedChat.lastMessage}, Unread count: ${updatedChat.unreadCount}');
+        
+        // Show snackbar notification for new message from other user
+        if (data['isFromOtherUser'] == true && data.containsKey('lastMessage')) {
+          _showNewMessageSnackbar(updatedChat, data['lastMessage']);
+        }
         
         // Sort the chat list to bring this chat to the top
         _sortChatList();
+        
+        // Force filtered list refresh as well
+        _filterChats();
+        
+        AppLogger.info('🔄 [MESSAGE] Chat list sorted and filtered successfully');
       } else {
         // Chat not found in current list, refresh the entire list
-        AppLogger.info('[MESSAGE CONTROLLER] Chat $chatId not found in current list, refreshing');
+        AppLogger.warning('🔍 [MESSAGE] Chat $chatId not found in current list, refreshing entire list');
         _loadChatList();
       }
     } catch (e) {
-      AppLogger.error('[MESSAGE CONTROLLER] Error handling new message update: $e');
+      AppLogger.error('❌ [MESSAGE] Error handling new message update: $e');
+      // Fallback to refresh on error
+      _loadChatList();
     }
   }
 
@@ -590,27 +567,34 @@ class MessageController extends GetxController {
     try {
       final chatId = data['chatId']?.toString();
       if (chatId == null || chatId.isEmpty) {
-        AppLogger.warning('[MESSAGE CONTROLLER] No chatId provided for read status update');
+        AppLogger.warning('⚠️ [MESSAGE] No chatId provided for read status update');
         return;
       }
 
-      AppLogger.info('[MESSAGE CONTROLLER] Handling read status update for chat: $chatId');
+      final isRead = data['isRead'] ?? true;
+      AppLogger.info('👁️ [MESSAGE] Handling read status update for chat: $chatId, read: $isRead');
       
       final chatIndex = chatList.indexWhere((chat) => chat.id == chatId);
       if (chatIndex != -1) {
-        final isRead = data['isRead'] ?? true;
+        final oldStatus = chatList[chatIndex].isRead;
         chatList[chatIndex].isRead = isRead;
         
         // Reset unread count when marked as read
         if (isRead) {
           chatList[chatIndex].unreadCount = 0;
+          AppLogger.info('📊 [MESSAGE] Reset unread count to 0 for chat $chatId');
         }
         
-        AppLogger.info('[MESSAGE CONTROLLER] Updated read status for chat $chatId: $isRead');
+        AppLogger.info('✅ [MESSAGE] Updated read status for chat $chatId: $oldStatus → $isRead');
+        
+        // Force UI refresh
         chatList.refresh();
+        _filterChats();
+      } else {
+        AppLogger.warning('🔍 [MESSAGE] Chat $chatId not found for read status update');
       }
     } catch (e) {
-      AppLogger.error('[MESSAGE CONTROLLER] Error handling read status update: $e');
+      AppLogger.error('❌ [MESSAGE] Error handling read status update: $e');
     }
   }
 
@@ -619,45 +603,55 @@ class MessageController extends GetxController {
     try {
       final chatId = data['chatId']?.toString();
       if (chatId == null || chatId.isEmpty) {
-        AppLogger.warning('[MESSAGE CONTROLLER] No chatId provided for unread count update');
+        AppLogger.warning('⚠️ [MESSAGE] No chatId provided for unread count update');
         return;
       }
 
       final unreadCount = data['unreadCount'] ?? 0;
-      AppLogger.info('[MESSAGE CONTROLLER] Handling unread count update for chat: $chatId, count: $unreadCount');
+      AppLogger.info('📊 [MESSAGE] Handling unread count update for chat: $chatId, count: $unreadCount');
       
       final chatIndex = chatList.indexWhere((chat) => chat.id == chatId);
       if (chatIndex != -1) {
+        final oldCount = chatList[chatIndex].unreadCount;
         chatList[chatIndex].unreadCount = unreadCount;
+        
+        // Update read status based on unread count
         chatList[chatIndex].isRead = unreadCount == 0;
         
-        AppLogger.info('[MESSAGE CONTROLLER] Updated unread count for chat $chatId: $unreadCount');
+        AppLogger.info('✅ [MESSAGE] Updated unread count for chat $chatId: $oldCount → $unreadCount');
+        
+        // Force UI refresh
         chatList.refresh();
+        _filterChats();
+        AppLogger.info('🔄 [MESSAGE] UI refreshed after unread count update');
+      } else {
+        AppLogger.warning('🔍 [MESSAGE] Chat $chatId not found for unread count update');
       }
     } catch (e) {
-      AppLogger.error('[MESSAGE CONTROLLER] Error handling unread count update: $e');
+      AppLogger.error('❌ [MESSAGE] Error handling unread count update: $e');
     }
   }
-
   /// Handle chat deleted update
   void _handleChatDeletedUpdate(Map<String, dynamic> data) {
     try {
       final chatId = data['chatId']?.toString();
       if (chatId == null || chatId.isEmpty) {
-        AppLogger.warning('[MESSAGE CONTROLLER] No chatId provided for chat deleted update');
+        AppLogger.warning('⚠️ [MESSAGE] No chatId provided for chat deleted update');
         return;
       }
 
-      AppLogger.info('[MESSAGE CONTROLLER] Handling chat deleted update for chat: $chatId');
+      AppLogger.info('🗑️ [MESSAGE] Handling chat deleted update for chat: $chatId');
       
       final chatIndex = chatList.indexWhere((chat) => chat.id == chatId);
       if (chatIndex != -1) {
         chatList.removeAt(chatIndex);
-        AppLogger.info('[MESSAGE CONTROLLER] Removed deleted chat $chatId from list');
+        AppLogger.info('✅ [MESSAGE] Removed deleted chat $chatId from list');
         _filterChats(); // Update filtered list as well
+      } else {
+        AppLogger.warning('🔍 [MESSAGE] Chat $chatId not found for deletion');
       }
     } catch (e) {
-      AppLogger.error('[MESSAGE CONTROLLER] Error handling chat deleted update: $e');
+      AppLogger.error('❌ [MESSAGE] Error handling chat deleted update: $e');
     }
   }
 
@@ -666,21 +660,28 @@ class MessageController extends GetxController {
     try {
       final chatId = data['chatId']?.toString();
       if (chatId == null || chatId.isEmpty) {
-        AppLogger.warning('[MESSAGE CONTROLLER] No chatId provided for mute status update');
+        AppLogger.warning('⚠️ [MESSAGE] No chatId provided for mute status update');
         return;
       }
 
       final isMuted = data['isMuted'] ?? false;
-      AppLogger.info('[MESSAGE CONTROLLER] Handling mute status update for chat: $chatId, muted: $isMuted');
+      AppLogger.info('🔇 [MESSAGE] Handling mute status update for chat: $chatId, muted: $isMuted');
       
       final chatIndex = chatList.indexWhere((chat) => chat.id == chatId);
       if (chatIndex != -1) {
+        final oldStatus = chatList[chatIndex].isMuted;
         chatList[chatIndex].isMuted = isMuted;
-        AppLogger.info('[MESSAGE CONTROLLER] Updated mute status for chat $chatId: $isMuted');
+        
+        AppLogger.info('✅ [MESSAGE] Updated mute status for chat $chatId: $oldStatus → $isMuted');
+        
+        // Force UI refresh
         chatList.refresh();
+        _filterChats();
+      } else {
+        AppLogger.warning('🔍 [MESSAGE] Chat $chatId not found for mute status update');
       }
     } catch (e) {
-      AppLogger.error('[MESSAGE CONTROLLER] Error handling mute status update: $e');
+      AppLogger.error('❌ [MESSAGE] Error handling mute status update: $e');
     }
   }
 
@@ -689,21 +690,28 @@ class MessageController extends GetxController {
     try {
       final chatId = data['chatId']?.toString();
       if (chatId == null || chatId.isEmpty) {
-        AppLogger.warning('[MESSAGE CONTROLLER] No chatId provided for block status update');
+        AppLogger.warning('⚠️ [MESSAGE] No chatId provided for block status update');
         return;
       }
 
       final isBlocked = data['isBlocked'] ?? false;
-      AppLogger.info('[MESSAGE CONTROLLER] Handling block status update for chat: $chatId, blocked: $isBlocked');
+      AppLogger.info('🚫 [MESSAGE] Handling block status update for chat: $chatId, blocked: $isBlocked');
       
       final chatIndex = chatList.indexWhere((chat) => chat.id == chatId);
       if (chatIndex != -1) {
+        final oldStatus = chatList[chatIndex].isBlocked;
         chatList[chatIndex].isBlocked = isBlocked;
-        AppLogger.info('[MESSAGE CONTROLLER] Updated block status for chat $chatId: $isBlocked');
+        
+        AppLogger.info('✅ [MESSAGE] Updated block status for chat $chatId: $oldStatus → $isBlocked');
+        
+        // Force UI refresh
         chatList.refresh();
+        _filterChats();
+      } else {
+        AppLogger.warning('🔍 [MESSAGE] Chat $chatId not found for block status update');
       }
     } catch (e) {
-      AppLogger.error('[MESSAGE CONTROLLER] Error handling block status update: $e');
+      AppLogger.error('❌ [MESSAGE] Error handling block status update: $e');
     }
   }
 
@@ -712,40 +720,37 @@ class MessageController extends GetxController {
     try {
       final chatId = data['chatId']?.toString();
       if (chatId == null || chatId.isEmpty) {
-        AppLogger.warning('[MESSAGE CONTROLLER] No chatId provided for participant update');
+        AppLogger.warning('⚠️ [MESSAGE] No chatId provided for participant update');
         return;
       }
 
-      AppLogger.info('[MESSAGE CONTROLLER] Handling participant update for chat: $chatId');
+      AppLogger.info('👥 [MESSAGE] Handling participant update for chat: $chatId');
       
       // For participant updates, it's safer to refresh the entire chat
       // as participant data structure might change significantly
       _loadChatList();
     } catch (e) {
-      AppLogger.error('[MESSAGE CONTROLLER] Error handling participant update: $e');
+      AppLogger.error('❌ [MESSAGE] Error handling participant update: $e');
+      // Fallback to refresh on error
+      _loadChatList();
     }
   }
 
   /// Handle general update (fallback)
   void _handleGeneralUpdate(dynamic data) {
     try {
-      AppLogger.info('[MESSAGE CONTROLLER] Handling general chat list update');
+      AppLogger.info('🔄 [MESSAGE] Handling general chat list update');
       
       // Sort chat list based on the update
       _sortChatList();
       
-      // Check if we need to refresh the entire list
-      bool shouldRefresh = false;
-      if (data is Map<String, dynamic>) {
-        shouldRefresh = data['refresh'] == true;
-      }
+      // Force UI refresh
+      chatList.refresh();
+      _filterChats();
       
-      if (shouldRefresh) {
-        AppLogger.info('[MESSAGE CONTROLLER] General update requires full refresh');
-        _loadChatList();
-      }
+      AppLogger.info('✅ [MESSAGE] General update completed successfully');
     } catch (e) {
-      AppLogger.error('[MESSAGE CONTROLLER] Error handling general update: $e');
+      AppLogger.error('❌ [MESSAGE] Error handling general update: $e');
       // Fallback to refresh on error
       _loadChatList();
     }
@@ -754,6 +759,8 @@ class MessageController extends GetxController {
   /// Sort chat list based on last message timestamp
   void _sortChatList() {
     try {
+      AppLogger.info('📊 [MESSAGE] Sorting chat list by timestamp...');
+      
       // Sort chat list by updatedAt timestamp (most recent first)
       chatList.sort((a, b) {
         try {
@@ -761,7 +768,7 @@ class MessageController extends GetxController {
           final dateB = DateTime.parse(b.updatedAt);
           return dateB.compareTo(dateA); // Descending order (newest first)
         } catch (e) {
-          AppLogger.error('[MESSAGE CONTROLLER] Error parsing date for sorting: $e');
+          AppLogger.error('❌ [MESSAGE] Error parsing date for sorting: $e');
           return 0;
         }
       });
@@ -769,21 +776,109 @@ class MessageController extends GetxController {
       // Update filtered list as well
       _filterChats();
       
-      AppLogger.info('[MESSAGE CONTROLLER] Chat list sorted successfully');
+      AppLogger.info('✅ [MESSAGE] Chat list sorted successfully');
     } catch (e) {
-      AppLogger.error('[MESSAGE CONTROLLER] Error sorting chat list: $e');
+      AppLogger.error('❌ [MESSAGE] Error sorting chat list: $e');
     }
   }
 
   /// Disconnect socket connection
   void _disconnectSocket() {
     try {
+      AppLogger.info('🔌 [SOCKET] Disconnecting WebSocket connection...');
       _socket?.disconnect();
       _socket = null;
       isSocketConnected.value = false;
-      AppLogger.info('[MESSAGE CONTROLLER] Socket disconnected');
+      AppLogger.info('✅ [SOCKET] WebSocket disconnected successfully');
     } catch (e) {
-      AppLogger.error('[MESSAGE CONTROLLER] Error disconnecting socket: $e');
+      AppLogger.error('❌ [SOCKET] Error disconnecting socket: $e');
+    }
+  }
+
+  /// Show snackbar notification for new message
+  void _showNewMessageSnackbar(Chat chat, String message) {
+    try {
+      AppLogger.info('🔔 [NOTIFICATION] Showing snackbar for new message from chat: ${chat.id}');
+      
+      // Get the current context
+      final context = Get.context;
+      if (context == null) {
+        AppLogger.warning('⚠️ [NOTIFICATION] No context available for snackbar');
+        return;
+      }
+      
+      // Get the participant name (other user in the chat)
+      String senderName = 'Someone';
+      if (chat.participants.isNotEmpty) {
+        // Find the participant that is not the current user
+        final currentUserId = LocalStorage.userId;
+        final otherParticipant = chat.participants.firstWhere(
+          (participant) => participant.id != currentUserId,
+          orElse: () => chat.participants.first,
+        );
+        senderName = '${otherParticipant.firstName} ${otherParticipant.lastName}'.trim();
+        if (senderName.isEmpty) {
+          senderName = 'Someone';
+        }
+      }
+      
+      // Show the snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      senderName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      message,
+                      style: const TextStyle(
+                        color: Colors.white,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.message,
+                color: Colors.white,
+              ),
+            ],
+          ),
+          backgroundColor: Colors.blue[600],
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'View',
+            textColor: Colors.white,
+            onPressed: () {
+              // Navigate to the chat screen
+              Get.toNamed(
+                AppRoutes.chat,
+                arguments: {
+                  'chatId': chat.id,
+                  'participantName': senderName,
+                },
+              );
+            },
+          ),
+        ),
+      );
+      
+      AppLogger.info('✅ [NOTIFICATION] Snackbar shown successfully');
+    } catch (e) {
+      AppLogger.error('❌ [NOTIFICATION] Error showing snackbar: $e');
     }
   }
 }

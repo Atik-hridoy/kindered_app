@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import 'package:kindered_app/modules/home/models/user_suggestion_model.dart';
 import 'package:kindered_app/modules/home/services/user_suggestion_service.dart';
-import 'package:kindered_app/core/logger/app_logger.dart';
 import '../models/ai_assistent_get_model.dart' as ai_models;
 import '../controller/ai_assistent_controller.dart';
 import 'package:kindered_app/core/app_urls.dart';
@@ -86,21 +85,18 @@ class HomeSuggestionController extends GetxController {
     // Try body image first
     if (bodyImage.isNotEmpty && _isValidImageUrl(bodyImage)) {
       final url = _prependBaseUrlIfNeeded(bodyImage);
-      AppLogger.info('=== HOME SUGGESTION - Using body image: $url ===');
       return url;
     }
     
     // Try primary image
     if (primaryImage.isNotEmpty && _isValidImageUrl(primaryImage)) {
       final url = _prependBaseUrlIfNeeded(primaryImage);
-      AppLogger.info('=== HOME SUGGESTION - Using primary image: $url ===');
       return url;
     }
     
     // Try regular image URL from backward compatibility
     if (imageUrl.isNotEmpty && _isValidImageUrl(imageUrl)) {
       final url = _prependBaseUrlIfNeeded(imageUrl);
-      AppLogger.info('=== HOME SUGGESTION - Using legacy image URL: $url ===');
       return url;
     }
     
@@ -109,14 +105,12 @@ class HomeSuggestionController extends GetxController {
       for (String img in userImages!) {
         if (_isValidImageUrl(img)) {
           final url = _prependBaseUrlIfNeeded(img);
-          AppLogger.info('=== HOME SUGGESTION - Using image from list: $url ===');
           return url;
         }
       }
     }
     
     // Return empty string - CustomPhotoCard will handle the placeholder
-    AppLogger.info('=== HOME SUGGESTION - No valid image found, returning empty string ===');
     return '';
   }
   
@@ -186,12 +180,9 @@ class HomeSuggestionController extends GetxController {
   /// Update data from AiAssistentController
   Future<void> _updateFromAiData(ai_models.MatchmakingResponse? aiData) async {
     if (aiData == null || aiData.data?.currentMatch == null) {
-      AppLogger.info('=== HOME SUGGESTION - AI DATA UPDATE: No AI data available ===');
       isUsingAiData.value = false;
       return;
     }
-    
-    AppLogger.info('=== HOME SUGGESTION - AI DATA UPDATE: Syncing from AI Assistant ===');
     
     try {
       final aiCurrentMatch = aiData.data!.currentMatch;
@@ -216,12 +207,7 @@ class HomeSuggestionController extends GetxController {
       // Save current user ID to local storage
       await _saveCurrentUserIdToStorage();
       
-      AppLogger.info('=== HOME SUGGESTION - AI DATA SYNC COMPLETED ===');
-      AppLogger.info('Synced user: ${userSuggestion.name}, Age: ${userSuggestion.age}');
-      AppLogger.info('Match Score: ${aiCurrentMatch.matchScore}%, Distance: ${aiCurrentMatch.distance}km');
-      
-    } catch (e, stackTrace) {
-      AppLogger.error('Error syncing AI data to HomeSuggestionController', e, stackTrace);
+    } catch (e) {
       isUsingAiData.value = false;
     }
   }
@@ -233,15 +219,11 @@ class HomeSuggestionController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     
-    AppLogger.info('=== HOME SUGGESTION CONTROLLER - LOADING CURRENT MATCH ===');
-    AppLogger.info('Starting to load current match from API...');
     
     try {
       // Use legacy method for backward compatibility
       final currentMatch = await _suggestionService.getCurrentMatchLegacy();
       
-      AppLogger.info('API Response Received:');
-      AppLogger.info('Current Match: $currentMatch');
       
       if (currentMatch != null) {
         currentSuggestion.value = currentMatch;
@@ -251,14 +233,11 @@ class HomeSuggestionController extends GetxController {
         await _saveCurrentUserIdToStorage();
       } else {
         errorMessage.value = 'No match available';
-        AppLogger.warning('No match available from API');
       }
     } catch (e) {
       errorMessage.value = 'Failed to load match';
-      AppLogger.error('Error loading current match: $e');
     } finally {
       isLoading.value = false;
-      AppLogger.info('Current match loading completed. Loading state: ${isLoading.value}');
     }
   }
   
@@ -288,12 +267,9 @@ class HomeSuggestionController extends GetxController {
       
       if (currentUserId.isNotEmpty) {
         await LocalStorage.setString('current_suggestion_user_id', currentUserId);
-        AppLogger.info('=== HOME SUGGESTION - Saved current user ID to storage: $currentUserId ===');
-      } else {
-        AppLogger.info('=== HOME SUGGESTION - No user ID available to save ===');
       }
     } catch (e) {
-      AppLogger.error('=== HOME SUGGESTION - Error saving user ID to storage: $e ===');
+      // Error handling without logging
     }
   }
 
@@ -301,10 +277,8 @@ class HomeSuggestionController extends GetxController {
   Future<String> getSavedUserId() async {
     try {
       final savedUserId = await LocalStorage.getString('current_suggestion_user_id');
-      AppLogger.info('=== HOME SUGGESTION - Retrieved saved user ID: $savedUserId ===');
       return savedUserId;
     } catch (e) {
-      AppLogger.error('=== HOME SUGGESTION - Error retrieving saved user ID: $e ===');
       return '';
     }
   }
@@ -317,26 +291,11 @@ class HomeSuggestionController extends GetxController {
     // Get suggested user data from current suggestion
     final suggestedUserId = userData?.id ?? currentSuggestion.value?.id ?? '';
     final suggestedUserName = fullName.isNotEmpty ? fullName : (name.isNotEmpty ? name : 'Unknown');
-    final suggestedUserAge = userAge > 0 ? userAge.toString() : (age.isNotEmpty ? age : '0');
     
     // Determine the final chat ID to be used
     // Only use chatId if it's provided and valid, otherwise let ChatController create new chat
     final finalChatId = (chatId != null && chatId.isNotEmpty && chatId != suggestedUserId) ? chatId : null;
     
-    AppLogger.info('=== HOME SUGGESTION - NAVIGATE TO CHAT ===');
-    AppLogger.info('🏠 HOME TO CHAT NAVIGATION STARTED ===');
-    AppLogger.info('📋 Input Parameters:');
-    AppLogger.info('  - chatId (input): $chatId');
-    AppLogger.info('  - participantName (input): $participantName');
-    AppLogger.info('  - participantId (input): $participantId');
-    AppLogger.info('👤 User Data:');
-    AppLogger.info('  - Current User ID: $currentUserId');
-    AppLogger.info('  - Suggested User ID: $suggestedUserId');
-    AppLogger.info('  - Suggested User Name: $suggestedUserName');
-    AppLogger.info('  - Suggested User Age: $suggestedUserAge');
-    AppLogger.info('🆔 Chat ID Resolution:');
-    AppLogger.info('  - Final Chat ID: $finalChatId');
-    AppLogger.info('  - Chat ID Source: ${finalChatId != null ? 'Using existing chat ID' : 'Will create new chat'}');
     
     // Prepare navigation arguments
     final navigationArgs = {
@@ -346,13 +305,6 @@ class HomeSuggestionController extends GetxController {
       'participantId': participantId ?? suggestedUserId, // This should be the other user's ID
     };
     
-    AppLogger.info('🚀 Navigation Arguments:');
-    navigationArgs.forEach((key, value) {
-      AppLogger.info('  - $key: $value');
-    });
-    
-    AppLogger.info('🎯 Navigating to: ${AppRoutes.chat}');
-    AppLogger.info('=== HOME TO CHAT NAVIGATION COMPLETED ===');
     
     // Navigate to chat view with both user IDs and suggested user data
     // The ChatController will automatically create the chat using CreateChatService

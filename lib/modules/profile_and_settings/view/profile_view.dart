@@ -115,7 +115,7 @@ class _ProfileViewState extends State<ProfileView> {
             Obx(() {
               if (controller.isLoading.value) {
                 return Container(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   child: Center(
                     child: Skeletonizer(
                       enabled: true,

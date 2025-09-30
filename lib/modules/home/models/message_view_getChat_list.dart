@@ -1,3 +1,5 @@
+import '../../../local/storage_service.dart';
+
 class ChatResponse {
   bool success;
   String message;
@@ -167,29 +169,64 @@ class Chat {
   // Getter methods for easy access to participant information
   String get participantName {
     if (participants.isNotEmpty) {
-      final participant = participants.first;
-      return '${participant.firstName} ${participant.lastName}'.trim();
+      // Try to get the current user ID from LocalStorage
+      final currentUserId = LocalStorage.userId;
+      
+      // Find the participant that is not the current user
+      final otherParticipant = participants.firstWhere(
+        (participant) => participant.id != currentUserId,
+        orElse: () => participants.first, // Fallback to first participant if current user not found
+      );
+      
+      return '${otherParticipant.firstName} ${otherParticipant.lastName}'.trim();
     }
     return 'Unknown';
   }
 
   String get participantId {
     if (participants.isNotEmpty) {
-      return participants.first.id;
+      // Try to get the current user ID from LocalStorage
+      final currentUserId = LocalStorage.userId;
+      
+      // Find the participant that is not the current user
+      final otherParticipant = participants.firstWhere(
+        (participant) => participant.id != currentUserId,
+        orElse: () => participants.first, // Fallback to first participant if current user not found
+      );
+      
+      return otherParticipant.id;
     }
     return '';
   }
 
   String get participantEmail {
     if (participants.isNotEmpty) {
-      return participants.first.email;
+      // Try to get the current user ID from LocalStorage
+      final currentUserId = LocalStorage.userId;
+      
+      // Find the participant that is not the current user
+      final otherParticipant = participants.firstWhere(
+        (participant) => participant.id != currentUserId,
+        orElse: () => participants.first, // Fallback to first participant if current user not found
+      );
+      
+      return otherParticipant.email;
     }
     return '';
   }
 
   List<dynamic> get participantImage {
     if (participants.isNotEmpty) {
-      return participants.first.image;
+      // Try to get the current user ID from LocalStorage
+      final currentUserId = LocalStorage.userId;
+      
+      // Find the participant that is not the current user
+      final otherParticipant = participants.firstWhere(
+        (participant) => participant.id != currentUserId,
+        orElse: () => participants.first, // Fallback to first participant if current user not found
+      );
+      
+      return otherParticipant.image;
     }
     return [];
   }

@@ -52,23 +52,23 @@ class TermsConditionView extends GetView<TermsConditionController> {
             ],
           ),
         ),
-      body: Obx(() {
-        if (controller.isCurrentLoading) {
-          return const _LoadingState();
-        }
-        
-        if (controller.hasCurrentError) {
-          return _ErrorState(
-            errorMessage: controller.currentErrorMessage,
-            onRetry: controller.retry,
+        body: Obx(() {
+          if (controller.isCurrentLoading) {
+            return const _LoadingState();
+          }
+          
+          if (controller.hasCurrentError) {
+            return _ErrorState(
+              errorMessage: controller.currentErrorMessage,
+              onRetry: controller.retry,
+            );
+          }
+          
+          return _ContentState(
+            content: controller.currentContent,
+            currentTab: controller.currentTab.value,
           );
-        }
-        
-        return _ContentState(
-          content: controller.currentContent,
-          currentTab: controller.currentTab.value,
-        );
-      }),
+        }),
       ),
     );
   }
@@ -253,19 +253,72 @@ class _ContentState extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Text(
-                content,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontFamily: 'Inter',
-                  height: 1.6,
-                ),
-              ),
+              child: _buildHtmlContent(content),
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Build HTML content by stripping tags and displaying as formatted text
+  Widget _buildHtmlContent(String htmlContent) {
+    final cleanText = _stripHtmlTags(htmlContent);
+    final lines = cleanText.split('\n');
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: lines.map((line) {
+        final trimmedLine = line.trim();
+        if (trimmedLine.isEmpty) {
+          return const SizedBox(height: 8);
+        }
+        
+        // Check if it is a heading (all caps or starts with common heading patterns)
+        final isHeading = _isHeadingLine(trimmedLine);
+        
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            trimmedLine,
+            style: TextStyle(
+              color: isHeading ? const Color(0xFFD4A373) : Colors.white,
+              fontSize: isHeading ? 16 : 14,
+              fontWeight: isHeading ? FontWeight.bold : FontWeight.normal,
+              fontFamily: 'Inter',
+              height: 1.6,
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  /// Strip HTML tags from content
+  String _stripHtmlTags(String htmlText) {
+    // Remove common HTML tags
+    return htmlText
+        .replaceAll(RegExp(r'<[^>]*>'), '') // Remove all HTML tags
+        .replaceAll('&nbsp;', ' ') // Replace non-breaking spaces
+        .replaceAll('&lt;', '<') // Replace HTML entities
+        .replaceAll('&gt;', '>')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll(RegExp(r'\s+'), ' ') // Replace multiple spaces with single space
+        .trim();
+  }
+
+  /// Check if a line is a heading
+  bool _isHeadingLine(String line) {
+    // Check for common heading patterns
+    final headingPatterns = [
+      RegExp(r'^[A-Z][A-Z\s]+$'), // ALL CAPS
+      RegExp(r'^\d+\.\s+[A-Z]'), // Numbered list items
+      RegExp(r'^[IVX]+\.\s+[A-Z]'), // Roman numerals
+      RegExp(r'^[A-Z][a-z\s]+:$'), // Ends with colon
+    ];
+    
+    return headingPatterns.any((pattern) => pattern.hasMatch(line));
   }
 }

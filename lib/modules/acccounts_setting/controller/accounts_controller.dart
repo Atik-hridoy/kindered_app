@@ -5,7 +5,6 @@ import 'package:dio/dio.dart' as dio;
 import 'package:kindered_app/config/app_routes.dart';
 import '../services/account_setup_service.dart';
 import 'package:kindered_app/local/storage_service.dart';
-import 'package:kindered_app/core/logger/app_logger.dart';
 import '../model/complete_profile.dart';
 
 class AccountsController extends GetxController {
@@ -34,7 +33,6 @@ class AccountsController extends GetxController {
   }) async {
     try {
       isLoading.value = true;
-      AppLogger.info('🚀 Starting $methodName');
 
       final response = await apiCall();
 
@@ -47,7 +45,6 @@ class AccountsController extends GetxController {
         }
 
         if (result['success'] == true) {
-          AppLogger.success('✅ $methodName completed successfully');
           
           if (showSuccessSnackbar) {
             Get.snackbar(
@@ -62,7 +59,6 @@ class AccountsController extends GetxController {
             Get.offAllNamed(navigationRoute);
           }
         } else {
-          AppLogger.warning('⚠️ $methodName response not successful: ${result['message']}');
           Get.snackbar(
             'Error',
             result['message'] ?? '$methodName failed',
@@ -73,13 +69,11 @@ class AccountsController extends GetxController {
         return result;
       } else {
         final errorMessage = 'Failed to complete $methodName: ${response.statusCode}';
-        AppLogger.error(errorMessage);
         Get.snackbar('Error', errorMessage, snackPosition: SnackPosition.BOTTOM);
         return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       final errorMessage = 'Exception during $methodName: $e';
-      AppLogger.error('❌ $errorMessage');
       Get.snackbar('Error', errorMessage, snackPosition: SnackPosition.BOTTOM);
       return {'success': false, 'message': errorMessage};
     } finally {
@@ -90,7 +84,6 @@ class AccountsController extends GetxController {
   /// Handle verification status detection and display appropriate message
   void _handleVerificationStatus(String message) {
     if (message.contains('not verified') || message.contains('verification')) {
-      AppLogger.warning('⚠️ Verification status change detected: $message');
       
       Get.snackbar(
         'Verification Required',
@@ -98,25 +91,20 @@ class AccountsController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.orange,
         colorText: Colors.white,
-        duration: const Duration(seconds: 5),
       );
     }
   }
 
 
-  /// Log and handle file operations for image uploads
+  /// Handle file operations for image uploads
   void _logImagePreparation(String operation, Map<String, String?> imagePaths) {
-    AppLogger.info('🖼️ $operation:');
-    AppLogger.info('  • Body Image: ${imagePaths['bodyImage'] ?? 'Not provided'}');
-    AppLogger.info('  • Head Shot Image: ${imagePaths['headShotImage'] ?? 'Not provided'}');
-    AppLogger.info('  • Personality Image: ${imagePaths['personalityImage'] ?? 'Not provided'}');
+    // Method kept for compatibility but logging removed
   }
 
   /// Validate image files exist before upload
   Future<bool> _validateImageFiles(Map<String, File?> images) async {
     for (final entry in images.entries) {
       if (entry.value == null || !await entry.value!.exists()) {
-        AppLogger.warning('⚠️ ${entry.key} file does not exist or is missing');
         return false;
       }
     }
@@ -427,13 +415,11 @@ class AccountsController extends GetxController {
   /// Submit complete profile with optional photos
   Future<Map<String, dynamic>> submitCompleteProfileWithPhotos(List<String> photoPaths) async {
     _ensureService();
-    AppLogger.info('🚀 Submitting complete profile WITH photos: count=${photoPaths.length}');
 
     final profileData = _prepareCompleteProfileData(includeImageFields: false);
 
     // Convert to File list for the service
     final files = photoPaths.where((p) => p.isNotEmpty).map((p) => File(p)).toList();
-    AppLogger.info('🖼️ PHOTO PROCESSING: Valid Photo Paths: ${files.length}');
 
     // Map first three images to named fields per backend: bodyImage, headShotImage, personalityImage
     File? bodyImage;
@@ -451,7 +437,6 @@ class AccountsController extends GetxController {
       'headShotImage': headShotImage?.path,
       'personalityImage': personalityImage?.path,
     });
-    AppLogger.info('  • Extra Images Count: ${extraImages.length}');
 
     // Validate image files before upload
     final imageFiles = {
@@ -484,21 +469,12 @@ class AccountsController extends GetxController {
   /// Submit complete profile data using CompleteProfile model
   Future<Map<String, dynamic>> submitCompleteProfileUsingModel() async {
     _ensureService();
-    AppLogger.info('🚀 Submitting complete profile data using CompleteProfile model');
 
     // Create CompleteProfile instance using current controller data
     final completeProfile = _createCompleteProfileInstance();
     
     // Use the model's toJson() method to get properly structured data
     final profileData = completeProfile.toJson();
-    
-    // Log essential profile data (reduced logging)
-    AppLogger.info('📋 PROFILE DATA PREPARED:');
-    AppLogger.info('  • First Name: ${completeProfile.firstName}');
-    AppLogger.info('  • Last Name: ${completeProfile.lastName}');
-    AppLogger.info('  • Age: ${completeProfile.age}');
-    AppLogger.info('  • Gender: ${completeProfile.gender}');
-    AppLogger.info('  • Profile Completion: ${completeProfile.profileCompletionPercentage}%');
 
     // Use the helper function for API call
     return _handleApiCall(
@@ -962,7 +938,6 @@ class AccountsController extends GetxController {
 
   /// Initialize the account setup service with authentication token
   void initializeAccountSetupService(String token) {
-    AppLogger.info('🔗 Setting up AccountSetupService with bearer token (len=${token.length})');
     _accountSetupService = AccountSetupService(token);
   }
 
@@ -972,14 +947,11 @@ class AccountsController extends GetxController {
       // Accessing a member forces initialization check
       // ignore: unnecessary_statements
       _accountSetupService;
-      AppLogger.debug('✅ AccountSetupService already initialized');
     } catch (_) {
       // Attempt to initialize from LocalStorage
       if (LocalStorage.token.isNotEmpty) {
-        AppLogger.info('♻️ Re-initializing AccountSetupService from stored token');
         initializeAccountSetupService(LocalStorage.token);
       } else {
-        AppLogger.warning('❌ Missing bearer token. Cannot call AccountSetupService');
         Get.snackbar(
           'Authentication Required',
           'Missing bearer token. Please sign in again.',
@@ -993,11 +965,9 @@ class AccountsController extends GetxController {
   /// Submit complete profile data without photos
   Future<Map<String, dynamic>> submitCompleteProfile() async {
     _ensureService();
-    AppLogger.info('🚀 Submitting complete profile (without photos)');
 
     // Prepare complete profile data
     final profileData = _prepareCompleteProfileData(includeImageFields: true);
-    AppLogger.debug('🧾 Payload keys: ${profileData.keys.toList()}');
 
     // Use the helper function for API call
     return _handleApiCall(
@@ -1015,7 +985,6 @@ class AccountsController extends GetxController {
   /// Submit personal info (intro view)
   Future<Map<String, dynamic>> submitPersonalInfo() async {
     _ensureService();
-    AppLogger.info('🚀 Submitting personal info');
 
     final personalInfoData = {
       'first_name': firstName.value,
@@ -1034,7 +1003,6 @@ class AccountsController extends GetxController {
   /// Submit gender selection
   Future<Map<String, dynamic>> submitGenderSelection() async {
     _ensureService();
-    AppLogger.info('🚀 Submitting gender selection');
 
     final genderData = {
       'gender': selectedGender.value,
@@ -1052,7 +1020,6 @@ class AccountsController extends GetxController {
   /// Submit height and weight
   Future<Map<String, dynamic>> submitHeightWeight() async {
     _ensureService();
-    AppLogger.info('🚀 Submitting height and weight');
 
     final heightWeightData = {
       'height': heightController.text,
@@ -1070,7 +1037,6 @@ class AccountsController extends GetxController {
   /// Submit education information
   Future<Map<String, dynamic>> submitEducation() async {
     _ensureService();
-    AppLogger.info('🚀 Submitting education information');
 
     final educationData = getEducationFormData();
 
@@ -1085,7 +1051,6 @@ class AccountsController extends GetxController {
   /// Submit faith and belief information
   Future<Map<String, dynamic>> submitFaithBelief() async {
     _ensureService();
-    AppLogger.info('🚀 Submitting faith and belief information');
 
     final faithData = {
       'religion': selectedReligion ?? '',
@@ -1104,7 +1069,6 @@ class AccountsController extends GetxController {
   /// Submit habits information
   Future<Map<String, dynamic>> submitHabits() async {
     _ensureService();
-    AppLogger.info('🚀 Submitting habits information');
 
     final habitsData = {
       'exercise_frequency': selectedExerciseFrequency.value != null ? exerciseFrequencies[selectedExerciseFrequency.value!] : '',
@@ -1125,7 +1089,6 @@ class AccountsController extends GetxController {
   /// Submit personality traits
   Future<Map<String, dynamic>> submitTraits() async {
     _ensureService();
-    AppLogger.info('🚀 Submitting personality traits');
 
     final traitsData = {
       'personality_traits': selectedTraitIndices.map((index) => traits[index]).toList(),
@@ -1138,11 +1101,10 @@ class AccountsController extends GetxController {
       showSuccessSnackbar: false,
     );
   }
-
+// MARK : wqerfpweiourpweiourgp9weui
   /// Submit interests
   Future<Map<String, dynamic>> submitInterests() async {
     _ensureService();
-    AppLogger.info('🚀 Submitting interests');
 
     final interestsData = {
       'interests': selectedInterestIndices.map((index) => interestOptions[index]['title']).toList(),
@@ -1156,81 +1118,70 @@ class AccountsController extends GetxController {
     );
   }
 
-  // =========================================
-  // VALIDATION METHODS
-  // =========================================
   bool validateAllSections() {
-    // Personal info validation
     if (firstName.value.isEmpty || lastName.value.isEmpty || age.value.isEmpty) {
       Get.snackbar('Validation Error', 'Please complete personal information',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
 
-    // Gender validation
     if (!isGenderSelected) {
       Get.snackbar('Validation Error', 'Please select your gender',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
 
-    // Choice validation
     if (selectedGenders.isEmpty) {
       Get.snackbar('Validation Error', 'Please select who you like to meet',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
 
-    // Height & weight validation
     if (!areHeightWeightValid) {
       Get.snackbar('Validation Error', 'Please enter height and weight',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
 
-    // Education validation
     if (!isEducationButtonEnabled.value) {
       Get.snackbar('Validation Error', 'Please complete education information',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
 
-    // Faith validation
     if (!isFaithCompleted) {
       Get.snackbar('Validation Error', 'Please select religion and zodiac',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
 
-    // Habits validation
     if (!areHabitsCompleted) {
       Get.snackbar('Validation Error', 'Please complete all habit selections',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
 
-    // Inspire validation
+
     if (!isInspireButtonEnabled) {
       Get.snackbar('Validation Error', 'Please select at least 3 personality traits',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
 
-    // Interest validation
     if (selectedInterestIndices.isEmpty) {
       Get.snackbar('Validation Error', 'Please select at least one interest',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
 
-    // Lifestyle validation
+
     if (!isLifestyleCompleted) {
       Get.snackbar('Validation Error', 'Please complete lifestyle preferences',
           snackPosition: SnackPosition.BOTTOM);
       return false;
     }
 
-    // Like to do validation
+
     if (!isLikeToDoCompleted) {
       Get.snackbar('Validation Error', 'Please select at least one option from each category',
           snackPosition: SnackPosition.BOTTOM);
@@ -1243,13 +1194,13 @@ class AccountsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Initialize controllers and set up listeners
+
     loadUserData();
   }
 
   @override
   void onClose() {
-    // Dispose of controllers
+
     firstNameController.dispose();
     lastNameController.dispose();
     ageController.dispose();
@@ -1261,38 +1212,34 @@ class AccountsController extends GetxController {
     super.onClose();
   }
 
-  /// Upload the 3 specific images separately: bodyImage, headShotImage, and personalityImage
-  /// This method handles only the image upload part, separate from profile data submission
+
   Future<Map<String, dynamic>> uploadThreeSpecificImages({
     required String bodyImagePath,
     required String headShotImagePath,
     required String personalityImagePath,
   }) async {
     _ensureService();
-    AppLogger.info('🚀 Uploading 3 specific images separately');
 
     // Convert to File objects
     final bodyImage = bodyImagePath.isNotEmpty ? File(bodyImagePath) : null;
     final headShotImage = headShotImagePath.isNotEmpty ? File(headShotImagePath) : null;
     final personalityImage = personalityImagePath.isNotEmpty ? File(personalityImagePath) : null;
 
-    // Log image preparation using helper function
+
     _logImagePreparation('PREPARING IMAGES FOR UPLOAD', {
       'bodyImage': bodyImage?.path,
       'headShotImage': headShotImage?.path,
       'personalityImage': personalityImage?.path,
     });
 
-    // Validate that all 3 images are provided
+
     if (bodyImage == null || headShotImage == null || personalityImage == null) {
-      AppLogger.warning('⚠️ Missing required images for upload');
-      return {
+        return {
         'success': false,
         'message': 'All 3 images (body, headshot, personality) are required',
       };
     }
 
-    // Validate that files exist using helper function
     final imageFiles = {
       'bodyImage': bodyImage,
       'headShotImage': headShotImage,
@@ -1306,7 +1253,7 @@ class AccountsController extends GetxController {
       };
     }
 
-    // Use the helper function for API call
+
     return _handleApiCall(
       '3 specific images upload',
       () => _accountSetupService.uploadSpecificImages(
@@ -1350,9 +1297,9 @@ class AccountsController extends GetxController {
 
   void updateProfileCompletion() {
     int completedSections = 0;
-    int totalSections = 12; // Total number of sections to complete
+    int totalSections = 12; 
 
-    // Check each section for completion
+
     if (firstName.value.isNotEmpty && lastName.value.isNotEmpty && age.value.isNotEmpty) completedSections++;
     if (isGenderSelected) completedSections++;
     if (selectedGenders.isNotEmpty) completedSections++;

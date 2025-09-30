@@ -38,7 +38,8 @@ abstract class AppUrls {
   //settings
   static const String privacyPolicy = '/settings?key=privacyPolicy';
   static const String termsOfService = '/settings?key=termsOfService';
-
+  static const String support = '/settings?key=support';
+  static const String aboutUs = '/settings?key=aboutUs'; 
 
   //message
 

@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:kindered_app/core/app_urls.dart';
-import 'package:kindered_app/modules/profile_and_settings/model/treamsOfService.dart';
 import 'package:kindered_app/local/storage_service.dart';
+import 'package:kindered_app/modules/profile_and_settings/model/treamsOfService.dart';
 
-class TermsOfService {
+class Support {
   final Dio _dio;
 
-  TermsOfService(String token)
+  Support(String token)
       : _dio = Dio(
           BaseOptions(
             baseUrl: AppUrls.baseUrl,
@@ -21,11 +21,10 @@ class TermsOfService {
     }
   }
 
-  /// Get Terms of Service content
-  Future<SettingResponse> getTermsOfService() async {
+  Future<SettingResponse> getSupport() async {
     try {
       final response = await _dio.get(
-        AppUrls.termsOfService,
+        AppUrls.support,
       );
 
       return SettingResponse.fromJson(response.data);
@@ -33,34 +32,7 @@ class TermsOfService {
       // Return error response
       return SettingResponse(
         success: false,
-        message: e.message ?? 'Failed to fetch terms of service',
-        statusCode: e.response?.statusCode ?? 500,
-        data: '',
-      );
-    } catch (e) {
-      // Return error response
-      return SettingResponse(
-        success: false,
-        message: 'An unexpected error occurred',
-        statusCode: 500,
-        data: '',
-      );
-    }
-  }
-
-  /// Get Privacy Policy content
-  Future<SettingResponse> getPrivacyPolicy() async {
-    try {
-      final response = await _dio.get(
-        AppUrls.privacyPolicy,
-      );
-
-      return SettingResponse.fromJson(response.data);
-    } on DioException catch (e) {
-      // Return error response
-      return SettingResponse(
-        success: false,
-        message: e.message ?? 'Failed to fetch privacy policy',
+        message: e.message ?? 'Failed to fetch support',
         statusCode: e.response?.statusCode ?? 500,
         data: '',
       );

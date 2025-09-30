@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:kindered_app/core/app_urls.dart';
 import 'package:kindered_app/local/storage_service.dart';
 import 'package:kindered_app/modules/profile_and_settings/model/display_profile.dart';
@@ -144,9 +143,6 @@ class DisplayProfileController extends GetxController {
         // Use the passed data instead of fetching from API
         currentMatch.value = arguments['currentMatch'];
         currentUser.value = arguments['user'];
-        AppLogger.info('✅ [DISPLAY PROFILE] Using data from AI assistant view');
-        AppLogger.info('👤 [DISPLAY PROFILE] User: $fullName, Age: $age');
-        AppLogger.info('💯 [DISPLAY PROFILE] Match Score: $matchScore%');
         return;
       }
     }
@@ -159,9 +155,7 @@ class DisplayProfileController extends GetxController {
   void _initializeProfileService() {
     if (LocalStorage.token.isNotEmpty) {
       _profileService = ProfileService(LocalStorage.token);
-      AppLogger.info('🔐 [DISPLAY PROFILE] ProfileService initialized with token');
     } else {
-      AppLogger.error('❌ [DISPLAY PROFILE] Cannot initialize ProfileService - no token found');
       hasError.value = true;
       errorMessage.value = 'Authentication token not found. Please log in again.';
     }
@@ -180,7 +174,6 @@ class DisplayProfileController extends GetxController {
       hasError.value = false;
       errorMessage.value = '';
       
-      AppLogger.info('🔄 [DISPLAY PROFILE] Fetching current match data...');
       
       final response = await _profileService.getCurrentMatch();
       
@@ -188,12 +181,8 @@ class DisplayProfileController extends GetxController {
       currentUser.value = response.data.currentMatch.user;
       currentMatch.value = response.data.currentMatch;
       
-      AppLogger.info('✅ [DISPLAY PROFILE] Current match data loaded successfully');
-      AppLogger.info('👤 [DISPLAY PROFILE] User: $fullName, Age: $age');
-      AppLogger.info('💯 [DISPLAY PROFILE] Match Score: $matchScore%');
       
     } catch (e) {
-      AppLogger.error('❌ [DISPLAY PROFILE] Error fetching current match: $e');
       hasError.value = true;
       errorMessage.value = e.toString();
     } finally {

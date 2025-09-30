@@ -198,7 +198,6 @@ class ProfileEditController extends GetxController {
   }
 
   Future<void> _handlePickedImage(XFile pickedFile, int index) async {
-    AppLogger.info('📸 [PROFILE CONTROLLER] Image picked: ${pickedFile.path}');
     
     if (!isProfileServiceInitialized) {
       AppLogger.error('❌ [PROFILE CONTROLLER] Profile service not initialized');
@@ -257,7 +256,6 @@ class ProfileEditController extends GetxController {
     if (isEditMode.value) {
       _initializeControllersForEdit();
       // Load current data when entering edit mode
-      AppLogger.info('✏️ [EDIT MODE] Entering edit mode - loading current profile data');
     } else {
       // Save changes when exiting edit mode
       _saveProfileChanges();
@@ -267,7 +265,6 @@ class ProfileEditController extends GetxController {
   void cancelEditMode() {
     isEditMode.value = false;
     _resetControllersToProfileData();
-    AppLogger.info('❌ [EDIT MODE] Edit mode cancelled - changes discarded');
   }
   
   void _initializeControllersForEdit() {
@@ -310,7 +307,6 @@ class ProfileEditController extends GetxController {
   /// Save all profile changes when exiting edit mode
   Future<void> _saveProfileChanges() async {
     try {
-      AppLogger.info('💾 [EDIT MODE] Saving profile changes...');
       
       if (_userProfile.value == null) {
         AppLogger.warning('❌ [EDIT MODE] No profile data available to save');
@@ -414,7 +410,6 @@ class ProfileEditController extends GetxController {
       
       // Only submit if there are changes
       if (changes.isNotEmpty) {
-        AppLogger.info('📝 [EDIT MODE] Changes to save: $changes');
         await _submitUpdate(changes);
         AppLogger.success('✅ [EDIT MODE] Profile changes saved successfully');
         
@@ -427,7 +422,6 @@ class ProfileEditController extends GetxController {
           colorText: Colors.white,
         );
       } else {
-        AppLogger.info('ℹ️ [EDIT MODE] No changes to save');
       }
       
     } catch (e) {
@@ -505,7 +499,6 @@ class ProfileEditController extends GetxController {
       LocalStorage.token = token;
       _profileService = ProfileService(token);
       _isInitialized.value = true;
-      AppLogger.info('🔐 ProfileService initialized with token (len=${token.length})');
       
     } catch (e) {
       print('DEBUG: Error in _initializeProfileService: $e');
@@ -524,7 +517,6 @@ class ProfileEditController extends GetxController {
     
     isLoading.value = true;
     try {
-      AppLogger.info('🔄 [PROFILE LOAD] Loading profile data from API...');
       
       // Make API call to get profile data
       final response = await _profileService.getProfile();
@@ -533,17 +525,10 @@ class ProfileEditController extends GetxController {
         final profileData = response.data;
         
         // Log complete API response in Postman-like format
-        AppLogger.info('📋 [PROFILE LOAD] ===== COMPLETE API RESPONSE (POSTMAN STYLE) =====');
-        AppLogger.info('📋 Status Code: ${response.statusCode}');
-        AppLogger.info('📋 Response Headers: ${response.headers}');
-        AppLogger.info('📋 Response Body:');
-        AppLogger.info('📋 ${_formatJsonForLogging(profileData)}');
-        AppLogger.info('📋 ===== END API RESPONSE =====');
         
         // Map API response to controller variables
         _mapApiDataToController(profileData);
         
-        AppLogger.info('✅ [PROFILE LOAD] Profile data loaded successfully');
       } else if (response.statusCode == 401) {
         AppLogger.warning('🔐 [PROFILE LOAD] Authentication failed (401)');
         _handleAuthError();
@@ -608,65 +593,12 @@ class ProfileEditController extends GetxController {
   /// Map API response data to UserProfile model
   void _mapApiDataToController(Map<String, dynamic> data) {
     try {
-      AppLogger.info('🔄 [PROFILE MAPPING] Mapping API data to UserProfile model...');
       
       // Extract the actual profile data from the response wrapper
       final profileData = data['data'] as Map<String, dynamic>;
       
       // Create UserProfile from API data
       final userProfileData = UserProfile.fromJson(profileData);
-      
-      // Debug logging for each section
-      print('\n=== DEBUG: Profile Data Mapping ===');
-      print('Basic Info:');
-      print('- Name: ${userProfileData.firstName} ${userProfileData.lastName}');
-      print('- Email: ${userProfileData.email}');
-      print('- Age: ${userProfileData.age}');
-      print('- Gender: ${userProfileData.gender}');
-      print('- About Me: ${userProfileData.aboutMe}');
-      print('- Religion: ${userProfileData.religion}');
-      print('- Zodiac: ${userProfileData.zodiacSign}');
-      
-      print('\nLifestyle:');
-      print('- Sleeping Style: ${userProfileData.lifestyle?.sleepingStyle}');
-      print('- Love Style: ${userProfileData.lifestyle?.loveStyle}');
-      print('- Weekends: ${userProfileData.lifestyle?.weekends}');
-      print('- Traveling: ${userProfileData.lifestyle?.traveling}');
-      print('- Home Environment: ${userProfileData.lifestyle?.homeEnvironment}');
-      print('- Living Space: ${userProfileData.lifestyle?.livingSpace}');
-      
-      print('\nHabits:');
-      print('- Communication Style: ${userProfileData.habits?.communicationStyle}');
-      print('- Workout: ${userProfileData.habits?.workout}');
-      print('- Eating Style: ${userProfileData.habits?.eatingStyle}');
-      print('- Social Media: ${userProfileData.habits?.socialMedia}');
-      print('- Smoke/Drink: ${userProfileData.habits?.smokeOrDrink}');
-      print('- New Experiences: ${userProfileData.habits?.newExercise}');
-      
-      print('\nInterests:');
-      print('- Hobbies: ${userProfileData.interests?.hobbies}');
-      print('- Creative Outlets: ${userProfileData.interests?.creativeOutlets}');
-      print('- Fitness/Sports: ${userProfileData.interests?.fitnessAndSports}');
-      print('- Entertainment: ${userProfileData.interests?.entertainment}');
-      print('- Leisure Activities: ${userProfileData.interests?.leisureActivities}');
-      print('- Music Genres: ${userProfileData.interests?.musicGenres}');
-      print('- Health/Wellness: ${userProfileData.interests?.healthAndWellness}');
-      print('- Reading/Content: ${userProfileData.interests?.readingAndContent}');
-      
-      print('\nPreferences:');
-      print('- Like to Meet: ${userProfileData.likeToMeet}');
-      print('- Personal Traits: ${userProfileData.personalTraitsInspire}');
-      print('- Relation Type: ${userProfileData.relationType}');
-      
-      print('\nProfile Status:');
-      print('- Completion: ${userProfileData.profileCompletionPercentage}%');
-      
-      print('- Status: ${userProfileData.status}');
-      
-      print('\nPhotos and Location:');
-      print('- Images: ${userProfileData.image}');
-      print('- Location: ${userProfileData.location != null ? 'Available' : 'Not set'}');
-      print('==============================\n');
       
       // Set the profile data
       _userProfile.value = userProfileData;
@@ -678,7 +610,6 @@ class ProfileEditController extends GetxController {
       _profileCompletion.value = userProfileData.profileCompletionPercentage;
       
       AppLogger.success('✅ [PROFILE MAPPING] API data mapped to UserProfile model successfully');
-      AppLogger.info('📊 [PROFILE MAPPING] Profile completion: ${_profileCompletion.value}%');
       
       // Verify all required fields are present
       _verifyProfileData(userProfileData);
@@ -769,29 +700,20 @@ class ProfileEditController extends GetxController {
         'Please complete the required profile information to continue.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
-        colorText: Colors.white,
         duration: Duration(seconds: 5),
       );
     }
     
-    // Log optional missing fields with lower priority
-    if (missingOptionalFields.isNotEmpty) {
-      AppLogger.info('ℹ️ [PROFILE MAPPING] Optional fields that can be completed:');
-      for (var field in missingOptionalFields) {
-        AppLogger.info('  - $field');
-      }
-      
-      // Show info for missing optional fields only if required fields are complete
-      if (missingRequiredFields.isEmpty) {
-        Get.snackbar(
-          'Profile Enhancement',
-          'Consider adding more details to enhance your profile.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.blue,
-          colorText: Colors.white,
-          duration: Duration(seconds: 4),
-        );
-      }
+    // Check optional missing fields
+    if (missingOptionalFields.isNotEmpty && missingRequiredFields.isEmpty) {
+      Get.snackbar(
+        'Profile Enhancement',
+        'Consider adding more details to enhance your profile.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.blue,
+        colorText: Colors.white,
+        duration: Duration(seconds: 4),
+      );
     }
     
     // Log success if all required fields are present
@@ -823,13 +745,9 @@ class ProfileEditController extends GetxController {
   
   // Methods
   void updateProfileCompletion() {
-    print('DEBUG: updateProfileCompletion() called');
-    print('DEBUG: _userProfile.value: ${_userProfile.value}');
-    print('DEBUG: profileCompletionPercentage getter: $profileCompletionPercentage');
     
     // Use the profile completion percentage from the model
     _profileCompletion.value = profileCompletionPercentage;
-    print('DEBUG: _profileCompletion.value set to: ${_profileCompletion.value}');
   }
   
   void addPhoto(String photoUrl) {
