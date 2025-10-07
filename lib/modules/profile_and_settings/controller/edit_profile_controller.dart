@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 import 'dart:io';
-import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:kindered_app/core/logger/app_logger.dart';
 import 'package:kindered_app/modules/profile_and_settings/services/profile_service.dart';
@@ -11,21 +10,19 @@ import 'package:kindered_app/local/storage_keys.dart';
 import 'package:kindered_app/modules/profile_and_settings/model/get_profile.dart';
 
 class ProfileEditController extends GetxController {
-
   late final ProfileService _profileService;
-  
+  final ImagePicker _imagePicker = ImagePicker();
 
+  // State management
   final isLoading = RxBool(false);
   final _isInitialized = RxBool(false);
-  
   final Rx<UserProfile?> _userProfile = Rx<UserProfile?>(null);
   final _profileCompletion = RxInt(0);
-  
-  // Temporary about me text controller for unsaved changes
-  late TextEditingController aboutMeController;
   final isAboutMeDirty = RxBool(false);
-  
-  // Text editing controllers for editable fields
+  final isEditMode = RxBool(false);
+
+  // Text editing controllers
+  late TextEditingController aboutMeController;
   late TextEditingController nameController;
   late TextEditingController ageController;
   late TextEditingController heightController;
@@ -33,31 +30,26 @@ class ProfileEditController extends GetxController {
   late TextEditingController educationController;
   late TextEditingController jobStatusController;
   late TextEditingController locationController;
-  
-  // Edit mode state
-  final isEditMode = RxBool(false);
-  
+
   // Dropdown options
   final List<String> genders = ['Male', 'Female', 'Non-binary', 'Trans man', 'Trans woman', 'Prefer not to say'];
   final List<String> zodiacSigns = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
   final List<String> religions = ['Christianity', 'Islam', 'Hinduism', 'Buddhism', 'Judaism', 'Sikhism', 'Spiritual', 'Agnostic', 'Atheist', 'Other'];
-  
-  // Lifestyle preferences
   final List<String> sleepingStyles = ['Early bird', 'Night owl', 'Flexible'];
   final List<String> loveStyles = ['Romantic', 'Practical', 'Adventurous', 'Traditional', 'Modern'];
   final List<String> weekendPreferences = ['Homebody', 'Social butterfly', 'Adventure seeker', 'Relaxation focused'];
   final List<String> travelingPreferences = ['Love traveling', 'Prefer staying local', 'Occasional traveler'];
   final List<String> homeEnvironments = ['Cozy', 'Modern', 'Minimalist', 'Traditional', 'Eclectic'];
   final List<String> livingSpaces = ['House', 'Apartment', 'Condo', 'Shared housing'];
-  
-  // Habits
   final List<String> communicationStyles = ['Direct', 'Diplomatic', 'Reserved', 'Expressive'];
   final List<String> exerciseFrequencies = ['Daily', '3-4 times/week', '1-2 times/week', 'Occasionally', 'Never'];
   final List<String> foodPreferences = ['Omnivore', 'Vegetarian', 'Vegan', 'Pescatarian', 'Keto', 'Gluten-free'];
   final List<String> socialMediaUsage = ['Very active', 'Moderately active', 'Occasionally', 'Rarely', 'Never'];
   final List<String> smokingDrinking = ['Non-smoker, Non-drinker', 'Social drinker', 'Smoker', 'Both smoker and drinker'];
   final List<String> newExperienceOptions = ['Love trying new things', 'Open to new experiences', 'Prefer familiar things', 'Selective about new experiences'];
-  
+  final List<String> educationLevels = ['High School', 'Some College', 'Associates Degree', "Bachelor's Degree", "Master's Degree", 'Doctorate', 'Trade School', 'Other', 'Prefer not to say'];
+  final List<String> jobStatuses = ['Student', 'Employed Full-time', 'Employed Part-time', 'Self-employed', 'Freelancer', 'Looking for work', 'Not working', 'Retired', 'Prefer not to say'];
+
   // Selected dropdown values
   final RxString selectedGender = ''.obs;
   final RxString selectedZodiac = ''.obs;
@@ -74,41 +66,12 @@ class ProfileEditController extends GetxController {
   final RxString selectedSocialMediaUsage = ''.obs;
   final RxString selectedSmokingDrinking = ''.obs;
   final RxString selectedNewExperiences = ''.obs;
-  
-  // Education levels
-  final List<String> educationLevels = [
-    'High School',
-    'Some College',
-    'Associates Degree',
-    "Bachelor's Degree",
-    "Master's Degree",
-    'Doctorate',
-    'Trade School',
-    'Other',
-    'Prefer not to say'
-  ];
 
-  // Job status options
-  final List<String> jobStatuses = [
-    'Student',
-    'Employed Full-time',
-    'Employed Part-time',
-    'Self-employed',
-    'Freelancer',
-    'Looking for work',
-    'Not working',
-    'Retired',
-    'Prefer not to say'
-  ];
-
-  // Weekend styles (alias for weekendPreferences)
+  // Aliases
   List<String> get weekendStyles => weekendPreferences;
-
-  // Traveling styles (alias for travelingPreferences)
   List<String> get travelingStyles => travelingPreferences;
 
-  final ImagePicker _imagePicker = ImagePicker();
-
+  // Getters
   bool get isLoadingValue => isLoading.value;
   bool get isInitialized => _isInitialized.value;
   bool get isProfileServiceInitialized => _isInitialized.value;
@@ -116,21 +79,37 @@ class ProfileEditController extends GetxController {
   int get profileCompletion => _profileCompletion.value;
   int get profileCompletionPercentage => profile?.profileCompletionPercentage ?? 0;
   
-  String get userFirstName => _userProfile.value?.firstName ?? '';
-  String get userLastName => _userProfile.value?.lastName ?? '';
-  String get userEmail => _userProfile.value?.email ?? '';
-  String get userAge => _userProfile.value?.age?.toString() ?? '';
-  String get userGender => _userProfile.value?.gender ?? '';
-  String get userAboutMe => _userProfile.value?.aboutMe ?? '';
-  String get userReligion => _userProfile.value?.religion ?? '';
-  String get userZodiacSign => _userProfile.value?.zodiacSign ?? '';
+  String get userFirstName => profile?.firstName ?? '';
+  String get userLastName => profile?.lastName ?? '';
+  String get userEmail => profile?.email ?? '';
+  String get userAge => profile?.age?.toString() ?? '';
+  String get userGender => profile?.gender ?? '';
+  String get userAboutMe => profile?.aboutMe ?? '';
+  String get userReligion => profile?.religion ?? '';
+  String get userZodiacSign => profile?.zodiacSign ?? '';
+  String get userHeight => profile?.body?.heightCm?.toString() ?? '';
+  String get userWeight => profile?.body?.weightKg?.toString() ?? '';
+  String get userSleepingStyle => profile?.lifestyle?.sleepingStyle ?? '';
+  String get userLoveStyle => profile?.lifestyle?.loveStyle ?? '';
+  String get userWeekend => profile?.lifestyle?.weekends ?? '';
+  String get userTravelling => profile?.lifestyle?.traveling ?? '';
+  String get userHomeEnvironment => profile?.lifestyle?.homeEnvironment ?? '';
+  String get userLivingSpace => profile?.lifestyle?.livingSpace ?? '';
+  String get userWorkout => profile?.habits?.workout ?? '';
+  String get userSocialMedia => profile?.habits?.socialMedia ?? '';
+  String get userSmokeOrDrink => profile?.habits?.smokeOrDrink ?? '';
+  String get userNewExperiences => profile?.habits?.newExercise ?? '';
+  String get userLocation => profile?.location != null ? 'Location available' : '';
+  String get userRelationType => profile?.relationType ?? '';
   
-  List<String> get userPhotos => _userProfile.value?.image ?? [];
-  List<String> get userTraits => _userProfile.value?.personalTraitsInspire ?? [];
-  List<String> get userPreferences => _userProfile.value?.likeToMeet ?? [];
+  List<String> get userPhotos => profile?.image ?? [];
+  List<String> get userTraits => profile?.personalTraitsInspire ?? [];
+  List<String> get userPreferences => profile?.likeToMeet ?? [];
+  List<String> get userCommunicationStyle => profile?.habits?.communicationStyle ?? [];
+  List<String> get userEatingStyle => profile?.habits?.eatingStyle ?? [];
   
   List<String> get userInterests {
-    final interests = _userProfile.value?.interests;
+    final interests = profile?.interests;
     if (interests == null) return [];
     
     return [
@@ -144,308 +123,23 @@ class ProfileEditController extends GetxController {
       ...interests.readingAndContent,
     ];
   }
-  
-  List<String> get userCommunicationStyle => _userProfile.value?.habits?.communicationStyle ?? [];
-  String get userWorkout => _userProfile.value?.habits?.workout ?? '';
-  List<String> get userEatingStyle => _userProfile.value?.habits?.eatingStyle ?? [];
-  String get userSocialMedia => _userProfile.value?.habits?.socialMedia ?? '';
-  String get userSmokeOrDrink => _userProfile.value?.habits?.smokeOrDrink ?? '';
-  String get userNewExperiences => _userProfile.value?.habits?.newExercise ?? '';
 
-  String get userHeight => _userProfile.value?.body?.heightCm?.toString() ?? '';
-  String get userWeight => _userProfile.value?.body?.weightKg?.toString() ?? '';
-  String get userSleepingStyle => _userProfile.value?.lifestyle?.sleepingStyle ?? '';
-  String get userLoveStyle => _userProfile.value?.lifestyle?.loveStyle ?? '';
-  String get userWeekend => _userProfile.value?.lifestyle?.weekends ?? '';
-  String get userTravelling => _userProfile.value?.lifestyle?.traveling ?? '';
-  String get userHomeEnvironment => _userProfile.value?.lifestyle?.homeEnvironment ?? '';
-  String get userLivingSpace => _userProfile.value?.lifestyle?.livingSpace ?? '';
-  String get userLocation => _userProfile.value?.location != null ? 'Location available' : '';
-  String get userRelationType => _userProfile.value?.relationType ?? '';
-
-  Future<void> pickImageFromCamera(int index) async {
-    try {
-      final pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 70,
-        maxWidth: 1000,
-        maxHeight: 1000,
-      );
-
-      if (pickedFile != null) {
-        await _handlePickedImage(pickedFile, index);
-      }
-    } catch (e) {
-      _handleImagePickError(e);
-    }
-  }
-
-  Future<void> pickImageFromGallery(int index) async {
-    try {
-      final pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 70,
-        maxWidth: 1000,
-        maxHeight: 1000,
-      );
-
-      if (pickedFile != null) {
-        await _handlePickedImage(pickedFile, index);
-      }
-    } catch (e) {
-      _handleImagePickError(e);
-    }
-  }
-
-  Future<void> _handlePickedImage(XFile pickedFile, int index) async {
-    
-    if (!isProfileServiceInitialized) {
-      AppLogger.error('❌ [PROFILE CONTROLLER] Profile service not initialized');
-      return;
-    }
-    
-    isLoading.value = true;
-    try {
-      final file = File(pickedFile.path);
-      
-      final response = await _profileService.updateProfile(
-        data: {},
-        images: [file],
-      );
-      
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        await _loadProfileData();
-        
-        Get.snackbar(
-          'Success',
-          'Profile photo updated successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-      } else {
-        throw Exception('Failed to upload image: ${response.statusMessage}');
-      }
-    } catch (e) {
-      AppLogger.error('❌ [PROFILE CONTROLLER] Error uploading image: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to upload photo. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  void _handleImagePickError(dynamic error) {
-    AppLogger.error('❌ [PROFILE CONTROLLER] Error picking image: $error');
-    Get.snackbar(
-      'Error',
-      'Failed to pick photo. Please try again.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-    );
-  }
-  
-  void toggleEditMode() {
-    isEditMode.value = !isEditMode.value;
-    if (isEditMode.value) {
-      _initializeControllersForEdit();
-      // Load current data when entering edit mode
-    } else {
-      // Save changes when exiting edit mode
-      _saveProfileChanges();
-    }
-  }
-  
-  void cancelEditMode() {
-    isEditMode.value = false;
-    _resetControllersToProfileData();
-  }
-  
-  void _initializeControllersForEdit() {
-    if (_userProfile.value != null) {
-      nameController.text = _userProfile.value!.firstName ?? '';
-      ageController.text = _userProfile.value!.age?.toString() ?? '';
-      heightController.text = _userProfile.value!.body?.heightCm?.toString() ?? '';
-      weightController.text = _userProfile.value!.body?.weightKg?.toString() ?? '';
-      educationController.text = _userProfile.value!.eduJob?.educationLevel ?? '';
-      jobStatusController.text = _userProfile.value!.eduJob?.jobTitle ?? '';
-      locationController.text = _userProfile.value!.location?.toString() ?? '';
-      
-      // Initialize dropdown selections
-      selectedGender.value = _userProfile.value!.gender ?? '';
-      selectedZodiac.value = _userProfile.value!.zodiacSign ?? '';
-      selectedReligion.value = _userProfile.value!.religion ?? '';
-      selectedSleepingStyle.value = _userProfile.value!.lifestyle?.sleepingStyle ?? '';
-      selectedLoveStyle.value = _userProfile.value!.lifestyle?.loveStyle ?? '';
-      selectedWeekends.value = _userProfile.value!.lifestyle?.weekends ?? '';
-      selectedTraveling.value = _userProfile.value!.lifestyle?.traveling ?? '';
-      selectedCommunicationStyle.value = _userProfile.value!.habits!.communicationStyle.join(', ');
-      selectedExerciseFrequency.value = _userProfile.value!.habits!.workout ?? '';
-      selectedFoodPreference.value = _userProfile.value!.habits!.eatingStyle.join(', ');
-      selectedSocialMediaUsage.value = _userProfile.value!.habits!.socialMedia ?? '';
-      selectedSmokingDrinking.value = _userProfile.value!.habits!.smokeOrDrink ?? '';
-      selectedNewExperiences.value = _userProfile.value!.habits!.newExercise ?? '';
-    }
-  }
-  
-  void _resetControllersToProfileData() {
-    _initializeControllersForEdit(); // Reset to current profile data
-  }
-  
-  void _updateProfileCompletionFromControllers() {
-    // This method updates profile completion based on controller values
-    // Implementation will sync controller values with profile data and update completion
-    updateProfileCompletion();
-  }
-  
-  /// Save all profile changes when exiting edit mode
-  Future<void> _saveProfileChanges() async {
-    try {
-      
-      if (_userProfile.value == null) {
-        AppLogger.warning('❌ [EDIT MODE] No profile data available to save');
-        return;
-      }
-      
-      isLoading.value = true;
-      
-      // Collect all changes from controllers
-      final Map<String, dynamic> changes = {};
-      
-      // Personal information
-      if (nameController.text.isNotEmpty && nameController.text != _userProfile.value!.firstName) {
-        changes['firstName'] = nameController.text;
-      }
-      
-      final newAge = int.tryParse(ageController.text);
-      if (newAge != null && newAge != _userProfile.value!.age) {
-        changes['age'] = newAge;
-      }
-      
-      if (selectedGender.value.isNotEmpty && selectedGender.value != _userProfile.value!.gender) {
-        changes['gender'] = selectedGender.value;
-      }
-      
-      // Body information
-      final newHeight = double.tryParse(heightController.text);
-      final newWeight = double.tryParse(weightController.text);
-      
-      if (newHeight != null && newHeight != _userProfile.value!.body?.heightCm) {
-        changes['body'] = {'heightCm': newHeight};
-      }
-      
-      if (newWeight != null && newWeight != _userProfile.value!.body?.weightKg) {
-        if (changes['body'] == null) {
-          changes['body'] = {};
-        }
-        changes['body']['weightKg'] = newWeight;
-      }
-      
-      // Zodiac and Religion
-      if (selectedZodiac.value.isNotEmpty && selectedZodiac.value != _userProfile.value!.zodiacSign) {
-        changes['zodiacSign'] = selectedZodiac.value;
-      }
-      
-      if (selectedReligion.value.isNotEmpty && selectedReligion.value != _userProfile.value!.religion) {
-        changes['religion'] = selectedReligion.value;
-      }
-      
-      // Lifestyle preferences
-      if (selectedSleepingStyle.value.isNotEmpty && selectedSleepingStyle.value != _userProfile.value!.lifestyle?.sleepingStyle) {
-        if (changes['lifestyle'] == null) changes['lifestyle'] = {};
-        changes['lifestyle']['sleepingStyle'] = selectedSleepingStyle.value;
-      }
-      
-      if (selectedLoveStyle.value.isNotEmpty && selectedLoveStyle.value != _userProfile.value!.lifestyle?.loveStyle) {
-        if (changes['lifestyle'] == null) changes['lifestyle'] = {};
-        changes['lifestyle']['loveStyle'] = selectedLoveStyle.value;
-      }
-      
-      if (selectedWeekends.value.isNotEmpty && selectedWeekends.value != _userProfile.value!.lifestyle?.weekends) {
-        if (changes['lifestyle'] == null) changes['lifestyle'] = {};
-        changes['lifestyle']['weekends'] = selectedWeekends.value;
-      }
-      
-      if (selectedTraveling.value.isNotEmpty && selectedTraveling.value != _userProfile.value!.lifestyle?.traveling) {
-        if (changes['lifestyle'] == null) changes['lifestyle'] = {};
-        changes['lifestyle']['traveling'] = selectedTraveling.value;
-      }
-      
-      // Habits
-      if (selectedCommunicationStyle.value.isNotEmpty && selectedCommunicationStyle.value != _userProfile.value!.habits?.communicationStyle.join(', ')) {
-        if (changes['habits'] == null) changes['habits'] = {};
-        changes['habits']['communicationStyle'] = selectedCommunicationStyle.value.split(', ').map((s) => s.trim()).toList();
-      }
-      
-      if (selectedExerciseFrequency.value.isNotEmpty && selectedExerciseFrequency.value != _userProfile.value!.habits?.workout) {
-        if (changes['habits'] == null) changes['habits'] = {};
-        changes['habits']['workout'] = selectedExerciseFrequency.value;
-      }
-      
-      if (selectedFoodPreference.value.isNotEmpty && selectedFoodPreference.value != _userProfile.value!.habits?.eatingStyle.join(', ')) {
-        if (changes['habits'] == null) changes['habits'] = {};
-        changes['habits']['eatingStyle'] = selectedFoodPreference.value.split(', ').map((s) => s.trim()).toList();
-      }
-      
-      if (selectedSocialMediaUsage.value.isNotEmpty && selectedSocialMediaUsage.value != _userProfile.value!.habits?.socialMedia) {
-        if (changes['habits'] == null) changes['habits'] = {};
-        changes['habits']['socialMedia'] = selectedSocialMediaUsage.value;
-      }
-      
-      if (selectedSmokingDrinking.value.isNotEmpty && selectedSmokingDrinking.value != _userProfile.value!.habits?.smokeOrDrink) {
-        if (changes['habits'] == null) changes['habits'] = {};
-        changes['habits']['smokeOrDrink'] = selectedSmokingDrinking.value;
-      }
-      
-      if (selectedNewExperiences.value.isNotEmpty && selectedNewExperiences.value != _userProfile.value!.habits?.newExercise) {
-        if (changes['habits'] == null) changes['habits'] = {};
-        changes['habits']['newExercise'] = selectedNewExperiences.value;
-      }
-      
-      // Only submit if there are changes
-      if (changes.isNotEmpty) {
-        await _submitUpdate(changes);
-        AppLogger.success('✅ [EDIT MODE] Profile changes saved successfully');
-        
-        // Show only success snackbar
-        Get.snackbar(
-          'Success',
-          'Profile updated successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-      } else {
-      }
-      
-    } catch (e) {
-      AppLogger.error('❌ [EDIT MODE] Error saving profile changes: $e');
-      // No error snackbar as per requirements
-    } finally {
-      isLoading.value = false;
-    }
-  }
-  
-  // Location
-  String get location => profile?.location != null ? 'Location available' : '';
-  
-  // Additional getters for compatibility with existing UI
+  // Compatibility aliases
+  String get location => userLocation;
   String get height => userHeight;
   String get weight => userWeight;
   String get education => userWeekend;
   String get jobStatus => userTravelling;
   String get lookingFor => userRelationType;
-  
+
   @override
   void onInit() {
     super.onInit();
-    // Initialize all text controllers
+    _initializeControllers();
+    _initializeController();
+  }
+
+  void _initializeControllers() {
     aboutMeController = TextEditingController();
     nameController = TextEditingController();
     ageController = TextEditingController();
@@ -455,16 +149,23 @@ class ProfileEditController extends GetxController {
     jobStatusController = TextEditingController();
     locationController = TextEditingController();
     
-    // Add listeners for text changes to update profile completion
-    nameController.addListener(_updateProfileCompletionFromControllers);
-    ageController.addListener(_updateProfileCompletionFromControllers);
-    heightController.addListener(_updateProfileCompletionFromControllers);
-    weightController.addListener(_updateProfileCompletionFromControllers);
-    educationController.addListener(_updateProfileCompletionFromControllers);
-    jobStatusController.addListener(_updateProfileCompletionFromControllers);
-    locationController.addListener(_updateProfileCompletionFromControllers);
+    _addControllerListeners();
+  }
+
+  void _addControllerListeners() {
+    final controllers = [
+      nameController,
+      ageController,
+      heightController,
+      weightController,
+      educationController,
+      jobStatusController,
+      locationController
+    ];
     
-    _initializeController();
+    for (var controller in controllers) {
+      controller.addListener(_updateProfileCompletionFromControllers);
+    }
   }
 
   void _initializeController() {
@@ -473,164 +174,74 @@ class ProfileEditController extends GetxController {
         _loadProfileData();
       }
     }).catchError((e) {
-      AppLogger.error('❌ Error initializing controller: $e');
+      AppLogger.error('Error initializing controller: $e');
     });
   }
-  
+
   Future<void> _initializeProfileService() async {
-    
     try {
-      // Refresh token from preferences
       final token = await LocalStorage.getString(LocalStorageKeys.token);
       
       if (token.isEmpty) {
-        print('DEBUG: No token found - showing error snackbar');
-        AppLogger.warning('❌ Missing token. Cannot initialize ProfileService');
-        Get.snackbar(
-          'Authentication Required',
-          'Please sign in to view your profile.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        _showSnackbar('Authentication Required', 'Please sign in to view your profile.', Colors.red);
         return;
       }
       
       LocalStorage.token = token;
       _profileService = ProfileService(token);
       _isInitialized.value = true;
-      
     } catch (e) {
-      print('DEBUG: Error in _initializeProfileService: $e');
-      AppLogger.error('❌ Error initializing ProfileService: $e');
+      AppLogger.error('Error initializing ProfileService: $e');
       rethrow;
     }
   }
-  
-  /// Load profile data from API
+
   Future<void> _loadProfileData() async {
-    
-    if (!isProfileServiceInitialized || LocalStorage.token.isEmpty) {
-      AppLogger.warning('❌ Profile service not initialized or no token found');
-      return;
-    }
+    if (!isProfileServiceInitialized || LocalStorage.token.isEmpty) return;
     
     isLoading.value = true;
     try {
-      
-      // Make API call to get profile data
       final response = await _profileService.getProfile();
       
       if (response.statusCode == 200 && response.data != null) {
-        final profileData = response.data;
-        
-        // Log complete API response in Postman-like format
-        
-        // Map API response to controller variables
-        _mapApiDataToController(profileData);
-        
+        _mapApiDataToController(response.data);
       } else if (response.statusCode == 401) {
-        AppLogger.warning('🔐 [PROFILE LOAD] Authentication failed (401)');
         _handleAuthError();
       } else {
-        AppLogger.warning('⚠️ [PROFILE LOAD] Unexpected response: ${response.statusCode}');
-        Get.snackbar(
-          'Error',
-          'Failed to fetch profile data (${response.statusCode}). Please try again.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 3),
-        );
+        _showSnackbar('Error', 'Failed to fetch profile data (${response.statusCode}). Please try again.', Colors.orange);
       }
     } on DioException catch (e) {
-      AppLogger.error('❌ [PROFILE LOAD] Dio error: ${e.message}', e, e.stackTrace);
-      
-      String errorMessage = 'Failed to fetch profile data';
-      if (e.response?.statusCode == 401) {
-        errorMessage = 'Session expired. Please sign in again.';
-        _handleAuthError();
-      } else if (e.response?.data != null) {
-        errorMessage = e.response?.data['message'] ?? e.response?.data['error'] ?? errorMessage;
-      }
-      
-      Get.snackbar(
-        'Error',
-        errorMessage,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _handleDioError(e);
     } catch (e) {
-      AppLogger.error('❌ [PROFILE LOAD] Unexpected error: $e');
-      Get.snackbar(
-        'Error',
-        'An unexpected error occurred while fetching profile data.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showSnackbar('Error', 'An unexpected error occurred while fetching profile data.', Colors.red);
     } finally {
       isLoading.value = false;
     }
   }
-  
-  /// Format JSON data for logging in a readable way
-  String _formatJsonForLogging(dynamic data) {
-    try {
-      if (data is Map || data is List) {
-        // Convert to JSON string with indentation for readability
-        const encoder = JsonEncoder.withIndent('  ');
-        return encoder.convert(data);
-      } else {
-        return data.toString();
-      }
-    } catch (e) {
-      return 'Error formatting JSON: $e\nRaw data: $data';
-    }
-  }
-  
-  /// Map API response data to UserProfile model
+
   void _mapApiDataToController(Map<String, dynamic> data) {
     try {
-      
-      // Extract the actual profile data from the response wrapper
       final profileData = data['data'] as Map<String, dynamic>;
-      
-      // Create UserProfile from API data
       final userProfileData = UserProfile.fromJson(profileData);
       
-      // Set the profile data
       _userProfile.value = userProfileData;
-      
-      // Initialize about me controller with current data
       _initializeAboutMeController();
-      
-      // Update profile completion
       _profileCompletion.value = userProfileData.profileCompletionPercentage;
       
-      AppLogger.success('✅ [PROFILE MAPPING] API data mapped to UserProfile model successfully');
-      
-      // Verify all required fields are present
       _verifyProfileData(userProfileData);
-      
     } catch (e) {
-      print('DEBUG: Error in _mapApiDataToController: $e');
-      AppLogger.error('❌ [PROFILE MAPPING] Error mapping API data to UserProfile model: $e');
+      AppLogger.error('Error mapping API data to UserProfile model: $e');
     }
   }
-  
-  /// Verify all required profile fields are present and log missing optional fields
+
   void _verifyProfileData(UserProfile profile) {
     List<String> missingRequiredFields = [];
     List<String> missingOptionalFields = [];
     
-    // Check basic info (required)
     if (profile.firstName.isEmpty) missingRequiredFields.add('First Name');
     if (profile.age == null) missingRequiredFields.add('Age');
     if (profile.gender.isEmpty) missingRequiredFields.add('Gender');
     
-    // Check lifestyle (optional)
     if (profile.lifestyle != null) {
       final lifestyle = profile.lifestyle!;
       if (lifestyle.sleepingStyle?.isEmpty ?? true) missingOptionalFields.add('Sleeping Style');
@@ -641,1086 +252,643 @@ class ProfileEditController extends GetxController {
       if (lifestyle.livingSpace?.isEmpty ?? true) missingOptionalFields.add('Living Space');
     }
     
-    // Check habits (partially required)
     if (profile.habits == null) {
       missingRequiredFields.add('Habits Information');
     } else {
       final habits = profile.habits!;
-      // Required habit fields
       if (habits.communicationStyle.isEmpty) missingRequiredFields.add('Communication Style');
       if (habits.eatingStyle.isEmpty) missingRequiredFields.add('Eating Style');
-      
-      // Optional habit fields
       if (habits.workout?.isEmpty ?? true) missingOptionalFields.add('Workout Preference');
       if (habits.socialMedia?.isEmpty ?? true) missingOptionalFields.add('Social Media Usage');
       if (habits.smokeOrDrink?.isEmpty ?? true) missingOptionalFields.add('Smoking/Drinking Preference');
       if (habits.newExercise?.isEmpty ?? true) missingOptionalFields.add('New Experiences');
     }
     
-    // Check interests (partially required)
     if (profile.interests == null) {
       missingRequiredFields.add('Interests Information');
     } else {
       final interests = profile.interests!;
-      // Only check if ALL interest categories are empty
-      bool hasAnyInterest = !(
-        interests.hobbies.isEmpty &&
-        interests.creativeOutlets.isEmpty &&
-        interests.fitnessAndSports.isEmpty &&
-        interests.entertainment.isEmpty &&
-        interests.leisureActivities.isEmpty &&
-        interests.musicGenres.isEmpty &&
-        interests.healthAndWellness.isEmpty &&
-        interests.readingAndContent.isEmpty
-      );
+      bool hasAnyInterest = interests.hobbies.isNotEmpty ||
+          interests.creativeOutlets.isNotEmpty ||
+          interests.fitnessAndSports.isNotEmpty ||
+          interests.entertainment.isNotEmpty ||
+          interests.leisureActivities.isNotEmpty ||
+          interests.musicGenres.isNotEmpty ||
+          interests.healthAndWellness.isNotEmpty ||
+          interests.readingAndContent.isNotEmpty;
       
-      if (!hasAnyInterest) {
-        missingRequiredFields.add('At least one interest category');
-      }
+      if (!hasAnyInterest) missingRequiredFields.add('At least one interest category');
     }
     
-    // Check required preferences
     if (profile.likeToMeet.isEmpty) missingRequiredFields.add('Like to Meet Preferences');
     if (profile.personalTraitsInspire.isEmpty) missingRequiredFields.add('Personal Traits');
     if (profile.relationType?.isEmpty ?? true) missingRequiredFields.add('Relation Type');
-    
-    // Profile photo is optional during initial setup
     if (profile.image.isEmpty) missingOptionalFields.add('Profile Photos');
     
-    // Log required missing fields with high priority
     if (missingRequiredFields.isNotEmpty) {
-      AppLogger.warning('⚠️ [PROFILE MAPPING] Missing required fields:');
-      for (var field in missingRequiredFields) {
-        AppLogger.warning('  - $field');
-      }
-      
-      // Show warning for missing required fields
-      Get.snackbar(
-        'Required Information Missing',
-        'Please complete the required profile information to continue.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        duration: Duration(seconds: 5),
-      );
-    }
-    
-    // Check optional missing fields
-    if (missingOptionalFields.isNotEmpty && missingRequiredFields.isEmpty) {
-      Get.snackbar(
-        'Profile Enhancement',
-        'Consider adding more details to enhance your profile.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.blue,
-        colorText: Colors.white,
-        duration: Duration(seconds: 4),
-      );
-    }
-    
-    // Log success if all required fields are present
-    if (missingRequiredFields.isEmpty) {
-      AppLogger.success(' [PROFILE MAPPING] All required fields are present');
+      _showSnackbar('Required Information Missing', 'Please complete the required profile information to continue.', Colors.red, duration: 5);
+    } else if (missingOptionalFields.isNotEmpty) {
+      _showSnackbar('Profile Enhancement', 'Consider adding more details to enhance your profile.', Colors.blue, duration: 4);
     }
   }
-  
-  /// Handle authentication errors (401)
+
   void _handleAuthError() {
-    try {
-      AppLogger.warning(' [PROFILE AUTH] Handling authentication error...');
-      
-      // Show user-friendly message instead of redirecting
-      Get.snackbar(
-        'Session Expired',
-        'Please refresh the app or login again to continue',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-        duration: Duration(seconds: 5),
-      );
-      
-      AppLogger.info(' [PROFILE AUTH] User notified about session expiration');
-    } catch (e) {
-      AppLogger.error(' [PROFILE AUTH] Error handling auth error: $e');
-    }
+    _showSnackbar('Session Expired', 'Please refresh the app or login again to continue', Colors.orange, duration: 5);
   }
-  
-  // Methods
-  void updateProfileCompletion() {
-    
-    // Use the profile completion percentage from the model
-    _profileCompletion.value = profileCompletionPercentage;
-  }
-  
-  void addPhoto(String photoUrl) {
-    if (_userProfile.value != null) {
-      final currentPhotos = List<String>.from(_userProfile.value!.image);
-      if (currentPhotos.length < 6) {
-        currentPhotos.add(photoUrl);
-        _updateUserProfilePhotos(currentPhotos);
-      }
-    }
-  }
-  
-  void removePhoto(int index) {
-    if (_userProfile.value != null) {
-      final currentPhotos = List<String>.from(_userProfile.value!.image);
-      if (index >= 0 && index < currentPhotos.length) {
-        currentPhotos.removeAt(index);
-        _updateUserProfilePhotos(currentPhotos);
-      }
-    }
-  }
-  
-  void _updateUserProfilePhotos(List<String> newPhotos) {
-    if (_userProfile.value != null) {
-      final currProfile = _userProfile.value!;
-      final updatedProfile = UserProfile(
-        id: currProfile.id,
-        role: currProfile.role,
-        email: currProfile.email,
-        age: currProfile.age,
-        gender: currProfile.gender,
-        firstName: currProfile.firstName,
-        lastName: currProfile.lastName,
-        aboutMe: currProfile.aboutMe,
-        religion: currProfile.religion,
-        zodiacSign: currProfile.zodiacSign,
-        status: currProfile.status,
 
-        profileCompletionPercentage: currProfile.profileCompletionPercentage,
-        isDeleted: currProfile.isDeleted,
-        isVerified: currProfile.isVerified,
-        createdAt: currProfile.createdAt,
-        updatedAt: currProfile.updatedAt,
-        habits: currProfile.habits,
-        interests: currProfile.interests,
-        lifestyle: currProfile.lifestyle,
-        likeToMeet: currProfile.likeToMeet,
-        personalTraitsInspire: currProfile.personalTraitsInspire,
-        image: newPhotos,
-        phone: currProfile.phone,
-        relationType: currProfile.relationType,
-        location: currProfile.location,
+  void _handleDioError(DioException e) {
+    String errorMessage = 'Failed to fetch profile data';
+    if (e.response?.statusCode == 401) {
+      errorMessage = 'Session expired. Please sign in again.';
+      _handleAuthError();
+    } else if (e.response?.data != null) {
+      errorMessage = e.response?.data['message'] ?? e.response?.data['error'] ?? errorMessage;
+    }
+    _showSnackbar('Error', errorMessage, Colors.red);
+  }
+
+  // Image picking methods
+  Future<void> pickImageFromCamera(int index) => _pickImage(ImageSource.camera, index);
+  Future<void> pickImageFromGallery(int index) => _pickImage(ImageSource.gallery, index);
+
+  Future<void> _pickImage(ImageSource source, int index) async {
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 1000,
+        maxHeight: 1000,
       );
-      _userProfile.value = updatedProfile;
-      
-      // Changes will be saved when exiting edit mode
+
+      if (pickedFile != null) {
+        await _handlePickedImage(pickedFile, index);
+      }
+    } catch (e) {
+      _showSnackbar('Error', 'Failed to pick photo. Please try again.', Colors.red);
     }
   }
-  
-  void toggleTrait(String trait) {
-    if (_userProfile.value != null) {
-      final currentTraits = List<String>.from(_userProfile.value!.personalTraitsInspire);
-      if (currentTraits.contains(trait)) {
-        currentTraits.remove(trait);
+
+  Future<void> _handlePickedImage(XFile pickedFile, int index) async {
+    if (!isProfileServiceInitialized) return;
+    
+    isLoading.value = true;
+    try {
+      final file = File(pickedFile.path);
+      final response = await _profileService.updateProfile(data: {}, images: [file]);
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await _loadProfileData();
+        _showSnackbar('Success', 'Profile photo updated successfully', Colors.green);
       } else {
-        currentTraits.add(trait);
+        throw Exception('Failed to upload image: ${response.statusMessage}');
       }
-      _updateUserProfileTraits(currentTraits);
-    }
-  }
-  
-  void _updateUserProfileTraits(List<String> newTraits) {
-    if (_userProfile.value != null) {
-      final currProfile = _userProfile.value!;
-      final updatedProfile = UserProfile(
-        id: currProfile.id,
-        role: currProfile.role,
-        email: currProfile.email,
-        age: currProfile.age,
-        gender: currProfile.gender,
-        firstName: currProfile.firstName,
-        lastName: currProfile.lastName,
-        aboutMe: currProfile.aboutMe,
-        religion: currProfile.religion,
-        zodiacSign: currProfile.zodiacSign,
-        status: currProfile.status,
-  
-        profileCompletionPercentage: currProfile.profileCompletionPercentage,
-        isDeleted: currProfile.isDeleted,
-        isVerified: currProfile.isVerified,
-        createdAt: currProfile.createdAt,
-        updatedAt: currProfile.updatedAt,
-        habits: currProfile.habits,
-        interests: currProfile.interests,
-        lifestyle: currProfile.lifestyle,
-        likeToMeet: currProfile.likeToMeet,
-        personalTraitsInspire: newTraits,
-        image: currProfile.image,
-        phone: currProfile.phone,
-        relationType: currProfile.relationType,
-        location: currProfile.location,
-      );
-      _userProfile.value = updatedProfile;
-      
-      // Changes will be saved when exiting edit mode
-    }
-  }
-  
-  void toggleInterest(String interest) {
-    // Note: Interests are complex and nested, this would need more sophisticated handling
-    // For now, this is a placeholder for interest toggling logic
-    AppLogger.info('🔄 [PROFILE] Toggle interest: $interest (needs complex implementation)');
-  }
-  
-  void updateAboutMe(String value) {
-    // Update the temporary controller text
-    aboutMeController.text = value;
-    // Mark as dirty (has unsaved changes)
-    isAboutMeDirty.value = true;
-
-    AppLogger.info('✏️ [ABOUT ME] About me text updated locally: ${value.length} characters');
-  }
-  
-  /// Submit about me text to backend only when button is pressed
-  Future<void> submitAboutMe() async {
-    if (!isAboutMeDirty.value) {
-      AppLogger.info('ℹ️ [ABOUT ME] No changes to submit');
-      return;
-    }
-    
-    final aboutMeText = aboutMeController.text;
-    AppLogger.info('📤 [ABOUT ME] Submitting about me to backend: ${aboutMeText.length} characters');
-    
-    if (_userProfile.value != null) {
-      final currProfile = _userProfile.value!;
-      final updatedProfile = UserProfile(
-        id: currProfile.id,
-        role: currProfile.role,
-        email: currProfile.email,
-        age: currProfile.age,
-        gender: currProfile.gender,
-        firstName: currProfile.firstName,
-        lastName: currProfile.lastName,
-        aboutMe: aboutMeText,
-        religion: currProfile.religion,
-        zodiacSign: currProfile.zodiacSign,
-        status: currProfile.status,
-
-        profileCompletionPercentage: currProfile.profileCompletionPercentage,
-        isDeleted: currProfile.isDeleted,
-        isVerified: currProfile.isVerified,
-        createdAt: currProfile.createdAt,
-        updatedAt: currProfile.updatedAt,
-        habits: currProfile.habits,
-        interests: currProfile.interests,
-        lifestyle: currProfile.lifestyle,
-        likeToMeet: currProfile.likeToMeet,
-        personalTraitsInspire: currProfile.personalTraitsInspire,
-        image: currProfile.image,
-        phone: currProfile.phone,
-        relationType: currProfile.relationType,
-        location: currProfile.location,
-      );
-      _userProfile.value = updatedProfile;
-      
-      // Changes will be saved when exiting edit mode
-      
-      // Mark as clean (no unsaved changes)
-      isAboutMeDirty.value = false;
-      
-      AppLogger.success('✅ [ABOUT ME] About me submitted successfully');
-    }
-  }
-  
-  /// Initialize about me controller with current profile data
-  void _initializeAboutMeController() {
-    if (_userProfile.value != null) {
-      aboutMeController.text = _userProfile.value!.aboutMe ?? '';
-      isAboutMeDirty.value = false;
-      AppLogger.info('🔄 [ABOUT ME] About me controller initialized with ${aboutMeController.text.length} characters');
-    }
-  }
-  
-  /// Refresh profile data
-  Future<void> refreshProfileData() async {
-    await _loadProfileData();
-  }
-
-  // Update methods for profile fields
-  void updateName(String value) {
-    if (_userProfile.value != null) {
-      final currProfile = _userProfile.value!;
-      final updatedProfile = UserProfile(
-        id: currProfile.id,
-        role: currProfile.role,
-        email: currProfile.email,
-        age: currProfile.age,
-        gender: currProfile.gender,
-        firstName: value,
-        lastName: currProfile.lastName,
-        aboutMe: currProfile.aboutMe,
-        religion: currProfile.religion,
-        zodiacSign: currProfile.zodiacSign,
-        status: currProfile.status,
-
-        profileCompletionPercentage: currProfile.profileCompletionPercentage,
-        isDeleted: currProfile.isDeleted,
-        isVerified: currProfile.isVerified,
-        createdAt: currProfile.createdAt,
-        updatedAt: currProfile.updatedAt,
-        habits: currProfile.habits,
-        interests: currProfile.interests,
-        lifestyle: currProfile.lifestyle,
-        likeToMeet: currProfile.likeToMeet,
-        personalTraitsInspire: currProfile.personalTraitsInspire,
-        image: currProfile.image,
-        phone: currProfile.phone,
-        relationType: currProfile.relationType,
-        location: currProfile.location,
-      );
-      _userProfile.value = updatedProfile;
-      
-      // Changes will be saved when exiting edit mode
-    }
-  }
-
-  void updateAge(String value) {
-    if (_userProfile.value != null) {
-      final age = int.tryParse(value);
-      if (age != null) {
-        final currProfile = _userProfile.value!;
-        final updatedProfile = UserProfile(
-          id: currProfile.id,
-          role: currProfile.role,
-          email: currProfile.email,
-          age: age,
-          gender: currProfile.gender,
-          firstName: currProfile.firstName,
-          lastName: currProfile.lastName,
-          aboutMe: currProfile.aboutMe,
-          religion: currProfile.religion,
-          zodiacSign: currProfile.zodiacSign,
-          status: currProfile.status,
-
-          profileCompletionPercentage: currProfile.profileCompletionPercentage,
-          isDeleted: currProfile.isDeleted,
-          isVerified: currProfile.isVerified,
-          createdAt: currProfile.createdAt,
-          updatedAt: currProfile.updatedAt,
-          habits: currProfile.habits,
-          interests: currProfile.interests,
-          lifestyle: currProfile.lifestyle,
-          likeToMeet: currProfile.likeToMeet,
-          personalTraitsInspire: currProfile.personalTraitsInspire,
-          image: currProfile.image,
-          phone: currProfile.phone,
-          relationType: currProfile.relationType,
-          location: currProfile.location,
-        );
-        _userProfile.value = updatedProfile;
-      }
-
-      // Changes will be saved when exiting edit mode
-    }
-  }
-
-  void updateGender(String value) {
-    if (_userProfile.value != null) {
-      final currProfile = _userProfile.value!;
-      final updatedProfile = UserProfile(
-        id: currProfile.id,
-        role: currProfile.role,
-        email: currProfile.email,
-        age: currProfile.age,
-        gender: value,
-        firstName: currProfile.firstName,
-        lastName: currProfile.lastName,
-        aboutMe: currProfile.aboutMe,
-        religion: currProfile.religion,
-        zodiacSign: currProfile.zodiacSign,
-        status: currProfile.status,
-
-        profileCompletionPercentage: currProfile.profileCompletionPercentage,
-        isDeleted: currProfile.isDeleted,
-        isVerified: currProfile.isVerified,
-        createdAt: currProfile.createdAt,
-        updatedAt: currProfile.updatedAt,
-        habits: currProfile.habits,
-        interests: currProfile.interests,
-        lifestyle: currProfile.lifestyle,
-        likeToMeet: currProfile.likeToMeet,
-        personalTraitsInspire: currProfile.personalTraitsInspire,
-        image: currProfile.image,
-        phone: currProfile.phone,
-        relationType: currProfile.relationType,
-        location: currProfile.location,
-      );
-      _userProfile.value = updatedProfile;
-
-      // Changes will be saved when exiting edit mode
-    }
-  }
-
-  void updateReligion(String value) {
-    if (_userProfile.value != null) {
-      final currProfile = _userProfile.value!;
-      final updatedProfile = UserProfile(
-        id: currProfile.id,
-        role: currProfile.role,
-        email: currProfile.email,
-        age: currProfile.age,
-        gender: currProfile.gender,
-        firstName: currProfile.firstName,
-        lastName: currProfile.lastName,
-        aboutMe: currProfile.aboutMe,
-        religion: value,
-        zodiacSign: currProfile.zodiacSign,
-        status: currProfile.status,
-
-        profileCompletionPercentage: currProfile.profileCompletionPercentage,
-        isDeleted: currProfile.isDeleted,
-        isVerified: currProfile.isVerified,
-        createdAt: currProfile.createdAt,
-        updatedAt: currProfile.updatedAt,
-        habits: currProfile.habits,
-        interests: currProfile.interests,
-        lifestyle: currProfile.lifestyle,
-        likeToMeet: currProfile.likeToMeet,
-        personalTraitsInspire: currProfile.personalTraitsInspire,
-        image: currProfile.image,
-        phone: currProfile.phone,
-        relationType: currProfile.relationType,
-        location: currProfile.location,
-      );
-      _userProfile.value = updatedProfile;
-
-      // Changes will be saved when exiting edit mode
-    }
-  }
-
-  void updateZodiac(String value) {
-    if (_userProfile.value != null) {
-      final currProfile = _userProfile.value!;
-      final updatedProfile = UserProfile(
-        id: currProfile.id,
-        role: currProfile.role,
-        email: currProfile.email,
-        age: currProfile.age,
-        gender: currProfile.gender,
-        firstName: currProfile.firstName,
-        lastName: currProfile.lastName,
-        aboutMe: currProfile.aboutMe,
-        religion: currProfile.religion,
-        zodiacSign: value,
-        status: currProfile.status,
-
-        profileCompletionPercentage: currProfile.profileCompletionPercentage,
-        isDeleted: currProfile.isDeleted,
-        isVerified: currProfile.isVerified,
-        createdAt: currProfile.createdAt,
-        updatedAt: currProfile.updatedAt,
-        habits: currProfile.habits,
-        interests: currProfile.interests,
-        lifestyle: currProfile.lifestyle,
-        likeToMeet: currProfile.likeToMeet,
-        personalTraitsInspire: currProfile.personalTraitsInspire,
-        image: currProfile.image,
-        phone: currProfile.phone,
-        relationType: currProfile.relationType,
-        location: currProfile.location,
-      );
-      _userProfile.value = updatedProfile;
-
-      // Changes will be saved when exiting edit mode
-    }
-  }
-
-  // Body update methods
-  void updateHeight(String value) {
-    if (_userProfile.value != null) {
-      final currProfile = _userProfile.value!;
-      final oldBody = currProfile.body;
-      final heightValue = double.tryParse(value);
-
-      final updatedBody = Body(
-        heightCm: heightValue,
-        weightKg: oldBody?.weightKg,
-      );
-
-      _updateUserProfileWithBody(updatedBody);
-
-      // Changes will be saved when exiting edit mode
-    }
-  }
-
-  void updateWeight(String value) {
-    if (_userProfile.value != null) {
-      final currProfile = _userProfile.value!;
-      final oldBody = currProfile.body;
-      final weightValue = double.tryParse(value);
-
-      final updatedBody = Body(
-        heightCm: oldBody?.heightCm,
-        weightKg: weightValue,
-      );
-
-      _updateUserProfileWithBody(updatedBody);
-
-      // Changes will be saved when exiting edit mode
-    }
-  }
-
-  /// Update basic profile information (name, age, gender, height, weight) together
-  Future<void> updateBasicProfileInfo() async {
-    try {
-      AppLogger.info('🔄 [PROFILE CONTROLLER] Updating basic profile information...');
-
-      if (_userProfile.value == null) {
-        AppLogger.warning('❌ [PROFILE CONTROLLER] No profile data available');
-        Get.snackbar(
-          'Error',
-          'No profile data available',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return;
-      }
-
-      // Validate required fields
-      if (nameController.text.isEmpty) {
-        Get.snackbar(
-          'Required Field',
-          'Name is required',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
-        return;
-      }
-
-      if (ageController.text.isEmpty) {
-        Get.snackbar(
-          'Required Field',
-          'Age is required',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
-        return;
-      }
-
-      if (selectedGender.value.isEmpty) {
-        Get.snackbar(
-          'Required Field',
-          'Gender is required',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
-        return;
-      }
-
-      isLoading.value = true;
-
-      // Update each field individually using existing methods
-      if (nameController.text != _userProfile.value!.firstName) {
-        updateName(nameController.text);
-      }
-
-      final newAge = int.tryParse(ageController.text);
-      if (newAge != null && newAge != _userProfile.value!.age) {
-        updateAge(ageController.text);
-      }
-
-      if (selectedGender.value != _userProfile.value!.gender) {
-        updateGender(selectedGender.value);
-      }
-
-      if (heightController.text != userHeight && heightController.text.isNotEmpty) {
-        updateHeight(heightController.text);
-      }
-
-      if (weightController.text != userWeight && weightController.text.isNotEmpty) {
-        updateWeight(weightController.text);
-      }
-
-      AppLogger.success('✅ [PROFILE CONTROLLER] Basic profile information update initiated');
-      Get.snackbar(
-        'Success',
-        'Profile information updated successfully',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-
     } catch (e) {
-      AppLogger.error('❌ [PROFILE CONTROLLER] Error updating basic profile info: $e');
-      Get.snackbar(
-        'Error',
-        'An unexpected error occurred while updating profile',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showSnackbar('Error', 'Failed to upload photo. Please try again.', Colors.red);
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Update user profile with new lifestyle data
-  void _updateUserProfileWithLifestyle(Lifestyle updatedLifestyle) {
-    if (_userProfile.value != null) {
-      final currProfile = _userProfile.value!;
-      final updatedProfile = UserProfile(
-        id: currProfile.id,
-        role: currProfile.role,
-        email: currProfile.email,
-        age: currProfile.age,
-        gender: currProfile.gender,
-        firstName: currProfile.firstName,
-        lastName: currProfile.lastName,
-        aboutMe: currProfile.aboutMe,
-        religion: currProfile.religion,
-        zodiacSign: currProfile.zodiacSign,
-        status: currProfile.status,
-        profileCompletionPercentage: currProfile.profileCompletionPercentage,
-        isDeleted: currProfile.isDeleted,
-        isVerified: currProfile.isVerified,
-        createdAt: currProfile.createdAt,
-        updatedAt: currProfile.updatedAt,
-        habits: currProfile.habits,
-        interests: currProfile.interests,
-        lifestyle: updatedLifestyle,
-        likeToMeet: currProfile.likeToMeet,
-        personalTraitsInspire: currProfile.personalTraitsInspire,
-        image: currProfile.image,
-        bodyImage: currProfile.bodyImage,
-        headShotImage: currProfile.headShotImage,
-        personalityImage: currProfile.personalityImage,
-        phone: currProfile.phone,
-        relationType: currProfile.relationType,
-        location: currProfile.location,
-        body: currProfile.body,
-        eduJob: currProfile.eduJob,
-        beliefsOtherText: currProfile.beliefsOtherText,
-        address: currProfile.address,
-        traitsOtherText: currProfile.traitsOtherText,
-      );
-      _userProfile.value = updatedProfile;
+  // Edit mode methods
+  void toggleEditMode() {
+    isEditMode.value = !isEditMode.value;
+    if (isEditMode.value) {
+      _initializeControllersForEdit();
+    } else {
+      _saveProfileChanges();
     }
   }
 
-  /// Update user profile with new body data
-  void _updateUserProfileWithBody(Body updatedBody) {
-    if (_userProfile.value != null) {
-      final currProfile = _userProfile.value!;
-      final updatedProfile = UserProfile(
-        id: currProfile.id,
-        role: currProfile.role,
-        email: currProfile.email,
-        age: currProfile.age,
-        gender: currProfile.gender,
-        firstName: currProfile.firstName,
-        lastName: currProfile.lastName,
-        aboutMe: currProfile.aboutMe,
-        religion: currProfile.religion,
-        zodiacSign: currProfile.zodiacSign,
-        status: currProfile.status,
-        profileCompletionPercentage: currProfile.profileCompletionPercentage,
-        isDeleted: currProfile.isDeleted,
-        isVerified: currProfile.isVerified,
-        createdAt: currProfile.createdAt,
-        updatedAt: currProfile.updatedAt,
-        habits: currProfile.habits,
-        interests: currProfile.interests,
-        lifestyle: currProfile.lifestyle,
-        likeToMeet: currProfile.likeToMeet,
-        personalTraitsInspire: currProfile.personalTraitsInspire,
-        image: currProfile.image,
-        bodyImage: currProfile.bodyImage,
-        headShotImage: currProfile.headShotImage,
-        personalityImage: currProfile.personalityImage,
-        phone: currProfile.phone,
-        relationType: currProfile.relationType,
-        location: currProfile.location,
-        body: updatedBody,
-        eduJob: currProfile.eduJob,
-        beliefsOtherText: currProfile.beliefsOtherText,
-        address: currProfile.address,
-        traitsOtherText: currProfile.traitsOtherText,
-      );
-      _userProfile.value = updatedProfile;
+  void cancelEditMode() {
+    isEditMode.value = false;
+    _resetControllersToProfileData();
+  }
+
+  void _initializeControllersForEdit() {
+    if (profile == null) return;
+    
+    nameController.text = profile!.firstName ?? '';
+    ageController.text = profile!.age?.toString() ?? '';
+    heightController.text = profile!.body?.heightCm?.toString() ?? '';
+    weightController.text = profile!.body?.weightKg?.toString() ?? '';
+    educationController.text = profile!.eduJob?.educationLevel ?? '';
+    jobStatusController.text = profile!.eduJob?.jobTitle ?? '';
+    locationController.text = profile!.location?.toString() ?? '';
+    
+    selectedGender.value = profile!.gender ?? '';
+    selectedZodiac.value = profile!.zodiacSign ?? '';
+    selectedReligion.value = profile!.religion ?? '';
+    selectedSleepingStyle.value = profile!.lifestyle?.sleepingStyle ?? '';
+    selectedLoveStyle.value = profile!.lifestyle?.loveStyle ?? '';
+    selectedWeekends.value = profile!.lifestyle?.weekends ?? '';
+    selectedTraveling.value = profile!.lifestyle?.traveling ?? '';
+    selectedCommunicationStyle.value = profile!.habits?.communicationStyle.join(', ') ?? '';
+    selectedExerciseFrequency.value = profile!.habits?.workout ?? '';
+    selectedFoodPreference.value = profile!.habits?.eatingStyle.join(', ') ?? '';
+    selectedSocialMediaUsage.value = profile!.habits?.socialMedia ?? '';
+    selectedSmokingDrinking.value = profile!.habits?.smokeOrDrink ?? '';
+    selectedNewExperiences.value = profile!.habits?.newExercise ?? '';
+  }
+
+  void _resetControllersToProfileData() => _initializeControllersForEdit();
+
+  void _updateProfileCompletionFromControllers() {
+    updateProfileCompletion();
+  }
+
+  Future<void> _saveProfileChanges() async {
+    if (profile == null) return;
+    
+    isLoading.value = true;
+    try {
+      final changes = _collectProfileChanges();
+      
+      if (changes.isNotEmpty) {
+        await _submitUpdate(changes);
+        _showSnackbar('Success', 'Profile updated successfully', Colors.green);
+      }
+    } catch (e) {
+      AppLogger.error('Error saving profile changes: $e');
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  /// Submit profile updates to the server
+  Map<String, dynamic> _collectProfileChanges() {
+    final changes = <String, dynamic>{};
+    
+    if (nameController.text.isNotEmpty && nameController.text != profile!.firstName) {
+      changes['firstName'] = nameController.text;
+    }
+    
+    final newAge = int.tryParse(ageController.text);
+    if (newAge != null && newAge != profile!.age) {
+      changes['age'] = newAge;
+    }
+    
+    if (selectedGender.value.isNotEmpty && selectedGender.value != profile!.gender) {
+      changes['gender'] = selectedGender.value;
+    }
+    
+    _addBodyChanges(changes);
+    _addBasicChanges(changes);
+    _addLifestyleChanges(changes);
+    _addHabitsChanges(changes);
+    
+    return changes;
+  }
+
+  void _addBodyChanges(Map<String, dynamic> changes) {
+    final newHeight = double.tryParse(heightController.text);
+    final newWeight = double.tryParse(weightController.text);
+    
+    if (newHeight != null && newHeight != profile!.body?.heightCm) {
+      changes['body'] = {'heightCm': newHeight};
+    }
+    
+    if (newWeight != null && newWeight != profile!.body?.weightKg) {
+      changes['body'] ??= {};
+      changes['body']['weightKg'] = newWeight;
+    }
+  }
+
+  void _addBasicChanges(Map<String, dynamic> changes) {
+    if (selectedZodiac.value.isNotEmpty && selectedZodiac.value != profile!.zodiacSign) {
+      changes['zodiacSign'] = selectedZodiac.value;
+    }
+    
+    if (selectedReligion.value.isNotEmpty && selectedReligion.value != profile!.religion) {
+      changes['religion'] = selectedReligion.value;
+    }
+  }
+
+  void _addLifestyleChanges(Map<String, dynamic> changes) {
+    final lifestyleUpdates = <String, String>{
+      'sleepingStyle': selectedSleepingStyle.value,
+      'loveStyle': selectedLoveStyle.value,
+      'weekends': selectedWeekends.value,
+      'traveling': selectedTraveling.value,
+      'homeEnvironment': selectedHomeEnvironment.value,
+      'livingSpace': selectedLivingSpace.value,
+    };
+    
+    lifestyleUpdates.forEach((key, value) {
+      if (value.isNotEmpty && value != _getLifestyleValue(key)) {
+        changes['lifestyle'] ??= {};
+        changes['lifestyle'][key] = value;
+      }
+    });
+  }
+
+  String _getLifestyleValue(String key) {
+    final lifestyle = profile!.lifestyle;
+    if (lifestyle == null) return '';
+    
+    switch (key) {
+      case 'sleepingStyle': return lifestyle.sleepingStyle ?? '';
+      case 'loveStyle': return lifestyle.loveStyle ?? '';
+      case 'weekends': return lifestyle.weekends ?? '';
+      case 'traveling': return lifestyle.traveling ?? '';
+      case 'homeEnvironment': return lifestyle.homeEnvironment ?? '';
+      case 'livingSpace': return lifestyle.livingSpace ?? '';
+      default: return '';
+    }
+  }
+
+  void _addHabitsChanges(Map<String, dynamic> changes) {
+    if (selectedCommunicationStyle.value.isNotEmpty && 
+        selectedCommunicationStyle.value != profile!.habits?.communicationStyle.join(', ')) {
+      changes['habits'] ??= {};
+      changes['habits']['communicationStyle'] = selectedCommunicationStyle.value.split(', ').map((s) => s.trim()).toList();
+    }
+    
+    if (selectedExerciseFrequency.value.isNotEmpty && 
+        selectedExerciseFrequency.value != profile!.habits?.workout) {
+      changes['habits'] ??= {};
+      changes['habits']['workout'] = selectedExerciseFrequency.value;
+    }
+    
+    if (selectedFoodPreference.value.isNotEmpty && 
+        selectedFoodPreference.value != profile!.habits?.eatingStyle.join(', ')) {
+      changes['habits'] ??= {};
+      changes['habits']['eatingStyle'] = selectedFoodPreference.value.split(', ').map((s) => s.trim()).toList();
+    }
+    
+    if (selectedSocialMediaUsage.value.isNotEmpty && 
+        selectedSocialMediaUsage.value != profile!.habits?.socialMedia) {
+      changes['habits'] ??= {};
+      changes['habits']['socialMedia'] = selectedSocialMediaUsage.value;
+    }
+    
+    if (selectedSmokingDrinking.value.isNotEmpty && 
+        selectedSmokingDrinking.value != profile!.habits?.smokeOrDrink) {
+      changes['habits'] ??= {};
+      changes['habits']['smokeOrDrink'] = selectedSmokingDrinking.value;
+    }
+    
+    if (selectedNewExperiences.value.isNotEmpty && 
+        selectedNewExperiences.value != profile!.habits?.newExercise) {
+      changes['habits'] ??= {};
+      changes['habits']['newExercise'] = selectedNewExperiences.value;
+    }
+  }
+
   Future<void> _submitUpdate(Map<String, dynamic> data) async {
-    if (!isProfileServiceInitialized) {
-      AppLogger.error('❌ [PROFILE CONTROLLER] Profile service not initialized');
-      return;
-    }
+    if (!isProfileServiceInitialized) return;
 
     try {
-      AppLogger.info('📤 [PROFILE CONTROLLER] Submitting profile update: $data');
-      
       final response = await _profileService.updateProfile(data: data);
       
       if (response.statusCode == 200 || response.statusCode == 201) {
-        AppLogger.success('✅ [PROFILE CONTROLLER] Profile update successful');
-        
-        // Refresh profile data to get latest updates
         await _loadProfileData();
-        
-        // Show success message
-        Get.snackbar(
-          'Success',
-          'Profile updated successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        _showSnackbar('Success', 'Profile updated successfully', Colors.green);
       } else {
         throw Exception('Failed to update profile: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      AppLogger.error('❌ [PROFILE CONTROLLER] Dio error updating profile: ${e.message}', e, e.stackTrace);
-      
-      String errorMessage = 'Failed to update profile';
-      if (e.response?.statusCode == 401) {
-        errorMessage = 'Session expired. Please sign in again.';
-        _handleAuthError();
-      } else if (e.response?.data != null) {
-        errorMessage = e.response?.data['message'] ?? e.response?.data['error'] ?? errorMessage;
-      }
-      
-      Get.snackbar(
-        'Error',
-        errorMessage,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _handleDioError(e);
     } catch (e) {
-      AppLogger.error('❌ [PROFILE CONTROLLER] Unexpected error updating profile: $e');
-      Get.snackbar(
-        'Error',
-        'An unexpected error occurred while updating profile.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _showSnackbar('Error', 'An unexpected error occurred while updating profile.', Colors.red);
+    }
+  }
+
+  // Profile update methods
+  void updateProfileCompletion() {
+    _profileCompletion.value = profileCompletionPercentage;
+  }
+
+  void addPhoto(String photoUrl) {
+    if (profile != null && profile!.image.length < 6) {
+      final currentPhotos = List<String>.from(profile!.image)..add(photoUrl);
+      _updateProfile(image: currentPhotos);
+    }
+  }
+
+  void removePhoto(int index) {
+    if (profile != null && index >= 0 && index < profile!.image.length) {
+      final currentPhotos = List<String>.from(profile!.image)..removeAt(index);
+      _updateProfile(image: currentPhotos);
+    }
+  }
+
+  void toggleTrait(String trait) {
+    if (profile != null) {
+      final currentTraits = List<String>.from(profile!.personalTraitsInspire);
+      if (currentTraits.contains(trait)) {
+        currentTraits.remove(trait);
+      } else {
+        currentTraits.add(trait);
+      }
+      _updateProfile(personalTraitsInspire: currentTraits);
+    }
+  }
+
+  void toggleInterest(String interest) {
+    // Placeholder for complex interest toggling logic
+  }
+
+  void updateAboutMe(String value) {
+    aboutMeController.text = value;
+    isAboutMeDirty.value = true;
+  }
+
+  Future<void> submitAboutMe() async {
+    if (!isAboutMeDirty.value || profile == null) return;
+    
+    _updateProfile(aboutMe: aboutMeController.text);
+    isAboutMeDirty.value = false;
+  }
+
+  void _initializeAboutMeController() {
+    if (profile != null) {
+      aboutMeController.text = profile!.aboutMe ?? '';
+      isAboutMeDirty.value = false;
+    }
+  }
+
+  Future<void> refreshProfileData() => _loadProfileData();
+
+  // Individual field update methods
+  void updateName(String value) => _updateProfile(firstName: value);
+  void updateAge(String value) => _updateProfile(age: int.tryParse(value));
+  void updateGender(String value) => _updateProfile(gender: value);
+  void updateReligion(String value) => _updateProfile(religion: value);
+  void updateZodiac(String value) => _updateProfile(zodiacSign: value);
+  void updateHeight(String value) => _updateBody(heightCm: double.tryParse(value));
+  void updateWeight(String value) => _updateBody(weightKg: double.tryParse(value));
+
+  Future<void> updateBasicProfileInfo() async {
+    if (profile == null) {
+      _showSnackbar('Error', 'No profile data available', Colors.red);
+      return;
+    }
+
+    if (nameController.text.isEmpty || ageController.text.isEmpty || selectedGender.value.isEmpty) {
+      _showSnackbar('Required Field', 'Name, age, and gender are required', Colors.orange);
+      return;
+    }
+
+    isLoading.value = true;
+    try {
+      if (nameController.text != profile!.firstName) updateName(nameController.text);
+      
+      final newAge = int.tryParse(ageController.text);
+      if (newAge != null && newAge != profile!.age) updateAge(ageController.text);
+      
+      if (selectedGender.value != profile!.gender) updateGender(selectedGender.value);
+      if (heightController.text.isNotEmpty && heightController.text != userHeight) updateHeight(heightController.text);
+      if (weightController.text.isNotEmpty && weightController.text != userWeight) updateWeight(weightController.text);
+
+      _showSnackbar('Success', 'Profile information updated successfully', Colors.green);
+    } catch (e) {
+      _showSnackbar('Error', 'An unexpected error occurred while updating profile', Colors.red);
+    } finally {
+      isLoading.value = false;
     }
   }
 
   // Habits update methods
-  void updateCommunicationStyle(String value) {
-    if (_userProfile.value != null && _userProfile.value!.habits != null) {
-      final currProfile = _userProfile.value!;
-      final oldHabits = currProfile.habits!;
-      
-      // Convert single selection to list format
-      final List<String> communicationStyles = [value];
-      
-      final updatedHabits = Habits(
-        communicationStyle: communicationStyles,
-        workout: oldHabits.workout,
-        eatingStyle: oldHabits.eatingStyle,
-        socialMedia: oldHabits.socialMedia,
-        smokeOrDrink: oldHabits.smokeOrDrink,
-        newExercise: oldHabits.newExercise,
-      );
-      
-      _updateUserProfileWithHabits(updatedHabits);
+  void updateCommunicationStyle(String value) => _updateHabits(communicationStyle: [value]);
+  void updateWorkout(String value) => _updateHabits(workout: value);
+  void updateEatingStyle(String value) => _updateHabits(eatingStyle: [value]);
+  void updateSocialMedia(String value) => _updateHabits(socialMedia: value);
+  void updateSmokeOrDrink(String value) => _updateHabits(smokeOrDrink: value);
+  void updateNewExperiences(String value) => _updateHabits(newExercise: value);
 
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [HABITS] Communication style updated: $value');
-    }
-  }
-
-  void updateWorkout(String value) {
-    if (_userProfile.value != null && _userProfile.value!.habits != null) {
-      final currProfile = _userProfile.value!;
-      final oldHabits = currProfile.habits!;
-      
-      final updatedHabits = Habits(
-        communicationStyle: oldHabits.communicationStyle,
-        workout: value,
-        eatingStyle: oldHabits.eatingStyle,
-        socialMedia: oldHabits.socialMedia,
-        smokeOrDrink: oldHabits.smokeOrDrink,
-        newExercise: oldHabits.newExercise,
-      );
-      
-      _updateUserProfileWithHabits(updatedHabits);
-
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [HABITS] Workout frequency updated: $value');
-    }
-  }
-
-  void updateEatingStyle(String value) {
-    if (_userProfile.value != null && _userProfile.value!.habits != null) {
-      final currProfile = _userProfile.value!;
-      final oldHabits = currProfile.habits!;
-      
-      // Convert single selection to list format
-      final List<String> eatingStyles = [value];
-      
-      final updatedHabits = Habits(
-        communicationStyle: oldHabits.communicationStyle,
-        workout: oldHabits.workout,
-        eatingStyle: eatingStyles,
-        socialMedia: oldHabits.socialMedia,
-        smokeOrDrink: oldHabits.smokeOrDrink,
-        newExercise: oldHabits.newExercise,
-      );
-      
-      _updateUserProfileWithHabits(updatedHabits);
-
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [HABITS] Eating style updated: $value');
-    }
-  }
-
-  void updateSocialMedia(String value) {
-    if (_userProfile.value != null && _userProfile.value!.habits != null) {
-      final currProfile = _userProfile.value!;
-      final oldHabits = currProfile.habits!;
-      
-      final updatedHabits = Habits(
-        communicationStyle: oldHabits.communicationStyle,
-        workout: oldHabits.workout,
-        eatingStyle: oldHabits.eatingStyle,
-        socialMedia: value,
-        smokeOrDrink: oldHabits.smokeOrDrink,
-        newExercise: oldHabits.newExercise,
-      );
-      
-      _updateUserProfileWithHabits(updatedHabits);
-
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [HABITS] Social media usage updated: $value');
-    }
-  }
-
-  void updateSmokeOrDrink(String value) {
-    if (_userProfile.value != null && _userProfile.value!.habits != null) {
-      final currProfile = _userProfile.value!;
-      final oldHabits = currProfile.habits!;
-      
-      final updatedHabits = Habits(
-        communicationStyle: oldHabits.communicationStyle,
-        workout: oldHabits.workout,
-        eatingStyle: oldHabits.eatingStyle,
-        socialMedia: oldHabits.socialMedia,
-        smokeOrDrink: value,
-        newExercise: oldHabits.newExercise,
-      );
-      
-      _updateUserProfileWithHabits(updatedHabits);
-
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [HABITS] Smoke/drink habits updated: $value');
-    }
-  }
-
-  void updateNewExperiences(String value) {
-    if (_userProfile.value != null && _userProfile.value!.habits != null) {
-      final currProfile = _userProfile.value!;
-      final oldHabits = currProfile.habits!;
-      
-      final updatedHabits = Habits(
-        communicationStyle: oldHabits.communicationStyle,
-        workout: oldHabits.workout,
-        eatingStyle: oldHabits.eatingStyle,
-        socialMedia: oldHabits.socialMedia,
-        smokeOrDrink: oldHabits.smokeOrDrink,
-        newExercise: value,
-      );
-      
-      _updateUserProfileWithHabits(updatedHabits);
-
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [HABITS] New experiences preference updated: $value');
-    }
-  }
-
-  /// Update user profile with new habits data
-  void _updateUserProfileWithHabits(Habits updatedHabits) {
-    if (_userProfile.value != null) {
-      final currProfile = _userProfile.value!;
-      final updatedProfile = UserProfile(
-        id: currProfile.id,
-        role: currProfile.role,
-        email: currProfile.email,
-        age: currProfile.age,
-        gender: currProfile.gender,
-        firstName: currProfile.firstName,
-        lastName: currProfile.lastName,
-        aboutMe: currProfile.aboutMe,
-        religion: currProfile.religion,
-        zodiacSign: currProfile.zodiacSign,
-        status: currProfile.status,
-        profileCompletionPercentage: currProfile.profileCompletionPercentage,
-        isDeleted: currProfile.isDeleted,
-        isVerified: currProfile.isVerified,
-        createdAt: currProfile.createdAt,
-        updatedAt: currProfile.updatedAt,
-        habits: updatedHabits,
-        interests: currProfile.interests,
-        lifestyle: currProfile.lifestyle,
-        likeToMeet: currProfile.likeToMeet,
-        personalTraitsInspire: currProfile.personalTraitsInspire,
-        image: currProfile.image,
-        bodyImage: currProfile.bodyImage,
-        headShotImage: currProfile.headShotImage,
-        personalityImage: currProfile.personalityImage,
-        phone: currProfile.phone,
-        relationType: currProfile.relationType,
-        location: currProfile.location,
-        body: currProfile.body,
-        eduJob: currProfile.eduJob,
-        beliefsOtherText: currProfile.beliefsOtherText,
-        address: currProfile.address,
-        traitsOtherText: currProfile.traitsOtherText,
-      );
-      _userProfile.value = updatedProfile;
-    }
-  }
+  // Lifestyle update methods
+  void updateSleepingStyle(String value) => _updateLifestyle(sleepingStyle: value);
+  void updateLoveStyle(String value) => _updateLifestyle(loveStyle: value);
+  void updateWeekend(String value) => _updateLifestyle(weekends: value);
+  void updateTravelling(String value) => _updateLifestyle(traveling: value);
+  void updateHomeEnvironment(String value) => _updateLifestyle(homeEnvironment: value);
+  void updateLivingSpace(String value) => _updateLifestyle(livingSpace: value);
 
   // Education and Career update methods
   void updateEducation(String value) {
-    if (_userProfile.value != null) {
-      // For education, we need to update the profile's education field
-      // This might be part of a more complex education/career structure
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [EDUCATION] Education level updated: $value');
-    }
+    // Placeholder for education update logic
   }
 
   void updateJobStatus(String value) {
-    if (_userProfile.value != null) {
-      // For job status, we need to update the profile's job status field
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [CAREER] Job status updated: $value');
-    }
+    // Placeholder for job status update logic
   }
 
-  // Lifestyle update methods
-  void updateSleepingStyle(String value) {
-    if (_userProfile.value != null && _userProfile.value!.lifestyle != null) {
-      final currProfile = _userProfile.value!;
-      final oldLifestyle = currProfile.lifestyle!;
-      
-      final updatedLifestyle = Lifestyle(
-        sleepingStyle: value,
-        loveStyle: oldLifestyle.loveStyle,
-        weekends: oldLifestyle.weekends,
-        traveling: oldLifestyle.traveling,
-        homeEnvironment: oldLifestyle.homeEnvironment,
-        livingSpace: oldLifestyle.livingSpace,
-      );
-      
-      _updateUserProfileWithLifestyle(updatedLifestyle);
-
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [LIFESTYLE] Sleeping style updated: $value');
-    }
+  // Helper methods for profile updates
+  void _updateProfile({
+    String? firstName,
+    String? lastName,
+    int? age,
+    String? gender,
+    String? aboutMe,
+    String? religion,
+    String? zodiacSign,
+    List<String>? image,
+    List<String>? personalTraitsInspire,
+  }) {
+    if (profile == null) return;
+    
+    _userProfile.value = UserProfile(
+      id: profile!.id,
+      role: profile!.role,
+      email: profile!.email,
+      age: age ?? profile!.age,
+      gender: gender ?? profile!.gender,
+      firstName: firstName ?? profile!.firstName,
+      lastName: lastName ?? profile!.lastName,
+      aboutMe: aboutMe ?? profile!.aboutMe,
+      religion: religion ?? profile!.religion,
+      zodiacSign: zodiacSign ?? profile!.zodiacSign,
+      status: profile!.status,
+      profileCompletionPercentage: profile!.profileCompletionPercentage,
+      isDeleted: profile!.isDeleted,
+      isVerified: profile!.isVerified,
+      createdAt: profile!.createdAt,
+      updatedAt: profile!.updatedAt,
+      habits: profile!.habits,
+      interests: profile!.interests,
+      lifestyle: profile!.lifestyle,
+      likeToMeet: profile!.likeToMeet,
+      personalTraitsInspire: personalTraitsInspire ?? profile!.personalTraitsInspire,
+      image: image ?? profile!.image,
+      bodyImage: profile!.bodyImage,
+      headShotImage: profile!.headShotImage,
+      personalityImage: profile!.personalityImage,
+      phone: profile!.phone,
+      relationType: profile!.relationType,
+      location: profile!.location,
+      body: profile!.body,
+      eduJob: profile!.eduJob,
+      beliefsOtherText: profile!.beliefsOtherText,
+      address: profile!.address,
+      traitsOtherText: profile!.traitsOtherText,
+    );
   }
 
-  void updateLoveStyle(String value) {
-    if (_userProfile.value != null && _userProfile.value!.lifestyle != null) {
-      final currProfile = _userProfile.value!;
-      final oldLifestyle = currProfile.lifestyle!;
-      
-      final updatedLifestyle = Lifestyle(
-        sleepingStyle: oldLifestyle.sleepingStyle,
-        loveStyle: value,
-        weekends: oldLifestyle.weekends,
-        traveling: oldLifestyle.traveling,
-        homeEnvironment: oldLifestyle.homeEnvironment,
-        livingSpace: oldLifestyle.livingSpace,
-      );
-      
-      _updateUserProfileWithLifestyle(updatedLifestyle);
-
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [LIFESTYLE] Love style updated: $value');
-    }
+  void _updateBody({double? heightCm, double? weightKg}) {
+    if (profile == null) return;
+    
+    final updatedBody = Body(
+      heightCm: heightCm ?? profile!.body?.heightCm,
+      weightKg: weightKg ?? profile!.body?.weightKg,
+    );
+    
+    _userProfile.value = UserProfile(
+      id: profile!.id,
+      role: profile!.role,
+      email: profile!.email,
+      age: profile!.age,
+      gender: profile!.gender,
+      firstName: profile!.firstName,
+      lastName: profile!.lastName,
+      aboutMe: profile!.aboutMe,
+      religion: profile!.religion,
+      zodiacSign: profile!.zodiacSign,
+      status: profile!.status,
+      profileCompletionPercentage: profile!.profileCompletionPercentage,
+      isDeleted: profile!.isDeleted,
+      isVerified: profile!.isVerified,
+      createdAt: profile!.createdAt,
+      updatedAt: profile!.updatedAt,
+      habits: profile!.habits,
+      interests: profile!.interests,
+      lifestyle: profile!.lifestyle,
+      likeToMeet: profile!.likeToMeet,
+      personalTraitsInspire: profile!.personalTraitsInspire,
+      image: profile!.image,
+      bodyImage: profile!.bodyImage,
+      headShotImage: profile!.headShotImage,
+      personalityImage: profile!.personalityImage,
+      phone: profile!.phone,
+      relationType: profile!.relationType,
+      location: profile!.location,
+      body: updatedBody,
+      eduJob: profile!.eduJob,
+      beliefsOtherText: profile!.beliefsOtherText,
+      address: profile!.address,
+      traitsOtherText: profile!.traitsOtherText,
+    );
   }
 
-  void updateWeekend(String value) {
-    if (_userProfile.value != null && _userProfile.value!.lifestyle != null) {
-      final currProfile = _userProfile.value!;
-      final oldLifestyle = currProfile.lifestyle!;
-      
-      final updatedLifestyle = Lifestyle(
-        sleepingStyle: oldLifestyle.sleepingStyle,
-        loveStyle: oldLifestyle.loveStyle,
-        weekends: value,
-        traveling: oldLifestyle.traveling,
-        homeEnvironment: oldLifestyle.homeEnvironment,
-        livingSpace: oldLifestyle.livingSpace,
-      );
-      
-      _updateUserProfileWithLifestyle(updatedLifestyle);
-
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [LIFESTYLE] Weekend preference updated: $value');
-    }
+  void _updateLifestyle({
+    String? sleepingStyle,
+    String? loveStyle,
+    String? weekends,
+    String? traveling,
+    String? homeEnvironment,
+    String? livingSpace,
+  }) {
+    if (profile == null || profile!.lifestyle == null) return;
+    
+    final updatedLifestyle = Lifestyle(
+      sleepingStyle: sleepingStyle ?? profile!.lifestyle!.sleepingStyle,
+      loveStyle: loveStyle ?? profile!.lifestyle!.loveStyle,
+      weekends: weekends ?? profile!.lifestyle!.weekends,
+      traveling: traveling ?? profile!.lifestyle!.traveling,
+      homeEnvironment: homeEnvironment ?? profile!.lifestyle!.homeEnvironment,
+      livingSpace: livingSpace ?? profile!.lifestyle!.livingSpace,
+    );
+    
+    _userProfile.value = UserProfile(
+      id: profile!.id,
+      role: profile!.role,
+      email: profile!.email,
+      age: profile!.age,
+      gender: profile!.gender,
+      firstName: profile!.firstName,
+      lastName: profile!.lastName,
+      aboutMe: profile!.aboutMe,
+      religion: profile!.religion,
+      zodiacSign: profile!.zodiacSign,
+      status: profile!.status,
+      profileCompletionPercentage: profile!.profileCompletionPercentage,
+      isDeleted: profile!.isDeleted,
+      isVerified: profile!.isVerified,
+      createdAt: profile!.createdAt,
+      updatedAt: profile!.updatedAt,
+      habits: profile!.habits,
+      interests: profile!.interests,
+      lifestyle: updatedLifestyle,
+      likeToMeet: profile!.likeToMeet,
+      personalTraitsInspire: profile!.personalTraitsInspire,
+      image: profile!.image,
+      bodyImage: profile!.bodyImage,
+      headShotImage: profile!.headShotImage,
+      personalityImage: profile!.personalityImage,
+      phone: profile!.phone,
+      relationType: profile!.relationType,
+      location: profile!.location,
+      body: profile!.body,
+      eduJob: profile!.eduJob,
+      beliefsOtherText: profile!.beliefsOtherText,
+      address: profile!.address,
+      traitsOtherText: profile!.traitsOtherText,
+    );
   }
 
-  void updateTravelling(String value) {
-    if (_userProfile.value != null && _userProfile.value!.lifestyle != null) {
-      final currProfile = _userProfile.value!;
-      final oldLifestyle = currProfile.lifestyle!;
-      
-      final updatedLifestyle = Lifestyle(
-        sleepingStyle: oldLifestyle.sleepingStyle,
-        loveStyle: oldLifestyle.loveStyle,
-        weekends: oldLifestyle.weekends,
-        traveling: value,
-        homeEnvironment: oldLifestyle.homeEnvironment,
-        livingSpace: oldLifestyle.livingSpace,
-      );
-      
-      _updateUserProfileWithLifestyle(updatedLifestyle);
-
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [LIFESTYLE] Traveling preference updated: $value');
-    }
+  void _updateHabits({
+    List<String>? communicationStyle,
+    String? workout,
+    List<String>? eatingStyle,
+    String? socialMedia,
+    String? smokeOrDrink,
+    String? newExercise,
+  }) {
+    if (profile == null || profile!.habits == null) return;
+    
+    final updatedHabits = Habits(
+      communicationStyle: communicationStyle ?? profile!.habits!.communicationStyle,
+      workout: workout ?? profile!.habits!.workout,
+      eatingStyle: eatingStyle ?? profile!.habits!.eatingStyle,
+      socialMedia: socialMedia ?? profile!.habits!.socialMedia,
+      smokeOrDrink: smokeOrDrink ?? profile!.habits!.smokeOrDrink,
+      newExercise: newExercise ?? profile!.habits!.newExercise,
+    );
+    
+    _userProfile.value = UserProfile(
+      id: profile!.id,
+      role: profile!.role,
+      email: profile!.email,
+      age: profile!.age,
+      gender: profile!.gender,
+      firstName: profile!.firstName,
+      lastName: profile!.lastName,
+      aboutMe: profile!.aboutMe,
+      religion: profile!.religion,
+      zodiacSign: profile!.zodiacSign,
+      status: profile!.status,
+      profileCompletionPercentage: profile!.profileCompletionPercentage,
+      isDeleted: profile!.isDeleted,
+      isVerified: profile!.isVerified,
+      createdAt: profile!.createdAt,
+      updatedAt: profile!.updatedAt,
+      habits: updatedHabits,
+      interests: profile!.interests,
+      lifestyle: profile!.lifestyle,
+      likeToMeet: profile!.likeToMeet,
+      personalTraitsInspire: profile!.personalTraitsInspire,
+      image: profile!.image,
+      bodyImage: profile!.bodyImage,
+      headShotImage: profile!.headShotImage,
+      personalityImage: profile!.personalityImage,
+      phone: profile!.phone,
+      relationType: profile!.relationType,
+      location: profile!.location,
+      body: profile!.body,
+      eduJob: profile!.eduJob,
+      beliefsOtherText: profile!.beliefsOtherText,
+      address: profile!.address,
+      traitsOtherText: profile!.traitsOtherText,
+    );
   }
 
-  void updateHomeEnvironment(String value) {
-    if (_userProfile.value != null && _userProfile.value!.lifestyle != null) {
-      final currProfile = _userProfile.value!;
-      final oldLifestyle = currProfile.lifestyle!;
-      
-      final updatedLifestyle = Lifestyle(
-        sleepingStyle: oldLifestyle.sleepingStyle,
-        loveStyle: oldLifestyle.loveStyle,
-        weekends: oldLifestyle.weekends,
-        traveling: oldLifestyle.traveling,
-        homeEnvironment: value,
-        livingSpace: oldLifestyle.livingSpace,
-      );
-      
-      _updateUserProfileWithLifestyle(updatedLifestyle);
-
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [LIFESTYLE] Home environment updated: $value');
-    }
-  }
-
-  void updateLivingSpace(String value) {
-    if (_userProfile.value != null && _userProfile.value!.lifestyle != null) {
-      final currProfile = _userProfile.value!;
-      final oldLifestyle = currProfile.lifestyle!;
-      
-      final updatedLifestyle = Lifestyle(
-        sleepingStyle: oldLifestyle.sleepingStyle,
-        loveStyle: oldLifestyle.loveStyle,
-        weekends: oldLifestyle.weekends,
-        traveling: oldLifestyle.traveling,
-        homeEnvironment: oldLifestyle.homeEnvironment,
-        livingSpace: value,
-      );
-      
-      _updateUserProfileWithLifestyle(updatedLifestyle);
-
-      // Changes will be saved when exiting edit mode
-      AppLogger.info('✏️ [LIFESTYLE] Living space updated: $value');
-    }
+  // Utility method for showing snackbars
+  void _showSnackbar(String title, String message, Color backgroundColor, {int duration = 3}) {
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: backgroundColor,
+      colorText: Colors.white,
+      duration: Duration(seconds: duration),
+    );
   }
 }
