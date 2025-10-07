@@ -73,7 +73,7 @@ class ProfileViewController extends GetxController {
   String get profilePhoto => _getProfilePhoto();
   int get profileCompletion {
     // Try to get completion from ProfileEditController first (most up-to-date from edits)
-    final editProfileCompletion = profileEditController.profileCompletionPercentage;
+    final editProfileCompletion = profileEditController.profileCompletion;
     
     // Try to get completion from AccountsController as second source
     final accountsCompletion = accountsController.profileCompletionPercentage.value;
