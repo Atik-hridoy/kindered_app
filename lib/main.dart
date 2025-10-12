@@ -11,25 +11,19 @@ import 'modules/acccounts_setting/controller/accounts_controller.dart';
 import 'local/storage_service.dart';
 
 void main() async {
-  // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
-    // Initialize error handling and logging
     AppErrorHandler.initialize();
     
-    // Initialize plugins
     await _initializePlugins();
     
-    // Load persisted auth/session data so token/email are available
     await LocalStorage.getAllPrefData();
     
-    // Run the app
     runApp(const MyApp());
   } catch (error) {
   
     
-    // Show error UI if possible
     runApp(
       const MaterialApp(
         home: Scaffold(
@@ -46,7 +40,6 @@ Future<void> _initializePlugins() async {
   bool imagePickerOk = false;
   
   try {
-    // Test image picker plugin
     ImagePicker();
     imagePickerOk = true;
   
@@ -54,7 +47,6 @@ Future<void> _initializePlugins() async {
   }
   
   try {
-    // Test permission handler plugin
     await Permission.photos.status;
   } catch (e) {
   }
@@ -73,12 +65,9 @@ class MyApp extends StatelessWidget {
   debugShowCheckedModeBanner: false,
   theme: AppTheme.lightTheme,
   initialRoute: AppRoutes.splash,
-  //initialRoute: AppRoutes.homeSuggestionView,
   initialBinding: BindingsBuilder(() {
-    // Register a single, permanent AccountsController instance for the whole app
     if (!Get.isRegistered<AccountsController>()) {
       final c = Get.put(AccountsController(), permanent: true);
-      // Initialize bearer token if available
       if (LocalStorage.token.isNotEmpty) {
         c.initializeAccountSetupService(LocalStorage.token);
       }

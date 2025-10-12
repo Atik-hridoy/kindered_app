@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:kindered_app/modules/profile_and_settings/controller/about_us_controller.dart';
 
